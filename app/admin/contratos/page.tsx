@@ -627,7 +627,7 @@ export default function Contratos() {
                   <div style={{ fontSize:11, color:'#6b7280' }}>{c.rol_funcion} · Bruto ${p.monto_bruto.toLocaleString('es-CL')} · Retención ${p.retencion.toLocaleString('es-CL')}</div>
                 </div>
                 <div style={{ fontWeight:700, fontSize:14, color:'#3B6D11' }}>${p.monto_liquido.toLocaleString('es-CL')}</div>
-                <button onClick={() => marcarPagado(p)} style={{ padding:'6px 14px', border:'none', borderRadius:8, background:'#3B6D11', color:'#EAF3DE', fontSize:12, fontWeight:600, cursor:'pointer' }}>
+                <button onClick={() => marcarPagado(p.id)} style={{ padding:'6px 14px', border:'none', borderRadius:8, background:'#3B6D11', color:'#EAF3DE', fontSize:12, fontWeight:600, cursor:'pointer' }}>
                   ✓ Registrar pago
                 </button>
               </div>
