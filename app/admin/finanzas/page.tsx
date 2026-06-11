@@ -90,8 +90,8 @@ export default function Finanzas() {
       supabase.from('movimientos_financieros').select('*').eq('año', filtroAño).eq('tipo','egreso').order('created_at', { ascending: false }),
       supabase.from('pagos_contratos').select('*, contrato:contratos(nombre,tipo,rol_funcion)').eq('año', filtroAño).eq('estado','pagado').order('mes', { ascending: true }),
     ])
-    if (dispRes.data) setDispensaciones(dispRes.data as Dispensacion[])
-    if (movRes.data) setCostos(movRes.data as Movimiento[])
+    if (dispRes.data) setDispensaciones(dispRes.data as unknown as Dispensacion[])
+    if (movRes.data) setCostos(movRes.data as unknown as Movimiento[])
     const { data: ae } = await supabase.from('aportes_extraordinarios').select('*').eq('año', filtroAño).order('created_at', { ascending: false })
     if (ae) setAportesExt(ae)
     if (pagContRes.data) setPagosContratos(pagContRes.data as any[])
