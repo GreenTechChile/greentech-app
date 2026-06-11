@@ -85,16 +85,16 @@ export default function Finanzas() {
 
   const cargarDatos = async () => {
     setLoading(true)
-    const [{ data: disp }, { data: mov }, { data: pagCont }] = await Promise.all([
+    const [dispRes, movRes, pagContRes] = await Promise.all([
       supabase.from('dispensaciones').select('id,monto,mes,año').eq('año', filtroAño),
       supabase.from('movimientos_financieros').select('*').eq('año', filtroAño).eq('tipo','egreso').order('created_at', { ascending: false }),
       supabase.from('pagos_contratos').select('*, contrato:contratos(nombre,tipo,rol_funcion)').eq('año', filtroAño).eq('estado','pagado').order('mes', { ascending: true }),
     ])
-    if (disp) setDispensaciones(disp)
-    if (mov) setCostos(mov)
+    if (dispRes.data) setDispensaciones(dispRes.data as Dispensacion[])
+    if (movRes.data) setCostos(movRes.data as Movimiento[])
     const { data: ae } = await supabase.from('aportes_extraordinarios').select('*').eq('año', filtroAño).order('created_at', { ascending: false })
     if (ae) setAportesExt(ae)
-    if (pagCont) setPagosContratos(pagCont)
+    if (pagContRes.data) setPagosContratos(pagContRes.data as any[])
     setLoading(false)
   }
 
