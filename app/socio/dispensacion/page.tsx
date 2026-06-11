@@ -46,6 +46,22 @@ export default function Dispensacion() {
   const [medioPago, setMedioPago] = useState<'oneclick'|'webpay'|'khipu'>('webpay')
 
   useEffect(() => {
+    // Manejar retorno desde MercadoPago
+    const params = new URLSearchParams(window.location.search)
+    const pago = params.get('pago')
+    const orden = params.get('orden')
+    if (pago === 'success' && orden) {
+      setOrdenNumero(orden)
+      setPaso('confirmacion')
+      // Limpiar URL
+      window.history.replaceState({}, '', window.location.pathname)
+    } else if (pago === 'failure') {
+      alert('El pago fue rechazado. Intenta nuevamente.')
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+  }, [])
+
+  useEffect(() => {
     try {
       const keys = Object.keys(localStorage).filter(k => k.startsWith('sb-') && k.endsWith('-auth-token'))
       if (keys.length > 0) {
@@ -83,7 +99,8 @@ export default function Dispensacion() {
   }
 
   const totalCarrito = carrito.reduce((acc, item) => acc + item.gramos, 0)
-  const totalMonto = carrito.reduce((acc, item) => acc + item.precio, 0)
+  const COSTO_DESPACHO = 4900
+  const totalMonto = carrito.reduce((acc, item) => acc + item.precio, 0) + COSTO_DESPACHO
   const totalItems = carrito.length
   const disponibleRestante = cuota - dispensadoMes - totalCarrito
 
@@ -107,40 +124,63 @@ export default function Dispensacion() {
       const orden = 'GT-' + new Date().getFullYear() + '-' + String(Math.floor(Math.random() * 90000) + 10000)
       const mesActual = new Date().getMonth() + 1
       const añoActual = new Date().getFullYear()
-      const medioPagoLabel = medioPago === 'oneclick' ? 'Webpay OneClick' : medioPago === 'khipu' ? 'Khipu' : 'Webpay Plus'
 
-      // TODO (OneClick): cuando esté contratado, llamar a /api/oneclick/cobrar antes de insertar
-      // const res = await fetch('/api/oneclick/cobrar', { method:'POST', body: JSON.stringify({ tbkUser, monto: totalMonto, orden }) })
-      // if (!res.ok) throw new Error('Pago rechazado')
-
+      // Pre-registrar dispensaciones como "pendiente_pago"
       for (const item of carrito) {
-        const { error: insertError } = await supabase.from('dispensaciones').insert({
+        await supabase.from('dispensaciones').insert({
           rut_socio: rutSocio,
           cepa: item.cepa.nombre,
           gramos: item.gramos,
           monto: item.precio,
           orden_numero: orden + '-' + item.cepa.nombre.slice(0,3).toUpperCase(),
-          estado: 'pagado',
+          estado: 'pendiente_pago',
           mes: mesActual,
           año: añoActual,
-          medio_pago: medioPagoLabel,
+          medio_pago: 'MercadoPago',
         })
-        if (insertError) {
-          alert('Error al registrar dispensación: ' + insertError.message)
-          setProcesando(false)
-          return
-        }
-        const { data: cepaActual } = await supabase.from('cepas').select('stock_gramos').eq('id', item.cepa.id).single()
-        if (cepaActual) {
-          await supabase.from('cepas').update({ stock_gramos: cepaActual.stock_gramos - item.gramos }).eq('id', item.cepa.id)
-        }
       }
-      setOrdenNumero(orden)
-      setDispensadoMes(prev => prev + totalCarrito)
-      setPaso('confirmacion')
+
+      // Crear preferencia de pago en MercadoPago
+      const items = [
+        ...carrito.map(item => ({
+          id: item.cepa.id,
+          title: `${item.cepa.nombre} — ${item.gramos} gr`,
+          quantity: 1,
+          unit_price: item.precio,
+          currency_id: 'CLP',
+        })),
+        {
+          id: 'despacho',
+          title: 'Despacho a domicilio',
+          quantity: 1,
+          unit_price: COSTO_DESPACHO,
+          currency_id: 'CLP',
+        }
+      ]
+
+      const res = await fetch('/api/mercadopago/preferencia', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items,
+          pagador: { email: rutSocio + '@greentech.cl' },
+          external_reference: `${rutSocio}|dispensacion|${orden}`,
+          back_urls: {
+            success: `${window.location.origin}/socio/dispensacion?pago=success&orden=${orden}`,
+            failure: `${window.location.origin}/socio/dispensacion?pago=failure`,
+            pending: `${window.location.origin}/socio/dispensacion?pago=pending`,
+          }
+        }),
+      })
+
+      const data = await res.json()
+      if (!res.ok) throw new Error('Error al crear preferencia')
+
+      // Redirigir a MercadoPago (sandbox en pruebas)
+      window.location.href = data.sandbox_init_point
+
     } catch {
       alert('Error al procesar el pago. Intenta nuevamente.')
-    } finally {
       setProcesando(false)
     }
   }
@@ -189,7 +229,7 @@ export default function Dispensacion() {
                 Checkout
                 {totalItems > 0 && (
                   <span style={{ background: '#EAF3DE', color: '#3B6D11', borderRadius: 20, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>
-                    {totalItems} items - ${totalMonto.toLocaleString('es-CL')}
+                    {totalItems} items - ${(totalMonto - COSTO_DESPACHO).toLocaleString('es-CL')}
                   </span>
                 )}
               </button>
@@ -363,6 +403,13 @@ export default function Dispensacion() {
                   </div>
                 </div>
               ))}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #f3f4f6', fontSize: 13 }}>
+                <div>
+                  <div style={{ fontWeight: 500 }}>🚚 Despacho a domicilio</div>
+                  <div style={{ fontSize: 11, color: '#6b7280' }}>Envío a tu dirección registrada</div>
+                </div>
+                <span style={{ fontWeight: 600 }}>${COSTO_DESPACHO.toLocaleString('es-CL')}</span>
+              </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, fontSize: 14, paddingTop: 10, borderTop: '1px solid #e5e7eb', marginTop: 4 }}>
                 <span>Total ({totalCarrito} gr)</span>
                 <span style={{ color: '#3B6D11' }}>${totalMonto.toLocaleString('es-CL')}</span>
@@ -380,77 +427,23 @@ export default function Dispensacion() {
             </div>
             <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: 16, marginBottom: 20 }}>
               <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>Medio de pago</div>
-
-              {/* Banner modo prueba OneClick */}
               <div style={{ background: '#FAEEDA', border: '1px solid #EF9F27', borderRadius: 8, padding: '8px 12px', fontSize: 11, color: '#633806', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
-                🧪 <span><strong>Modo prueba</strong> — OneClick se activará cuando esté contratado con Transbank.</span>
+                🧪 <span><strong>Modo prueba</strong> — Los pagos usan el sandbox de MercadoPago.</span>
               </div>
-
-              {/* Tarjeta guardada OneClick */}
-              {tbkUser && tarjetaInfo && (
-                <div onClick={() => setMedioPago('oneclick')}
-                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', border: `2px solid ${medioPago === 'oneclick' ? '#3B6D11' : '#e5e7eb'}`, borderRadius: 10, marginBottom: 8, background: medioPago === 'oneclick' ? '#EAF3DE' : '#fff', cursor: 'pointer' }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 8, background: '#3B6D11', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>💳</div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>
-                      {tarjetaInfo.tipo} •••• {tarjetaInfo.ultimos4}
-                      <span style={{ marginLeft: 8, fontSize: 10, background: '#EAF3DE', color: '#3B6D11', padding: '2px 7px', borderRadius: 20, fontWeight: 700 }}>GUARDADA</span>
-                    </div>
-                    <div style={{ fontSize: 11, color: '#6b7280' }}>Pago con un click · Webpay OneClick</div>
-                  </div>
-                  <div style={{ width: 18, height: 18, borderRadius: '50%', border: `2px solid ${medioPago === 'oneclick' ? '#3B6D11' : '#d1d5db'}`, background: medioPago === 'oneclick' ? '#3B6D11' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    {medioPago === 'oneclick' && <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#fff' }}/>}
-                  </div>
-                </div>
-              )}
-
-              {/* Webpay Plus */}
-              <div onClick={() => setMedioPago('webpay')}
-                style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', border: `2px solid ${medioPago === 'webpay' ? '#185FA5' : '#e5e7eb'}`, borderRadius: 10, marginBottom: 8, background: medioPago === 'webpay' ? '#E6F1FB' : '#fff', cursor: 'pointer' }}>
-                <div style={{ width: 36, height: 36, borderRadius: 8, background: '#185FA5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>💳</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', border: '2px solid #009EE3', borderRadius: 10, background: '#F0F9FF' }}>
+                <div style={{ width: 36, height: 36, borderRadius: 8, background: '#009EE3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>💙</div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>Webpay Plus</div>
-                  <div style={{ fontSize: 11, color: '#6b7280' }}>Tarjeta de crédito o débito</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>MercadoPago</div>
+                  <div style={{ fontSize: 11, color: '#6b7280' }}>Tarjeta de crédito, débito o transferencia</div>
                 </div>
-                <div style={{ width: 18, height: 18, borderRadius: '50%', border: `2px solid ${medioPago === 'webpay' ? '#185FA5' : '#d1d5db'}`, background: medioPago === 'webpay' ? '#185FA5' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  {medioPago === 'webpay' && <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#fff' }}/>}
-                </div>
-              </div>
-
-              {/* Khipu */}
-              <div onClick={() => setMedioPago('khipu')}
-                style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', border: `2px solid ${medioPago === 'khipu' ? '#633806' : '#e5e7eb'}`, borderRadius: 10, marginBottom: 12, background: medioPago === 'khipu' ? '#FAEEDA' : '#fff', cursor: 'pointer' }}>
-                <div style={{ width: 36, height: 36, borderRadius: 8, background: '#633806', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>🏦</div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>Khipu</div>
-                  <div style={{ fontSize: 11, color: '#6b7280' }}>Transferencia bancaria</div>
-                </div>
-                <div style={{ width: 18, height: 18, borderRadius: '50%', border: `2px solid ${medioPago === 'khipu' ? '#633806' : '#d1d5db'}`, background: medioPago === 'khipu' ? '#633806' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  {medioPago === 'khipu' && <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#fff' }}/>}
+                <div style={{ width: 18, height: 18, borderRadius: '50%', border: '2px solid #009EE3', background: '#009EE3', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#fff' }}/>
                 </div>
               </div>
-
-              {/* Invitación a guardar tarjeta si no tiene OneClick */}
-              {!tbkUser && medioPago === 'webpay' && (
-                <div style={{ background: '#f9fafb', border: '1px dashed #d1d5db', borderRadius: 8, padding: '10px 12px', fontSize: 11, color: '#6b7280', display: 'flex', alignItems: 'center', gap: 8 }}>
-                  ⚡ <span>Al pagar podrás guardar tu tarjeta para <strong>pago con un click</strong> en futuras dispensaciones. <span style={{ color: '#9ca3af' }}>(Disponible al activar Transbank OneClick)</span></span>
-                </div>
-              )}
-
-              {/* Eliminar tarjeta */}
-              {tbkUser && (
-                <button onClick={eliminarTarjeta}
-                  style={{ background: 'none', border: 'none', color: '#A32D2D', fontSize: 11, cursor: 'pointer', padding: '4px 0', textDecoration: 'underline', marginTop: 4 }}>
-                  🗑️ Eliminar tarjeta guardada
-                </button>
-              )}
             </div>
             <button onClick={confirmarPago} disabled={procesando}
-              style={{ width: '100%', background: procesando ? '#9ca3af' : '#3B6D11', color: '#EAF3DE', border: 'none', borderRadius: 10, padding: 14, fontSize: 14, fontWeight: 600, cursor: procesando ? 'not-allowed' : 'pointer' }}>
-              {procesando ? 'Procesando pago...' :
-                medioPago === 'oneclick' ? `⚡ Pagar $${totalMonto.toLocaleString('es-CL')} con un click` :
-                medioPago === 'khipu'   ? `🏦 Pagar $${totalMonto.toLocaleString('es-CL')} con Khipu` :
-                                          `💳 Pagar $${totalMonto.toLocaleString('es-CL')} con Webpay`}
+              style={{ width: '100%', background: procesando ? '#9ca3af' : '#009EE3', color: '#fff', border: 'none', borderRadius: 10, padding: 14, fontSize: 14, fontWeight: 700, cursor: procesando ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+              {procesando ? 'Redirigiendo...' : `💙 Pagar $${totalMonto.toLocaleString('es-CL')} con MercadoPago`}
             </button>
           </div>
         )}
@@ -461,7 +454,7 @@ export default function Dispensacion() {
             <h1 style={{ fontSize: 20, fontWeight: 600, marginBottom: 8, color: '#3B6D11' }}>Pago confirmado</h1>
             <p style={{ fontSize: 14, color: '#6b7280', marginBottom: 4 }}>Tu pedido fue recibido y sera preparado por la corporacion.</p>
             <div style={{ fontSize: 12, color: '#9ca3af', marginBottom: 24 }}>
-              Orden <strong>{ordenNumero}</strong> · {medioPago === 'oneclick' ? '⚡ Webpay OneClick' : medioPago === 'khipu' ? '🏦 Khipu' : '💳 Webpay Plus'}
+              Orden <strong>{ordenNumero}</strong> · 💙 MercadoPago
             </div>
             <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: 16, marginBottom: 20, textAlign: 'left' as const }}>
               <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10 }}>Resumen del pedido</div>
