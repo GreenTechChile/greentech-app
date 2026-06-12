@@ -39,6 +39,7 @@ export default function Dispensacion() {
   const [gramosInput, setGramosInput] = useState<Record<string, string>>({})
   const [rutSocio, setRutSocio] = useState<string>('')
   const [nombreSocio, setNombreSocio] = useState<string>('')
+  const [emailSocio, setEmailSocio] = useState<string>('')
   const [cuota, setCuota] = useState<number>(30)
   const [dispensadoMes, setDispensadoMes] = useState<number>(0)
   const [tbkUser, setTbkUser] = useState<string|null>(null)
@@ -94,9 +95,10 @@ export default function Dispensacion() {
         const rut = token?.user?.user_metadata?.rut
         if (rut) {
           setRutSocio(rut)
-          supabase.from('socios').select('nombre,cuota_mensual,tbk_user,tbk_tarjeta_tipo,tbk_tarjeta_ultimos4').eq('rut', rut).single()
+          supabase.from('socios').select('nombre,email,cuota_mensual,tbk_user,tbk_tarjeta_tipo,tbk_tarjeta_ultimos4').eq('rut', rut).single()
             .then(({ data }) => {
               if (data?.nombre) setNombreSocio(data.nombre)
+              if (data?.email) setEmailSocio(data.email)
               if (data?.cuota_mensual) setCuota(data.cuota_mensual)
               if (data?.tbk_user) {
                 setTbkUser(data.tbk_user)
@@ -176,7 +178,7 @@ export default function Dispensacion() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           items,
-          pagador: { email: rutSocio + '@greentech.cl' },
+          pagador: { email: emailSocio || rutSocio + '@greentech.cl' },
           external_reference: `${rutSocio}|dispensacion|${orden}`,
           back_urls: {
             success: `${window.location.origin}/socio/dispensacion?pago=success&orden=${orden}`,
