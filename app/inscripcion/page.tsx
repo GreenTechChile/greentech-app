@@ -65,6 +65,45 @@ export default function Inscripcion() {
   const [archivos, setArchivos] = useState<{cedula_anverso:File|null,cedula_reverso:File|null,receta:File|null,antecedentes:File|null}>({cedula_anverso:null,cedula_reverso:null,receta:null,antecedentes:null})
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [mpLoading, setMpLoading] = useState(false)
+
+  const handlePagoMP = async () => {
+    setMpLoading(true)
+    setError('')
+    try {
+      const res = await fetch('/api/mercadopago/preferencia', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: [{
+            id: 'incorporacion-greentech',
+            title: 'Incorporación como socio GreenTech',
+            quantity: 1,
+            unit_price: 25000,
+            currency_id: 'CLP',
+          }],
+          pagador: { name: form.nombre, email: form.email },
+          external_reference: form.rut,
+          back_urls: {
+            success: `${window.location.origin}/inscripcion/pago-exitoso`,
+            failure: `${window.location.origin}/inscripcion/pago-fallido`,
+            pending: `${window.location.origin}/inscripcion/pago-pendiente`,
+          },
+        }),
+      })
+      const data = await res.json()
+      const url = process.env.NODE_ENV === 'production' ? data.init_point : data.sandbox_init_point
+      if (url) {
+        window.location.href = url
+      } else {
+        setError('No se pudo iniciar el pago. Intenta nuevamente.')
+      }
+    } catch {
+      setError('Error al conectar con Mercado Pago.')
+    } finally {
+      setMpLoading(false)
+    }
+  }
 
   const [rutValido, setRutValido] = useState<boolean|null>(null)
   const [rutMedicoValido, setRutMedicoValido] = useState<boolean|null>(null)
@@ -530,9 +569,9 @@ export default function Inscripcion() {
               <h2 style={{fontSize:15,fontWeight:600,marginBottom:6}}>💳 Pago de incorporación</h2>
               <p style={{fontSize:12,color:'#6b7280',marginBottom:20}}>Para continuar con la generación y firma de tus contratos, debes realizar el pago del proceso de incorporación.</p>
 
-              {/* Banner modo prueba */}
-              <div style={{background:'#FAEEDA',border:'1px solid #EF9F27',borderRadius:10,padding:'10px 14px',fontSize:12,color:'#633806',marginBottom:20,display:'flex',alignItems:'center',gap:8}}>
-                🧪 <span><strong>Modo prueba</strong> — El pago está simulado. Se conectará a Webpay Plus cuando se active el contrato de pago.</span>
+              {/* Banner Mercado Pago */}
+              <div style={{background:'#f0f9ff',border:'1px solid #7dd3fc',borderRadius:10,padding:'10px 14px',fontSize:12,color:'#0369a1',marginBottom:20,display:'flex',alignItems:'center',gap:8}}>
+                🔵 <span><strong>Pago seguro con Mercado Pago</strong> — Acepta tarjetas de débito, crédito y transferencia bancaria.</span>
               </div>
 
               {/* Detalle del cobro */}
@@ -561,12 +600,14 @@ export default function Inscripcion() {
                 ✓ Alta en el sistema GreenTech
               </div>
 
-              <button onClick={()=>setPaso(7)}
-                style={{width:'100%',padding:'14px',border:'none',borderRadius:12,background:'#3B6D11',color:'#fff',fontSize:15,fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:10,marginBottom:10}}>
-                💳 Pagar $25.000 con Webpay Plus →
+              {error && <div style={{background:'#FCEBEB',border:'1px solid #F5C5C5',borderRadius:8,padding:'10px 12px',fontSize:12,color:'#A32D2D',marginBottom:14}}>⚠️ {error}</div>}
+
+              <button onClick={handlePagoMP} disabled={mpLoading}
+                style={{width:'100%',padding:'14px',border:'none',borderRadius:12,background:mpLoading?'#9ca3af':'#009ee3',color:'#fff',fontSize:15,fontWeight:700,cursor:mpLoading?'not-allowed':'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:10,marginBottom:10}}>
+                {mpLoading ? '⏳ Redirigiendo a Mercado Pago...' : '💳 Pagar $25.000 con Mercado Pago →'}
               </button>
               <div style={{textAlign:'center',fontSize:11,color:'#9ca3af',marginBottom:16}}>
-                🔒 Pago seguro · Transbank · SSL
+                🔒 Pago seguro · Mercado Pago · SSL
               </div>
               <div style={{display:'flex',justifyContent:'flex-start'}}>
                 <button style={s.btnOutline} onClick={()=>setPaso(5)}>← Anterior</button>
