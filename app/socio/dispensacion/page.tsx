@@ -104,6 +104,9 @@ export default function Dispensacion() {
                 setMedioPago('oneclick')
               }
             })
+          // Cargar configuración de envío gratis
+          supabase.from('configuracion').select('datos').eq('id', 'envio_gratis').single()
+            .then(({ data }) => { if (data?.datos) setEnvioGratis(data.datos) })
           const mesActual = new Date().getMonth() + 1
           const añoActual2 = new Date().getFullYear()
           supabase.from('dispensaciones').select('gramos').eq('rut_socio', rut).eq('mes', mesActual).eq('año', añoActual2).neq('estado', 'pendiente_pago')
@@ -123,9 +126,11 @@ export default function Dispensacion() {
     setLoading(false)
   }
 
+  const [envioGratis, setEnvioGratis] = useState<{activo:boolean, monto_minimo:number}>({ activo: false, monto_minimo: 100000 })
+  const montoProductos = carrito.reduce((acc, item) => acc + item.precio, 0)
+  const COSTO_DESPACHO = (envioGratis.activo && montoProductos >= envioGratis.monto_minimo) ? 0 : 4900
   const totalCarrito = carrito.reduce((acc, item) => acc + item.gramos, 0)
-  const COSTO_DESPACHO = 4900
-  const totalMonto = carrito.reduce((acc, item) => acc + item.precio, 0) + COSTO_DESPACHO
+  const totalMonto = montoProductos + COSTO_DESPACHO
   const totalItems = carrito.length
   const disponibleRestante = cuota - dispensadoMes - totalCarrito
 
@@ -232,6 +237,16 @@ export default function Dispensacion() {
 
         {paso === 'catalogo' && (
           <>
+            {/* Banner envío gratis */}
+            {envioGratis.activo && (
+              <div style={{ background: montoProductos >= envioGratis.monto_minimo ? '#EAF3DE' : '#f9fafb', border: `1px solid ${montoProductos >= envioGratis.monto_minimo ? '#97C459' : '#e5e7eb'}`, borderRadius: 10, padding: '10px 14px', marginBottom: 14, fontSize: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span>🚚</span>
+                {montoProductos >= envioGratis.monto_minimo
+                  ? <span style={{ color:'#3B6D11', fontWeight:600 }}>¡Tienes envío gratis en este pedido!</span>
+                  : <span style={{ color:'#6b7280' }}>Agrega <strong>${(envioGratis.monto_minimo - montoProductos).toLocaleString('es-CL')}</strong> más para obtener envío gratis</span>
+                }
+              </div>
+            )}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
               <div>
                 <h1 style={{ fontSize: 18, fontWeight: 600, marginBottom: 3 }}>Dispensar flores medicinales</h1>
@@ -419,9 +434,14 @@ export default function Dispensacion() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #f3f4f6', fontSize: 13 }}>
                 <div>
                   <div style={{ fontWeight: 500 }}>🚚 Despacho a domicilio</div>
-                  <div style={{ fontSize: 11, color: '#6b7280' }}>Envío a tu dirección registrada</div>
+                  <div style={{ fontSize: 11, color: '#6b7280' }}>
+                    {COSTO_DESPACHO === 0 ? '¡Envío gratis por superar el monto mínimo!' : 'Envío a tu dirección registrada'}
+                  </div>
                 </div>
-                <span style={{ fontWeight: 600 }}>${COSTO_DESPACHO.toLocaleString('es-CL')}</span>
+                {COSTO_DESPACHO === 0
+                  ? <span style={{ fontWeight:700, color:'#3B6D11' }}>¡Gratis!</span>
+                  : <span style={{ fontWeight: 600 }}>${COSTO_DESPACHO.toLocaleString('es-CL')}</span>
+                }
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, fontSize: 14, paddingTop: 10, borderTop: '1px solid #e5e7eb', marginTop: 4 }}>
                 <span>Total ({totalCarrito} gr)</span>

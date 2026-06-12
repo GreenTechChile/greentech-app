@@ -62,6 +62,12 @@ export default function Configuracion() {
 
   const [rutError, setRutError] = useState('')
   const [editando, setEditando] = useState(false)
+  const [datosBancarios, setDatosBancarios] = useState({ banco:'', tipo_cuenta:'', numero_cuenta:'', titular:'', rut_titular:'' })
+  const [editandoBanco, setEditandoBanco] = useState(false)
+  const [guardandoBanco, setGuardandoBanco] = useState(false)
+  const [envioGratis, setEnvioGratis] = useState({ activo: false, monto_minimo: 100000 })
+  const [editandoEnvio, setEditandoEnvio] = useState(false)
+  const [guardandoEnvio, setGuardandoEnvio] = useState(false)
 
   const validarRut = (rut: string): boolean => {
     if (!rut || rut.trim() === '') return true
@@ -109,7 +115,7 @@ export default function Configuracion() {
     plazoAprobacion: true,
   })
 
-  useEffect(() => { cargarCobertura(); cargarCorporacion() }, [])
+  useEffect(() => { cargarCobertura(); cargarCorporacion(); cargarDatosBancarios(); cargarEnvioGratis() }, [])
   useEffect(() => { if (tabActiva === 'documentos') cargarDocsInstitucionales() }, [tabActiva])
 
   const cargarCobertura = async () => {
@@ -120,6 +126,34 @@ export default function Configuracion() {
       if (data.length > 0 && !ciudadSeleccionada) setCiudadSeleccionada(data[0].ciudad)
     }
     setLoading(false)
+  }
+
+  const cargarDatosBancarios = async () => {
+    const { data } = await supabase.from('configuracion').select('datos').eq('id', 'banco').single()
+    if (data?.datos) setDatosBancarios(prev => ({ ...prev, ...data.datos }))
+  }
+
+  const guardarDatosBancarios = async () => {
+    setGuardandoBanco(true)
+    const { error } = await supabase.from('configuracion').upsert({ id:'banco', datos: datosBancarios, updated_at: new Date().toISOString() })
+    if (!error) { setEditandoBanco(false); setMensaje('✅ Datos bancarios guardados') }
+    else setMensaje('❌ Error al guardar datos bancarios')
+    setGuardandoBanco(false)
+    setTimeout(() => setMensaje(''), 3000)
+  }
+
+  const cargarEnvioGratis = async () => {
+    const { data } = await supabase.from('configuracion').select('datos').eq('id', 'envio_gratis').single()
+    if (data?.datos) setEnvioGratis(prev => ({ ...prev, ...data.datos }))
+  }
+
+  const guardarEnvioGratis = async () => {
+    setGuardandoEnvio(true)
+    const { error } = await supabase.from('configuracion').upsert({ id:'envio_gratis', datos: envioGratis, updated_at: new Date().toISOString() })
+    if (!error) { setEditandoEnvio(false); setMensaje('✅ Configuración de envío guardada') }
+    else setMensaje('❌ Error al guardar')
+    setGuardandoEnvio(false)
+    setTimeout(() => setMensaje(''), 3000)
   }
 
   const cargarCorporacion = async () => {
@@ -412,6 +446,108 @@ export default function Configuracion() {
                 Haz clic en ✏️ Editar para modificar los datos
               </div>
             )}
+
+            {/* ── Envío gratis ── */}
+            <div style={{ border:'1px solid #e5e7eb', borderRadius:12, padding:16, marginTop:20 }}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:14 }}>
+                <div>
+                  <div style={{ fontSize:13, fontWeight:600 }}>🚚 Envío gratis por monto mínimo</div>
+                  <div style={{ fontSize:11, color:'#6b7280', marginTop:2 }}>Cuando el pedido supere el monto indicado, el envío no se cobra</div>
+                </div>
+                {!editandoEnvio ? (
+                  <button onClick={() => setEditandoEnvio(true)}
+                    style={{ display:'flex', alignItems:'center', gap:6, padding:'6px 14px', border:'1px solid #185FA5', borderRadius:8, background:'#fff', color:'#185FA5', fontSize:12, fontWeight:600, cursor:'pointer' }}>
+                    ✏️ Editar
+                  </button>
+                ) : (
+                  <div style={{ display:'flex', gap:8 }}>
+                    <button onClick={() => { setEditandoEnvio(false); cargarEnvioGratis() }}
+                      style={{ padding:'6px 12px', border:'1px solid #d1d5db', borderRadius:8, background:'#fff', color:'#6b7280', fontSize:12, cursor:'pointer' }}>
+                      Cancelar
+                    </button>
+                    <button onClick={guardarEnvioGratis} disabled={guardandoEnvio}
+                      style={{ padding:'6px 14px', border:'none', borderRadius:8, background: guardandoEnvio ? '#9ca3af' : '#185FA5', color:'#fff', fontSize:12, fontWeight:600, cursor:'pointer' }}>
+                      {guardandoEnvio ? 'Guardando...' : '💾 Guardar'}
+                    </button>
+                  </div>
+                )}
+              </div>
+              <div style={{ display:'flex', alignItems:'center', gap:16 }}>
+                <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                  <div style={{ position:'relative', width:44, height:24, borderRadius:12, background: envioGratis.activo ? '#3B6D11' : '#d1d5db', cursor: editandoEnvio ? 'pointer' : 'default', transition:'0.2s' }}
+                    onClick={() => editandoEnvio && setEnvioGratis(prev => ({ ...prev, activo: !prev.activo }))}>
+                    <div style={{ position:'absolute', top:2, left: envioGratis.activo ? 22 : 2, width:20, height:20, borderRadius:'50%', background:'#fff', transition:'0.2s' }}/>
+                  </div>
+                  <span style={{ fontSize:13, fontWeight:500, color: envioGratis.activo ? '#3B6D11' : '#6b7280' }}>
+                    {envioGratis.activo ? 'Activado' : 'Desactivado'}
+                  </span>
+                </div>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:11, color:'#9ca3af', marginBottom:4 }}>Monto mínimo para envío gratis</div>
+                  {editandoEnvio ? (
+                    <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                      <span style={{ fontSize:13, color:'#6b7280' }}>$</span>
+                      <input type="number" value={envioGratis.monto_minimo}
+                        onChange={e => setEnvioGratis(prev => ({ ...prev, monto_minimo: parseInt(e.target.value) || 0 }))}
+                        style={{ width:120, padding:'7px 10px', border:'1px solid #d1d5db', borderRadius:8, fontSize:13, outline:'none' }} />
+                      <span style={{ fontSize:11, color:'#9ca3af' }}>CLP</span>
+                    </div>
+                  ) : (
+                    <div style={{ fontSize:15, fontWeight:600, color: envioGratis.activo ? '#3B6D11' : '#9ca3af' }}>
+                      ${envioGratis.monto_minimo.toLocaleString('es-CL')}
+                      {!envioGratis.activo && <span style={{ fontSize:11, fontWeight:400, marginLeft:8 }}>(inactivo)</span>}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* ── Datos bancarios ── */}
+            <div style={{ border:'1px solid #e5e7eb', borderRadius:12, padding:16, marginTop:16 }}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:14 }}>
+                <div style={{ fontSize:13, fontWeight:600 }}>🏦 Cuenta bancaria de la asociación</div>
+                {!editandoBanco ? (
+                  <button onClick={() => setEditandoBanco(true)}
+                    style={{ display:'flex', alignItems:'center', gap:6, padding:'6px 14px', border:'1px solid #185FA5', borderRadius:8, background:'#fff', color:'#185FA5', fontSize:12, fontWeight:600, cursor:'pointer' }}>
+                    ✏️ Editar
+                  </button>
+                ) : (
+                  <div style={{ display:'flex', gap:8 }}>
+                    <button onClick={() => { setEditandoBanco(false); cargarDatosBancarios() }}
+                      style={{ padding:'6px 12px', border:'1px solid #d1d5db', borderRadius:8, background:'#fff', color:'#6b7280', fontSize:12, cursor:'pointer' }}>
+                      Cancelar
+                    </button>
+                    <button onClick={guardarDatosBancarios} disabled={guardandoBanco}
+                      style={{ padding:'6px 14px', border:'none', borderRadius:8, background: guardandoBanco ? '#9ca3af' : '#185FA5', color:'#fff', fontSize:12, fontWeight:600, cursor:'pointer' }}>
+                      {guardandoBanco ? 'Guardando...' : '💾 Guardar'}
+                    </button>
+                  </div>
+                )}
+              </div>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:12 }}>
+                {[
+                  { label:'Banco', field:'banco', placeholder:'Ej: BancoEstado' },
+                  { label:'Tipo de cuenta', field:'tipo_cuenta', placeholder:'Ej: Cuenta Vista' },
+                  { label:'Número de cuenta', field:'numero_cuenta', placeholder:'Ej: 12345678' },
+                  { label:'Titular', field:'titular', placeholder:'Ej: Asociación GreenTech' },
+                  { label:'RUT titular', field:'rut_titular', placeholder:'Ej: 65.271.661-K' },
+                ].map(({ label, field, placeholder }) => (
+                  <div key={field}>
+                    <div style={{ fontSize:11, color:'#9ca3af', marginBottom:4 }}>{label}</div>
+                    {editandoBanco ? (
+                      <input style={{ width:'100%', padding:'7px 10px', border:'1px solid #d1d5db', borderRadius:8, fontSize:13, outline:'none', boxSizing:'border-box' as const }}
+                        value={datosBancarios[field as keyof typeof datosBancarios]}
+                        placeholder={placeholder}
+                        onChange={e => setDatosBancarios(prev => ({ ...prev, [field]: e.target.value }))} />
+                    ) : (
+                      <div style={{ fontSize:13, fontWeight:500, color: datosBancarios[field as keyof typeof datosBancarios] ? '#111' : '#d1d5db', background:'#f9fafb', padding:'7px 10px', borderRadius:8 }}>
+                        {datosBancarios[field as keyof typeof datosBancarios] || '—'}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 
