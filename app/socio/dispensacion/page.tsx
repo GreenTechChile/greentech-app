@@ -51,12 +51,37 @@ export default function Dispensacion() {
     const pago = params.get('pago')
     const orden = params.get('orden')
     if (pago === 'success' && orden) {
+      // Registrar dispensaciones ahora que el pago fue aprobado
+      const saved = sessionStorage.getItem('mp_carrito')
+      if (saved) {
+        const { carrito: savedCarrito, mesActual, añoActual, rutSocio: savedRut } = JSON.parse(saved)
+        ;(async () => {
+          for (const item of savedCarrito) {
+            await supabase.from('dispensaciones').insert({
+              rut_socio: savedRut,
+              cepa: item.cepa.nombre,
+              gramos: item.gramos,
+              monto: item.precio,
+              orden_numero: orden + '-' + item.cepa.nombre.slice(0,3).toUpperCase(),
+              estado: 'pagado',
+              mes: mesActual,
+              año: añoActual,
+              medio_pago: 'MercadoPago',
+            })
+            const { data: cepaActual } = await supabase.from('cepas').select('stock_gramos').eq('id', item.cepa.id).single()
+            if (cepaActual) {
+              await supabase.from('cepas').update({ stock_gramos: cepaActual.stock_gramos - item.gramos }).eq('id', item.cepa.id)
+            }
+          }
+          sessionStorage.removeItem('mp_carrito')
+        })()
+      }
       setOrdenNumero(orden)
       setPaso('confirmacion')
-      // Limpiar URL
       window.history.replaceState({}, '', window.location.pathname)
-    } else if (pago === 'failure') {
-      alert('El pago fue rechazado. Intenta nuevamente.')
+    } else if (pago === 'failure' || pago === 'pending') {
+      sessionStorage.removeItem('mp_carrito')
+      alert(pago === 'failure' ? 'El pago fue rechazado. Intenta nuevamente.' : 'El pago está pendiente de confirmación.')
       window.history.replaceState({}, '', window.location.pathname)
     }
   }, [])
@@ -81,7 +106,7 @@ export default function Dispensacion() {
             })
           const mesActual = new Date().getMonth() + 1
           const añoActual2 = new Date().getFullYear()
-          supabase.from('dispensaciones').select('gramos').eq('rut_socio', rut).eq('mes', mesActual).eq('año', añoActual2)
+          supabase.from('dispensaciones').select('gramos').eq('rut_socio', rut).eq('mes', mesActual).eq('año', añoActual2).neq('estado', 'pendiente_pago')
             .then(({ data: disp }) => {
               if (disp) setDispensadoMes(disp.reduce((acc, d) => acc + d.gramos, 0))
             })
@@ -125,20 +150,8 @@ export default function Dispensacion() {
       const mesActual = new Date().getMonth() + 1
       const añoActual = new Date().getFullYear()
 
-      // Pre-registrar dispensaciones como "pendiente_pago"
-      for (const item of carrito) {
-        await supabase.from('dispensaciones').insert({
-          rut_socio: rutSocio,
-          cepa: item.cepa.nombre,
-          gramos: item.gramos,
-          monto: item.precio,
-          orden_numero: orden + '-' + item.cepa.nombre.slice(0,3).toUpperCase(),
-          estado: 'pendiente_pago',
-          mes: mesActual,
-          año: añoActual,
-          medio_pago: 'MercadoPago',
-        })
-      }
+      // Guardar datos del carrito en sessionStorage para usarlos al retornar
+      sessionStorage.setItem('mp_carrito', JSON.stringify({ orden, mesActual, añoActual, carrito, rutSocio }))
 
       // Crear preferencia de pago en MercadoPago
       const items = [
