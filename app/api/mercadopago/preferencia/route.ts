@@ -16,9 +16,9 @@ export async function POST(req: NextRequest) {
         payer: pagador,
         external_reference,
         back_urls: {
-          success: back_urls?.success || `${process.env.NEXT_PUBLIC_BASE_URL}/socio/dispensacion?pago=success`,
-          failure: back_urls?.failure || `${process.env.NEXT_PUBLIC_BASE_URL}/socio/dispensacion?pago=failure`,
-          pending: back_urls?.pending || `${process.env.NEXT_PUBLIC_BASE_URL}/socio/dispensacion?pago=pending`,
+          success: back_urls?.success || `${process.env.NEXT_PUBLIC_BASE_URL}/inscripcion/pago-exitoso`,
+          failure: back_urls?.failure || `${process.env.NEXT_PUBLIC_BASE_URL}/inscripcion/pago-fallido`,
+          pending: back_urls?.pending || `${process.env.NEXT_PUBLIC_BASE_URL}/inscripcion/pago-pendiente`,
         },
         auto_return: 'approved',
         statement_descriptor: 'GreenTech Asociacion',
@@ -33,8 +33,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       id: data.id,
-      init_point: data.init_point,         // producción
-      sandbox_init_point: data.sandbox_init_point, // pruebas
+      init_point: data.init_point,
+      sandbox_init_point: data.sandbox_init_point,
     })
   } catch (e) {
     return NextResponse.json({ error: 'Error interno' }, { status: 500 })
