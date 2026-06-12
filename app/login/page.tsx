@@ -88,7 +88,7 @@ export default function Login() {
             <label style={{ fontSize: 12, color: '#6b7280', display: 'block', marginBottom: 4 }}>RUT</label>
             <input
               type="text"
-              placeholder="Ej: 10.836.787-3"
+              placeholder="Ej: 12345678-9"
               value={rut}
               onChange={e => setRut(e.target.value)}
               required
