@@ -67,7 +67,32 @@ export default function Inscripcion() {
   const [error, setError] = useState('')
   const [mpLoading, setMpLoading] = useState(false)
 
+  // 🚧 BYPASS TEMPORAL — cambiar a false para activar MP en producción
+  const BYPASS_PAGO = true
+
   const handlePagoMP = async () => {
+    if (BYPASS_PAGO) {
+      // ── MODO BYPASS: marcar pago como aprobado directamente ──
+      setMpLoading(true)
+      try {
+        await supabase.from('pagos_incorporacion').upsert({
+          rut: form.rut,
+          mp_payment_id: 'BYPASS-' + Date.now(),
+          monto: 25000,
+          estado: 'aprobado',
+          fecha: new Date().toISOString(),
+        })
+        await supabase.from('socios').update({ pago_incorporacion: true }).eq('rut', form.rut)
+        setPaso(7)
+      } catch {
+        setError('Error al registrar el pago.')
+      } finally {
+        setMpLoading(false)
+      }
+      return
+    }
+
+    // ── MODO PRODUCCIÓN: flujo real MercadoPago ──
     setMpLoading(true)
     setError('')
     try {
@@ -92,7 +117,7 @@ export default function Inscripcion() {
         }),
       })
       const data = await res.json()
-      const url = process.env.NODE_ENV === 'production' ? data.init_point : data.sandbox_init_point
+      const url = data.init_point
       if (url) {
         window.location.href = url
       } else {
