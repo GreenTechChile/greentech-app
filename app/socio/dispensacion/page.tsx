@@ -145,6 +145,9 @@ export default function Dispensacion() {
 
   const quitarDelCarrito = (id: string) => setCarrito(prev => prev.filter(item => item.id !== id))
 
+  // 🚧 BYPASS TEMPORAL — cambiar a false para activar MP en producción
+  const BYPASS_PAGO = true
+
   const confirmarPago = async () => {
     setProcesando(true)
     try {
@@ -152,10 +155,31 @@ export default function Dispensacion() {
       const mesActual = new Date().getMonth() + 1
       const añoActual = new Date().getFullYear()
 
-      // Guardar datos del carrito en sessionStorage para usarlos al retornar
+      if (BYPASS_PAGO) {
+        // ── MODO BYPASS: registrar dispensaciones directamente como pagado ──
+        for (const item of carrito) {
+          await supabase.from('dispensaciones').insert({
+            rut_socio: rutSocio,
+            cepa_id: item.cepa.id,
+            gramos: item.gramos,
+            precio: item.precio,
+            estado: 'pagado',
+            numero_orden: orden,
+            mes: mesActual,
+            año: añoActual,
+            mp_payment_id: 'BYPASS-' + orden,
+          })
+          await supabase.from('cepas').update({ stock_gramos: item.cepa.stock_gramos - item.gramos }).eq('id', item.cepa.id)
+        }
+        setOrdenNumero(orden)
+        setPaso('confirmacion')
+        setProcesando(false)
+        return
+      }
+
+      // ── MODO PRODUCCIÓN: flujo real MercadoPago ──
       sessionStorage.setItem('mp_carrito', JSON.stringify({ orden, mesActual, añoActual, carrito, rutSocio }))
 
-      // Crear preferencia de pago en MercadoPago
       const items = [
         ...carrito.map(item => ({
           id: item.cepa.id,
@@ -190,9 +214,7 @@ export default function Dispensacion() {
 
       const data = await res.json()
       if (!res.ok) throw new Error('Error al crear preferencia')
-
-      // Redirigir a MercadoPago (sandbox en pruebas)
-      window.location.href = data.sandbox_init_point
+      window.location.href = data.init_point
 
     } catch {
       alert('Error al procesar el pago. Intenta nuevamente.')
