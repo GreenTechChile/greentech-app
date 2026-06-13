@@ -55,6 +55,7 @@ export default function Cepas() {
   const [ncEfecto, setNcEfecto] = useState('')
   const [ncHorario, setNcHorario] = useState('')
   const [ncBanco, setNcBanco] = useState('')
+  const [ncDescripcion, setNcDescripcion] = useState('')
   const [ncPrecioGramo, setNcPrecioGramo] = useState('')
   const [ncImagen, setNcImagen] = useState<File | null>(null)
   const [ncImagenPreview, setNcImagenPreview] = useState<string | null>(null)
@@ -93,6 +94,7 @@ export default function Cepas() {
       pct_sativa: parseFloat(ncSativa) || 0,
       pct_indica: parseFloat(ncIndica) || 0,
       banco_semillas: ncBanco || null,
+      descripcion: ncDescripcion || null,
       efecto: ncEfecto || null,
       horario: ncHorario || null,
       stock_gramos: 0,
@@ -107,6 +109,7 @@ export default function Cepas() {
       setNcNombre(''); setNcTipo('sativa'); setNcThc(''); setNcCbd('')
       setNcSativa(''); setNcIndica(''); setNcEfecto(''); setNcHorario('')
       setNcBanco(''); setNcPrecioGramo(''); setNcImagen(null); setNcImagenPreview(null)
+        setNcDescripcion('')
       cargarCepas()
     }
     setGuardando(false)
@@ -153,6 +156,7 @@ export default function Cepas() {
       pct_indica: form.pct_indica ?? 0, pct_sativa: form.pct_sativa ?? 0,
       efecto: form.efecto || null, horario: form.horario || null,
       banco_semillas: form.banco_semillas || null,
+      descripcion: form.descripcion || null,
       stock_gramos: form.stock_gramos ?? 0,
       precio_gramo: form.precio_gramo ?? 0,
       visible: form.visible, imagen_url,
@@ -376,6 +380,17 @@ export default function Cepas() {
                         <div style={s.field}><label style={s.label}>% Sativa</label><input style={s.input} type="number" value={form.pct_sativa ?? ''} onChange={e => f('pct_sativa', parseFloat(e.target.value) || 0)} /></div>
                         <div style={s.field}><label style={s.label}>Banco de semillas</label><input style={s.input} value={form.banco_semillas || ''} onChange={e => f('banco_semillas', e.target.value)} /></div>
                         <div style={s.field}><label style={s.label}>Stock (gr)</label><input style={s.input} type="number" value={form.stock_gramos ?? ''} onChange={e => f('stock_gramos', parseInt(e.target.value) || 0)} /></div>
+
+                        {/* Descripción */}
+                        <div style={{ ...s.field, gridColumn: '1/-1' }}>
+                          <label style={s.label}>Descripción de la cepa</label>
+                          <textarea
+                            style={{ ...s.input, minHeight: 90, resize: 'vertical', fontFamily: 'inherit', fontSize: 13 }}
+                            value={form.descripcion || ''}
+                            onChange={e => f('descripcion', e.target.value)}
+                            placeholder="Describe las características, efectos, aroma, sabor y uso terapéutico de la cepa..."
+                          />
+                        </div>
 
                         {/* Precio por gramo */}
                         <div style={{ ...s.field, gridColumn: '1/-1' }}>

@@ -250,6 +250,19 @@ export default function Dispensacion() {
   if (!rutSocio) return <div style={{ display:'flex', minHeight:'100vh', alignItems:'center', justifyContent:'center', fontSize:13, color:'#9ca3af' }}>Cargando...</div>
 
   return (
+    <>
+    {/* Modal descripción cepa */}
+    {cepaDescripcion && (
+      <div onClick={() => setCepaDescripcion(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+        <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 16, padding: 28, maxWidth: 480, width: '100%', maxHeight: '80vh', overflowY: 'auto' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700 }}>🌿 {cepaDescripcion.nombre}</h3>
+            <button onClick={() => setCepaDescripcion(null)} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: '#9ca3af' }}>✕</button>
+          </div>
+          <p style={{ fontSize: 14, color: '#374151', lineHeight: 1.7, margin: 0, whiteSpace: 'pre-wrap' }}>{cepaDescripcion.descripcion}</p>
+        </div>
+      </div>
+    )}
     <div style={{ display: 'flex', minHeight: '100vh' }}>
       <SidebarSocio nombre={nombreSocio} rut={rutSocio} />
       <main style={{ flex: 1, padding: 24, overflowY: 'auto', background: '#f9fafb' }}>
@@ -329,6 +342,12 @@ export default function Dispensacion() {
                         <div style={{ padding: '10px 14px 8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <div style={{ fontSize: 14, fontWeight: 700 }}>{cepa.nombre}</div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            {cepa.descripcion && (
+                              <button onClick={e => { e.stopPropagation(); setCepaDescripcion({ nombre: cepa.nombre, descripcion: cepa.descripcion! }) }}
+                                style={{ fontSize: 11, background: '#EAF3DE', border: '1px solid #97C459', borderRadius: 20, padding: '2px 10px', color: '#3B6D11', cursor: 'pointer', fontWeight: 500 }}>
+                                ℹ️ Info
+                              </button>
+                            )}
                             <span style={{ fontSize: 12, fontWeight: 600, color: '#374151' }}>${precioGramo.toLocaleString('es-CL')}/gr</span>
                             <span style={{ fontSize: 12, color: '#9ca3af', transform: expandida ? 'rotate(180deg)' : 'rotate(0deg)', display: 'inline-block', transition: '0.2s' }}>v</span>
                           </div>
