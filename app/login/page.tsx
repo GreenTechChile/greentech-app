@@ -21,7 +21,7 @@ export default function Login() {
       // Buscar socio por RUT para obtener el email
       const { data: socio, error: socioError } = await supabase
         .from('socios')
-        .select('email, rol, estado')
+        .select('email, estado, rol_admin, rol_cultivador, rol_despachador')
         .eq('rut', rut.trim())
         .single()
 
@@ -55,7 +55,8 @@ export default function Login() {
       })
 
       // Redirigir según rol
-      if (socio.rol === 'admin') {
+      const tieneRolOperativo = socio.rol_admin || socio.rol_cultivador || socio.rol_despachador
+      if (tieneRolOperativo) {
         router.push('/admin')
       } else {
         router.push('/socio')

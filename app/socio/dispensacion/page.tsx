@@ -36,9 +36,11 @@ export default function Dispensacion() {
   const [procesando, setProcesando] = useState(false)
   const [ordenNumero, setOrdenNumero] = useState('')
   const [cepaExpandida, setCepaExpandida] = useState<string|null>(null)
+  const [cepaDescripcion, setCepaDescripcion] = useState<{nombre: string, descripcion: string} | null>(null)
   const [gramosInput, setGramosInput] = useState<Record<string, string>>({})
   const [rutSocio, setRutSocio] = useState<string>('')
   const [nombreSocio, setNombreSocio] = useState<string>('')
+  const [esAdmin, setEsAdmin] = useState<boolean>(false)
   const [emailSocio, setEmailSocio] = useState<string>('')
   const [cuota, setCuota] = useState<number>(30)
   const [dispensadoMes, setDispensadoMes] = useState<number>(0)
@@ -95,9 +97,10 @@ export default function Dispensacion() {
         const rut = token?.user?.user_metadata?.rut
         if (rut) {
           setRutSocio(rut)
-          supabase.from('socios').select('nombre,email,cuota_mensual,tbk_user,tbk_tarjeta_tipo,tbk_tarjeta_ultimos4').eq('rut', rut).single()
+          supabase.from('socios').select('nombre,email,cuota_mensual,rol_admin,rol_cultivador,rol_despachador,tbk_user,tbk_tarjeta_tipo,tbk_tarjeta_ultimos4').eq('rut', rut).single()
             .then(({ data }) => {
               if (data?.nombre) setNombreSocio(data.nombre)
+              if (data) setEsAdmin(data.rol_admin === true || data.rol_cultivador === true || data.rol_despachador === true)
               if (data?.email) setEmailSocio(data.email)
               if (data?.cuota_mensual) setCuota(data.cuota_mensual)
               if (data?.tbk_user) {
@@ -264,7 +267,7 @@ export default function Dispensacion() {
       </div>
     )}
     <div style={{ display: 'flex', minHeight: '100vh' }}>
-      <SidebarSocio nombre={nombreSocio} rut={rutSocio} />
+      <SidebarSocio nombre={nombreSocio} rut={rutSocio} esAdmin={esAdmin} />
       <main style={{ flex: 1, padding: 24, overflowY: 'auto', background: '#f9fafb' }}>
 
         {paso === 'catalogo' && (
@@ -543,5 +546,6 @@ export default function Dispensacion() {
         )}
       </main>
     </div>
+    </>
   )
 }

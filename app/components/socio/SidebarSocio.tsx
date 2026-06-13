@@ -5,56 +5,40 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 
 const navItems = [
-  { href: '/socio', label: 'Mi panel', icon: '🏠' },
-  { href: '/socio/dispensacion', label: 'Dispensar', icon: '🌿' },
-  { href: '/socio/historial', label: 'Mi historial', icon: '🕐' },
-  { href: '/socio/documentos', label: 'Mis documentos', icon: '📄' },
-  { href: '/socio/aportes', label: 'Mis aportes', icon: '💳' },
-  { href: '/socio/perfil', label: 'Mi perfil', icon: '👤' },
+  { href: '/socio',              label: 'Mi panel',       icon: '🏠' },
+  { href: '/socio/dispensacion', label: 'Dispensar',      icon: '🌿' },
+  { href: '/socio/historial',    label: 'Mi historial',   icon: '🕐' },
+  { href: '/socio/documentos',   label: 'Mis documentos', icon: '📄' },
+  { href: '/socio/aportes',      label: 'Mis aportes',    icon: '💳' },
+  { href: '/socio/perfil',       label: 'Mi perfil',      icon: '👤' },
 ]
 
-interface Props { nombre: string; rut: string; rol?: string }
+interface Props {
+  nombre: string
+  rut: string
+}
 
-export default function SidebarSocio({ nombre, rut, rol: rolProp }: Props) {
+export default function SidebarSocio({ nombre, rut }: Props) {
   const pathname = usePathname()
   const [esAdmin, setEsAdmin] = useState(false)
 
   useEffect(() => {
-    // Si ya nos pasaron el rol como prop, usarlo directo
-    if (rolProp === 'admin' || rolProp === 'ambos') {
-      setEsAdmin(true)
-      return
-    }
-
-    // Si no, leer desde localStorage directamente
-    const verificar = async () => {
-      try {
-        // Buscar la clave de sesión de Supabase en localStorage
-        const keys = Object.keys(localStorage).filter(
-          k => k.startsWith('sb-') && k.endsWith('-auth-token')
-        )
-        if (keys.length > 0) {
-          const token = JSON.parse(localStorage.getItem(keys[0]) || '{}')
-          const rut = token?.user?.user_metadata?.rut
-          if (rut) {
-            const { data } = await supabase
-              .from('socios')
-              .select('rol')
-              .eq('rut', rut)
-              .single()
-            if (data?.rol === 'admin' || data?.rol === 'ambos') {
-              setEsAdmin(true)
-            }
-            return
-          }
+    if (!rut) return
+    supabase
+      .from('socios')
+      .select('rol_admin, rol_cultivador, rol_despachador')
+      .eq('rut', rut)
+      .single()
+      .then(({ data }) => {
+        if (data) {
+          setEsAdmin(
+            data.rol_admin === true ||
+            data.rol_cultivador === true ||
+            data.rol_despachador === true
+          )
         }
-      } catch (e) {
-        console.error('Error verificando rol:', e)
-      }
-    }
-
-    verificar()
-  }, [rolProp])
+      })
+  }, [rut])
 
   const cerrarSesion = async () => {
     await supabase.auth.signOut()

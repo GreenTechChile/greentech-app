@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 
 interface SocioData {
-  nombre: string; rut: string; rol: string; cuota_mensual: number
+  nombre: string; rut: string; rol_admin: boolean; rol_cultivador: boolean; rol_despachador: boolean; cuota_mensual: number
   folio_receta: string; vencimiento_receta: string; medico_nombre: string; diagnostico: string
 }
 
@@ -42,7 +42,7 @@ export default function SocioDashboard() {
       // Cargar datos del socio
       const { data: socioData } = await supabase
         .from('socios')
-        .select('nombre,rut,rol,cuota_mensual,folio_receta,vencimiento_receta,medico_nombre,diagnostico')
+        .select('nombre,rut,rol_admin,rol_cultivador,rol_despachador,cuota_mensual,folio_receta,vencimiento_receta,medico_nombre,diagnostico')
         .eq('rut', rut)
         .single()
       if (socioData) setSocio(socioData)
@@ -86,7 +86,7 @@ export default function SocioDashboard() {
 
   return (
     <div style={{ display:'flex', minHeight:'100vh' }}>
-      <SidebarSocio nombre={socio.nombre} rut={socio.rut} />
+      <SidebarSocio nombre={socio.nombre} rut={socio.rut} esAdmin={socio.rol_admin || socio.rol_cultivador || socio.rol_despachador} />
       <main style={{ flex:1, padding:24, overflowY:'auto' }}>
 
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:20 }}>
