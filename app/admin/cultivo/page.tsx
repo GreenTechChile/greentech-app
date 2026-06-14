@@ -122,7 +122,7 @@ export default function Cultivo() {
   // Validación botón guardar
   const puedeGuardar = (() => {
     if (!loteSeleccionado) return false
-    if (!responsableRegistro) return false
+    if (responsables.length === 0) return false
     if (!proximoRegistro) return false
     if (proximoRegistro.value === 'cosechado' && !gramHumedo) return false
     if (proximoRegistro.value === 'procesado' && !gramSeco) return false
@@ -476,7 +476,7 @@ export default function Cultivo() {
             {loteSeleccionado && !puedeGuardar && (
               <div style={{ background:'#FAEEDA', border:'1px solid #EF9F27', borderRadius:8, padding:'8px 12px', fontSize:11, color:'#633806', marginBottom:12 }}>
                 ⚠️ Completa todos los campos obligatorios para guardar:
-                {!responsableRegistro && <span> · Responsable</span>}
+                {responsables.length === 0 && <span> · Sin rol de cultivador asignado</span>}
                 {proximoRegistro?.value === 'cosechado' && !gramHumedo && <span> · Gramaje húmedo</span>}
                 {proximoRegistro?.value === 'procesado' && !gramSeco && <span> · Gramaje seco</span>}
               </div>
