@@ -86,7 +86,7 @@ export default function SocioDashboard() {
 
   return (
     <div style={{ display:'flex', minHeight:'100vh' }}>
-      <SidebarSocio nombre={socio.nombre} rut={socio.rut} esAdmin={socio.rol_admin || socio.rol_cultivador || socio.rol_despachador} />
+      <SidebarSocio nombre={socio.nombre} rut={socio.rut} />
       <main style={{ flex:1, padding:24, overflowY:'auto' }}>
 
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:20 }}>
