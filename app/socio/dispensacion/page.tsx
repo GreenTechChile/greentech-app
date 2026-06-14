@@ -101,34 +101,56 @@ export default function Dispensacion() {
   }, [])
 
   useEffect(() => {
-    try {
-      const keys = Object.keys(localStorage).filter(k => k.startsWith('sb-') && k.endsWith('-auth-token'))
-      if (keys.length > 0) {
-        const token = JSON.parse(localStorage.getItem(keys[0]) || '{}')
-        const rut = token?.user?.user_metadata?.rut
-        if (rut) {
-          setRutSocio(rut)
-          supabase.from('socios').select('nombre,email,cuota_mensual,tbk_user,tbk_tarjeta_tipo,tbk_tarjeta_ultimos4').eq('rut', rut).single()
-            .then(({ data }) => {
-              if (data?.nombre) setNombreSocio(data.nombre)
-              if (data?.email) setEmailSocio(data.email)
-              if (data?.cuota_mensual) setCuota(data.cuota_mensual)
-              if (data?.tbk_user) {
-                setTbkUser(data.tbk_user)
-                setTarjetaInfo({ tipo: data.tbk_tarjeta_tipo || 'Tarjeta', ultimos4: data.tbk_tarjeta_ultimos4 || '****' })
-                setMedioPago('oneclick')
-              }
-            })
+    const cargarSocio = async () => {
+      try {
+        // Usar getSession() es más confiable que parsear localStorage directamente
+        const { data: { session } } = await supabase.auth.getSession()
+        const email = session?.user?.email
+
+        if (!email) {
+          // Fallback: intentar leer RUT desde metadata si la sesión no tiene email
+          const rut = session?.user?.user_metadata?.rut
+          if (rut) setRutSocio(rut)
+          cargarCepas()
+          return
+        }
+
+        // Buscar el socio por email (igual que lo hace RLS)
+        const { data: socio } = await supabase
+          .from('socios')
+          .select('rut,nombre,email,cuota_mensual,tbk_user,tbk_tarjeta_tipo,tbk_tarjeta_ultimos4')
+          .eq('email', email)
+          .single()
+
+        if (socio) {
+          setRutSocio(socio.rut)
+          setNombreSocio(socio.nombre)
+          setEmailSocio(socio.email)
+          if (socio.cuota_mensual) setCuota(socio.cuota_mensual)
+          if (socio.tbk_user) {
+            setTbkUser(socio.tbk_user)
+            setTarjetaInfo({ tipo: socio.tbk_tarjeta_tipo || 'Tarjeta', ultimos4: socio.tbk_tarjeta_ultimos4 || '****' })
+            setMedioPago('oneclick')
+          }
+
+          // Total dispensado este mes
           const mesActual = new Date().getMonth() + 1
           const añoActual2 = new Date().getFullYear()
-          supabase.from('dispensaciones').select('gramos').eq('rut_socio', rut).eq('mes', mesActual).eq('año', añoActual2).neq('estado', 'pendiente_pago')
-            .then(({ data: disp }) => {
-              if (disp) setDispensadoMes(disp.reduce((acc, d) => acc + d.gramos, 0))
-            })
+          const { data: disp } = await supabase
+            .from('dispensaciones')
+            .select('gramos')
+            .eq('rut_socio', socio.rut)
+            .eq('mes', mesActual)
+            .eq('año', añoActual2)
+            .neq('estado', 'pendiente_pago')
+          if (disp) setDispensadoMes(disp.reduce((acc, d) => acc + d.gramos, 0))
         }
+      } catch (e) {
+        console.error('[dispensacion] error cargando sesión:', e)
       }
-    } catch {}
-    cargarCepas()
+      cargarCepas()
+    }
+    cargarSocio()
   }, [])
 
   const cargarCepas = async () => {
