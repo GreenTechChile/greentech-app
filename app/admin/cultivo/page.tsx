@@ -32,7 +32,7 @@ const tipoCultivoIcon: Record<string, string> = {
 export default function Cultivo() {
   const [lotes, setLotes] = useState<Lote[]>([])
   const [cepasDisponibles, setCepasDisponibles] = useState<string[]>([])
-  const [responsables, setResponsables] = useState<string[]>(['Patricio Veloso'])
+  const [responsables, setResponsables] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [mostrarForm, setMostrarForm] = useState(false)
   const [mostrarRegistro, setMostrarRegistro] = useState(false)
@@ -71,6 +71,14 @@ export default function Cultivo() {
 
   useEffect(() => { cargarLotes(); cargarCepas(); cargarResponsables() }, [])
 
+  // Auto-seleccionar responsable cuando hay exactamente uno disponible
+  useEffect(() => {
+    if (responsables.length === 1) {
+      setNuevoResponsable(responsables[0])
+      setResponsableRegistro(responsables[0])
+    }
+  }, [responsables])
+
   const cargarLotes = async () => {
     setLoading(true)
     const { data } = await supabase.from('lotes_cultivo').select('*').order('created_at', { ascending: false })
@@ -84,8 +92,19 @@ export default function Cultivo() {
   }
 
   const cargarResponsables = async () => {
-    const { data } = await supabase.from('socios').select('nombre').in('rol', ['admin','ambos']).eq('estado','activo')
-    if (data && data.length > 0) setResponsables(data.map((s:{nombre:string}) => s.nombre))
+    // Solo muestra al usuario logueado si tiene rol_cultivador activo
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session?.user?.email) return
+    const { data: socio } = await supabase
+      .from('socios')
+      .select('nombre, rol_cultivador')
+      .eq('email', session.user.email)
+      .single()
+    if (socio?.rol_cultivador) {
+      setResponsables([socio.nombre])
+    } else {
+      setResponsables([])
+    }
   }
 
   const generarCodigo = () => {
@@ -345,10 +364,13 @@ export default function Cultivo() {
               <div style={s.field}><label style={s.label}>Fecha de germinación</label><input style={s.input} type="date" value={nuevaFechaGerm} onChange={e=>setNuevaFechaGerm(e.target.value)}/></div>
               <div style={s.field}><label style={s.label}>Cosecha estimada</label><input style={s.input} type="date" value={nuevaCosechaEst} onChange={e=>setNuevaCosechaEst(e.target.value)}/></div>
               <div style={s.field}><label style={s.label}>Responsable</label>
-                <select style={s.input} value={nuevoResponsable} onChange={e=>setNuevoResponsable(e.target.value)}>
-                  <option value="">Seleccionar...</option>
-                  {responsables.map(r => <option key={r} value={r}>{r}</option>)}
-                </select>
+                {responsables.length > 0 ? (
+                  <div style={s.inputReadonly}>{responsables[0]}</div>
+                ) : (
+                  <div style={{ ...s.inputReadonly, color:'#9ca3af', fontWeight:400, fontSize:12 }}>
+                    Sin rol de cultivador asignado
+                  </div>
+                )}
               </div>
             </div>
             <div style={{ ...s.field, marginBottom:14 }}>
@@ -433,10 +455,13 @@ export default function Cultivo() {
               {/* Responsable */}
               <div style={s.field}>
                 <label style={s.label}>Responsable *</label>
-                <select style={s.input} value={responsableRegistro} onChange={e=>setResponsableRegistro(e.target.value)}>
-                  <option value="">Seleccionar...</option>
-                  {responsables.map(r => <option key={r} value={r}>{r}</option>)}
-                </select>
+                {responsables.length > 0 ? (
+                  <div style={s.inputReadonly}>{responsables[0]}</div>
+                ) : (
+                  <div style={{ ...s.inputReadonly, color:'#9ca3af', fontWeight:400, fontSize:12 }}>
+                    Sin rol de cultivador asignado
+                  </div>
+                )}
               </div>
             </div>
 
