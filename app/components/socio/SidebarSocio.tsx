@@ -23,21 +23,46 @@ export default function SidebarSocio({ nombre, rut }: Props) {
   const [esAdmin, setEsAdmin] = useState(false)
 
   useEffect(() => {
-    if (!rut) return
-    supabase
-      .from('socios')
-      .select('rol_admin, rol_cultivador, rol_despachador')
-      .eq('rut', rut)
-      .single()
-      .then(({ data }) => {
+    const fetchRoles = async () => {
+      // Intentar con rut primero (cuando esté disponible)
+      if (rut) {
+        const { data } = await supabase
+          .from('socios')
+          .select('rol_admin, rol_cultivador, rol_despachador')
+          .eq('rut', rut)
+          .single()
+
         if (data) {
           setEsAdmin(
             data.rol_admin === true ||
             data.rol_cultivador === true ||
             data.rol_despachador === true
           )
+          return
         }
-      })
+      }
+
+      // Fallback: usar el email de la sesión activa
+      // Cubre el caso donde rut llega tarde o RLS requiere autenticación
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.user?.email) return
+
+      const { data } = await supabase
+        .from('socios')
+        .select('rol_admin, rol_cultivador, rol_despachador')
+        .eq('email', session.user.email)
+        .single()
+
+      if (data) {
+        setEsAdmin(
+          data.rol_admin === true ||
+          data.rol_cultivador === true ||
+          data.rol_despachador === true
+        )
+      }
+    }
+
+    fetchRoles()
   }, [rut])
 
   const cerrarSesion = async () => {
