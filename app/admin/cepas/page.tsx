@@ -14,6 +14,7 @@ interface Cepa {
   efecto?: string
   horario?: string
   banco_semillas?: string
+  descripcion?: string
   stock_gramos: number
   precio_gramo: number
   visible: boolean
