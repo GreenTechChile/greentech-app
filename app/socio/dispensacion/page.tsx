@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import SidebarSocio from '@/components/socio/SidebarSocio'
 import { supabase } from '@/lib/supabase'
+import { sendEmail } from '@/lib/email'
 
 interface Cepa {
   id: string
@@ -82,6 +83,16 @@ export default function Dispensacion() {
       setOrdenNumero(orden)
       setPaso('confirmacion')
       window.history.replaceState({}, '', window.location.pathname)
+      // Enviar correo de confirmación (vía MercadoPago)
+      if (emailSocio) {
+        const totalGr = savedCarrito?.reduce((a: number, i: {gramos: number}) => a + i.gramos, 0) || 0
+        sendEmail('dispensacion_confirmada', emailSocio, {
+          nombre: nombreSocio,
+          cepa: savedCarrito?.map((i: {cepa: {nombre: string}, gramos: number}) => `${i.cepa.nombre} ${i.gramos}gr`).join(', ') || '',
+          gramos: totalGr,
+          orden,
+        }).catch(console.error)
+      }
     } else if (pago === 'failure' || pago === 'pending') {
       sessionStorage.removeItem('mp_carrito')
       alert(pago === 'failure' ? 'El pago fue rechazado. Intenta nuevamente.' : 'El pago está pendiente de confirmación.')
@@ -175,6 +186,16 @@ export default function Dispensacion() {
         }
         setOrdenNumero(orden)
         setPaso('confirmacion')
+        // Enviar correo de confirmación de dispensación
+        if (emailSocio) {
+          const cepasResumen = carrito.map(i => `${i.cepa.nombre} ${i.gramos}gr`).join(', ')
+          sendEmail('dispensacion_confirmada', emailSocio, {
+            nombre: nombreSocio,
+            cepa: cepasResumen,
+            gramos: totalCarrito,
+            orden,
+          }).catch(console.error)
+        }
         setProcesando(false)
         return
       }

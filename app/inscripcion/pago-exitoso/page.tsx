@@ -3,6 +3,7 @@ import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
+import { sendEmail } from '@/lib/email'
 
 function PagoExitosoContent() {
   const params = useSearchParams()
@@ -10,7 +11,7 @@ function PagoExitosoContent() {
 
   useEffect(() => {
     const paymentId = params.get('payment_id')
-    const externalRef = params.get('external_reference')
+    const externalRef = params.get('external_reference') // RUT del socio
     const status = params.get('status')
 
     if (paymentId && externalRef && status === 'approved') {
@@ -20,7 +21,22 @@ function PagoExitosoContent() {
         monto: 25000,
         estado: 'aprobado',
         fecha: new Date().toISOString(),
-      }).then(() => setRegistrado(true))
+      }).then(async () => {
+        setRegistrado(true)
+        // Enviar correo de pago confirmado
+        const { data: socio } = await supabase
+          .from('socios')
+          .select('nombre, email')
+          .eq('rut', externalRef)
+          .single()
+        if (socio?.email) {
+          sendEmail('pago_incorporacion', socio.email, {
+            nombre: socio.nombre,
+            monto: 25000,
+            fecha: new Date().toLocaleDateString('es-CL'),
+          }).catch(console.error)
+        }
+      })
     } else {
       setRegistrado(true)
     }
