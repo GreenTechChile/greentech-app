@@ -173,7 +173,7 @@ export default function Inscripcion() {
         diagnostico_secundario: form.diagnostico_secundario.trim(), medico_nombre: form.medico_nombre.trim(),
         medico_rut: form.medico_rut.trim(), folio_receta: form.folio_receta.trim(),
         cuota_mensual: parseInt(form.cuota_mensual), gramos_delegados: parseInt(form.gramos_delegados),
-        vencimiento_receta: form.vencimiento_receta, estado: 'pendiente', rol: 'socio',
+        vencimiento_receta: form.vencimiento_receta, estado: 'pendiente',
       })
       if (insertError) throw insertError
 
@@ -302,7 +302,12 @@ export default function Inscripcion() {
 
       setPaso(10)
     } catch (e: unknown) {
-      setError('Error al enviar: ' + (e instanceof Error ? e.message : 'Error desconocido'))
+      const msg = e instanceof Error
+        ? e.message
+        : (typeof e === 'object' && e !== null && 'message' in e)
+          ? String((e as {message: unknown}).message)
+          : JSON.stringify(e)
+      setError('Error al enviar: ' + msg)
     } finally { setLoading(false) }
   }
 
