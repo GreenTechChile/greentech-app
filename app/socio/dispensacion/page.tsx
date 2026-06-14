@@ -78,21 +78,21 @@ export default function Dispensacion() {
             }
           }
           sessionStorage.removeItem('mp_carrito')
+          // Enviar correo de confirmación (vía MercadoPago) — dentro del bloque donde savedCarrito existe
+          if (emailSocio) {
+            const totalGr = savedCarrito.reduce((a: number, i: {gramos: number}) => a + i.gramos, 0)
+            sendEmail('dispensacion_confirmada', emailSocio, {
+              nombre: nombreSocio,
+              cepa: savedCarrito.map((i: {cepa: {nombre: string}, gramos: number}) => `${i.cepa.nombre} ${i.gramos}gr`).join(', '),
+              gramos: totalGr,
+              orden,
+            }).catch(console.error)
+          }
         })()
       }
       setOrdenNumero(orden)
       setPaso('confirmacion')
       window.history.replaceState({}, '', window.location.pathname)
-      // Enviar correo de confirmación (vía MercadoPago)
-      if (emailSocio) {
-        const totalGr = savedCarrito?.reduce((a: number, i: {gramos: number}) => a + i.gramos, 0) || 0
-        sendEmail('dispensacion_confirmada', emailSocio, {
-          nombre: nombreSocio,
-          cepa: savedCarrito?.map((i: {cepa: {nombre: string}, gramos: number}) => `${i.cepa.nombre} ${i.gramos}gr`).join(', ') || '',
-          gramos: totalGr,
-          orden,
-        }).catch(console.error)
-      }
     } else if (pago === 'failure' || pago === 'pending') {
       sessionStorage.removeItem('mp_carrito')
       alert(pago === 'failure' ? 'El pago fue rechazado. Intenta nuevamente.' : 'El pago está pendiente de confirmación.')
