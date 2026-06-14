@@ -17,6 +17,7 @@ interface Cepa {
   imagen_url?: string
   pct_indica?: number
   pct_sativa?: number
+  descripcion?: string
 }
 
 interface ItemCarrito {
@@ -40,7 +41,6 @@ export default function Dispensacion() {
   const [gramosInput, setGramosInput] = useState<Record<string, string>>({})
   const [rutSocio, setRutSocio] = useState<string>('')
   const [nombreSocio, setNombreSocio] = useState<string>('')
-  const [esAdmin, setEsAdmin] = useState<boolean>(false)
   const [emailSocio, setEmailSocio] = useState<string>('')
   const [cuota, setCuota] = useState<number>(30)
   const [dispensadoMes, setDispensadoMes] = useState<number>(0)
@@ -97,10 +97,9 @@ export default function Dispensacion() {
         const rut = token?.user?.user_metadata?.rut
         if (rut) {
           setRutSocio(rut)
-          supabase.from('socios').select('nombre,email,cuota_mensual,rol_admin,rol_cultivador,rol_despachador,tbk_user,tbk_tarjeta_tipo,tbk_tarjeta_ultimos4').eq('rut', rut).single()
+          supabase.from('socios').select('nombre,email,cuota_mensual,tbk_user,tbk_tarjeta_tipo,tbk_tarjeta_ultimos4').eq('rut', rut).single()
             .then(({ data }) => {
               if (data?.nombre) setNombreSocio(data.nombre)
-              if (data) setEsAdmin(data.rol_admin === true || data.rol_cultivador === true || data.rol_despachador === true)
               if (data?.email) setEmailSocio(data.email)
               if (data?.cuota_mensual) setCuota(data.cuota_mensual)
               if (data?.tbk_user) {
@@ -227,8 +226,6 @@ export default function Dispensacion() {
 
   const eliminarTarjeta = async () => {
     if (!confirm('¿Eliminar la tarjeta guardada? Tendrás que inscribirla nuevamente la próxima vez.')) return
-    // TODO (OneClick): llamar a /api/oneclick/eliminar cuando esté contratado
-    // await fetch('/api/oneclick/eliminar', { method:'POST', body: JSON.stringify({ tbkUser, rutSocio }) })
     await supabase.from('socios').update({ tbk_user: null, tbk_tarjeta_tipo: null, tbk_tarjeta_ultimos4: null }).eq('rut', rutSocio)
     setTbkUser(null)
     setTarjetaInfo(null)
@@ -267,7 +264,7 @@ export default function Dispensacion() {
       </div>
     )}
     <div style={{ display: 'flex', minHeight: '100vh' }}>
-      <SidebarSocio nombre={nombreSocio} rut={rutSocio} esAdmin={esAdmin} />
+      <SidebarSocio nombre={nombreSocio} rut={rutSocio} />
       <main style={{ flex: 1, padding: 24, overflowY: 'auto', background: '#f9fafb' }}>
 
         {paso === 'catalogo' && (
