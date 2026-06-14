@@ -164,18 +164,23 @@ export default function Inscripcion() {
       const fecha = new Date().toLocaleDateString('es-CL', { day:'2-digit', month:'long', year:'numeric' })
       const domicilio = [form.direccion, form.casa_depto].filter(Boolean).join(', ')
 
-      // 1. Insertar socio en la tabla
-      const { error: insertError } = await supabase.from('socios').insert({
-        rut, nombre: form.nombre.trim(), email: form.email.trim().toLowerCase(),
-        telefono: form.telefono.trim(), direccion: form.direccion.trim(), casa_depto: form.casa_depto.trim(),
-        comuna: form.comuna.trim(), ciudad: form.ciudad.trim(), estado_civil: form.estado_civil,
-        profesion: form.profesion.trim(), diagnostico: form.diagnostico.trim(),
-        diagnostico_secundario: form.diagnostico_secundario.trim(), medico_nombre: form.medico_nombre.trim(),
-        medico_rut: form.medico_rut.trim(), folio_receta: form.folio_receta.trim(),
-        cuota_mensual: parseInt(form.cuota_mensual), gramos_delegados: parseInt(form.gramos_delegados),
-        vencimiento_receta: form.vencimiento_receta, estado: 'pendiente',
+      // 1. Insertar socio via API route (service_role bypasea RLS)
+      const insertRes = await fetch('/api/inscripcion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          rut, nombre: form.nombre.trim(), email: form.email.trim().toLowerCase(),
+          telefono: form.telefono.trim(), direccion: form.direccion.trim(), casa_depto: form.casa_depto.trim(),
+          comuna: form.comuna.trim(), ciudad: form.ciudad.trim(), estado_civil: form.estado_civil,
+          profesion: form.profesion.trim(), diagnostico: form.diagnostico.trim(),
+          diagnostico_secundario: form.diagnostico_secundario.trim(), medico_nombre: form.medico_nombre.trim(),
+          medico_rut: form.medico_rut.trim(), folio_receta: form.folio_receta.trim(),
+          cuota_mensual: form.cuota_mensual, gramos_delegados: form.gramos_delegados,
+          vencimiento_receta: form.vencimiento_receta, observaciones: form.observaciones,
+        }),
       })
-      if (insertError) throw insertError
+      const insertData = await insertRes.json()
+      if (!insertRes.ok) throw new Error(insertData.error || 'Error al registrar socio')
 
       // 2. Subir documentos físicos a Supabase Storage
       const uploads = [
