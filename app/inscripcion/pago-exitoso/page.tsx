@@ -1,10 +1,10 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 
-export default function PagoExitoso() {
+function PagoExitosoContent() {
   const params = useSearchParams()
   const [registrado, setRegistrado] = useState(false)
 
@@ -46,5 +46,13 @@ export default function PagoExitoso() {
         </Link>
       </div>
     </div>
+  )
+}
+
+export default function PagoExitoso() {
+  return (
+    <Suspense fallback={<div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,color:'#9ca3af'}}>Cargando...</div>}>
+      <PagoExitosoContent />
+    </Suspense>
   )
 }
