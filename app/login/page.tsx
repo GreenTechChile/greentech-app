@@ -18,12 +18,11 @@ export default function Login() {
     setError('')
 
     try {
-      // Buscar socio por RUT para obtener el email
-      const { data: socio, error: socioError } = await supabase
-        .from('socios')
-        .select('email, estado, rol_admin, rol_cultivador, rol_despachador')
-        .eq('rut', rut.trim())
-        .single()
+      // Buscar socio por RUT usando RPC (evita bloqueo RLS pre-autenticación)
+      const { data: rows, error: socioError } = await supabase
+        .rpc('login_by_rut', { p_rut: rut.trim() })
+
+      const socio = rows?.[0]
 
       if (socioError || !socio) {
         setError('RUT no encontrado. Verifica tus datos.')
