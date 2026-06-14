@@ -191,20 +191,19 @@ export default function Dispensacion() {
       const añoActual = new Date().getFullYear()
 
       if (BYPASS_PAGO) {
-        // ── MODO BYPASS: registrar dispensaciones directamente como pagado ──
+        // ── MODO BYPASS: usar RPC SECURITY DEFINER para evitar bloqueo RLS ──
         for (const item of carrito) {
-          const { error: errDisp } = await supabase.from('dispensaciones').insert({
-            rut_socio: rutSocio,
-            cepa: item.cepa.nombre,
-            gramos: item.gramos,
-            monto: item.precio,
-            estado: 'pagado',
-            orden_numero: orden,
-            mes: mesActual,
-            año: añoActual,
-            medio_pago: 'BYPASS',
+          const { data: rpcResult, error: errDisp } = await supabase.rpc('registrar_dispensacion', {
+            p_cepa:       item.cepa.nombre,
+            p_gramos:     item.gramos,
+            p_monto:      item.precio,
+            p_orden:      orden,
+            p_mes:        mesActual,
+            p_ano:        añoActual,
+            p_medio_pago: 'BYPASS',
           })
-          if (errDisp) console.error('[dispensacion] insert error:', errDisp)
+          if (errDisp) console.error('[dispensacion] RPC error:', errDisp)
+          if (rpcResult?.error) console.error('[dispensacion] RPC lógico error:', rpcResult.error)
           await supabase.from('cepas').update({ stock_gramos: item.cepa.stock_gramos - item.gramos }).eq('id', item.cepa.id)
         }
         setOrdenNumero(orden)
