@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
-// Cambiar a 'GreenTech <no-reply@asociaciongreentech.cl>' una vez verificado el DNS en Resend
-const FROM = 'GreenTech <onboarding@resend.dev>'
+const FROM = 'GreenTech <no-reply@asociaciongreentech.cl>'
 const APP_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://greentech-app.vercel.app'
 
 // ─── Colores de marca ────────────────────────────────────────────────
