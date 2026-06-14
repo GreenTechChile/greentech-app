@@ -171,17 +171,18 @@ export default function Dispensacion() {
       if (BYPASS_PAGO) {
         // ── MODO BYPASS: registrar dispensaciones directamente como pagado ──
         for (const item of carrito) {
-          await supabase.from('dispensaciones').insert({
+          const { error: errDisp } = await supabase.from('dispensaciones').insert({
             rut_socio: rutSocio,
-            cepa_id: item.cepa.id,
+            cepa: item.cepa.nombre,
             gramos: item.gramos,
-            precio: item.precio,
+            monto: item.precio,
             estado: 'pagado',
-            numero_orden: orden,
+            orden_numero: orden,
             mes: mesActual,
             año: añoActual,
-            mp_payment_id: 'BYPASS-' + orden,
+            medio_pago: 'BYPASS',
           })
+          if (errDisp) console.error('[dispensacion] insert error:', errDisp)
           await supabase.from('cepas').update({ stock_gramos: item.cepa.stock_gramos - item.gramos }).eq('id', item.cepa.id)
         }
         setOrdenNumero(orden)
