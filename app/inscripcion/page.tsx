@@ -52,7 +52,7 @@ const formatearRut = (valor: string): string => {
 
 export default function Inscripcion() {
   const router = useRouter()
-  const [paso, setPaso] = useState(1)
+  const [paso, setPaso] = useState(0)
   const [form, setForm] = useState<FormData>(initialForm)
   const [ciudadesDisponibles, setCiudadesDisponibles] = useState<string[]>([])
   const [comunasDisponibles, setComunasDisponibles] = useState<string[]>([])
@@ -331,7 +331,7 @@ export default function Inscripcion() {
         <h1 style={{fontSize:22,fontWeight:600,marginBottom:6}}>Solicitud de incorporación como socio</h1>
         <p style={{fontSize:13,color:'#6b7280',marginBottom:28}}>Completa el formulario. La directiva revisará tu solicitud en un plazo máximo de 5 días hábiles.</p>
 
-        {paso <= 9 && (
+        {paso >= 1 && paso <= 9 && (
           <div style={{display:'flex',marginBottom:28}}>
             {pasos.map((p,i) => {
               const n=i+1; const done=paso>n; const active=paso===n
@@ -341,6 +341,87 @@ export default function Inscripcion() {
         )}
 
         <div style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:16,padding:28}}>
+
+          {/* PASO 0 — Bienvenida y requisitos */}
+          {paso===0 && (
+            <div>
+              {/* Encabezado */}
+              <div style={{textAlign:'center',marginBottom:28}}>
+                <div style={{fontSize:48,marginBottom:12}}>🌿</div>
+                <h2 style={{fontSize:18,fontWeight:700,color:'#3B6D11',marginBottom:6}}>Bienvenido/a al proceso de incorporación</h2>
+                <p style={{fontSize:13,color:'#6b7280',lineHeight:1.7,maxWidth:480,margin:'0 auto'}}>
+                  Antes de comenzar, revisa el resumen del trámite, lo que necesitas tener a mano y los documentos que deberás aceptar.
+                </p>
+              </div>
+
+              {/* Resumen del proceso */}
+              <div style={{border:'1px solid #97C459',borderRadius:12,padding:16,background:'#EAF3DE',marginBottom:16}}>
+                <div style={{fontSize:13,fontWeight:600,color:'#3B6D11',marginBottom:10}}>📋 Resumen del proceso</div>
+                <div style={{fontSize:12,color:'#374151',lineHeight:1.9}}>
+                  <div style={{display:'flex',alignItems:'flex-start',gap:8,marginBottom:6}}><span>1.</span><span>Completas el formulario con tus datos personales, domicilio e información médica.</span></div>
+                  <div style={{display:'flex',alignItems:'flex-start',gap:8,marginBottom:6}}><span>2.</span><span>Subes los documentos requeridos y aceptas el Reglamento Interno.</span></div>
+                  <div style={{display:'flex',alignItems:'flex-start',gap:8,marginBottom:6}}><span>3.</span><span>Realizas el pago de incorporación de <strong>$25.000</strong>.</span></div>
+                  <div style={{display:'flex',alignItems:'flex-start',gap:8,marginBottom:6}}><span>4.</span><span>Lees y aceptas el Contrato de Previsión y la Declaración Jurada de Ingreso.</span></div>
+                  <div style={{display:'flex',alignItems:'flex-start',gap:8}}><span>5.</span><span>La directiva revisa tu solicitud en un plazo máximo de <strong>5 días hábiles</strong> y te notifica por correo.</span></div>
+                </div>
+              </div>
+
+              {/* Costo */}
+              <div style={{border:'1px solid #7dd3fc',borderRadius:12,padding:16,background:'#f0f9ff',marginBottom:16,display:'flex',alignItems:'center',gap:14}}>
+                <div style={{fontSize:32}}>💳</div>
+                <div>
+                  <div style={{fontSize:13,fontWeight:600,color:'#0369a1',marginBottom:2}}>Costo del proceso de incorporación</div>
+                  <div style={{fontSize:22,fontWeight:700,color:'#0369a1'}}>$25.000 CLP</div>
+                  <div style={{fontSize:11,color:'#6b7280',marginTop:2}}>Pago único · Se realiza en el paso 6 del formulario · Mercado Pago</div>
+                </div>
+              </div>
+
+              {/* Documentos a tener a mano */}
+              <div style={{border:'1px solid #e5e7eb',borderRadius:12,padding:16,marginBottom:16}}>
+                <div style={{fontSize:13,fontWeight:600,color:'#111',marginBottom:12}}>📂 Documentos que necesitas tener a mano</div>
+                <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                  {[
+                    {icon:'🪪',titulo:'Cédula de identidad vigente',desc:'Se solicitará foto del anverso (frente) y reverso (dorso). Formato JPG, PNG o PDF.'},
+                    {icon:'🩺',titulo:'Receta médica vigente',desc:'Debe incluir diagnóstico, folio, nombre y RUT del médico, cantidad de gramos autorizados y fecha de vencimiento.'},
+                    {icon:'📋',titulo:'Certificado de antecedentes penales',desc:'Puedes obtenerlo en www.registrocivil.cl. Debe estar vigente.'},
+                  ].map((d,i)=>(
+                    <div key={i} style={{display:'flex',gap:12,padding:'10px 12px',background:'#f9fafb',borderRadius:10,border:'1px solid #e5e7eb'}}>
+                      <span style={{fontSize:20,flexShrink:0}}>{d.icon}</span>
+                      <div>
+                        <div style={{fontSize:12,fontWeight:600,color:'#111',marginBottom:2}}>{d.titulo}</div>
+                        <div style={{fontSize:11,color:'#6b7280',lineHeight:1.6}}>{d.desc}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Documentos a firmar */}
+              <div style={{border:'1px solid #e5e7eb',borderRadius:12,padding:16,marginBottom:24}}>
+                <div style={{fontSize:13,fontWeight:600,color:'#111',marginBottom:4}}>✍️ Documentos que deberás leer y aceptar</div>
+                <p style={{fontSize:11,color:'#6b7280',marginBottom:12}}>Estos documentos se presentan dentro del formulario con tus datos pre-completados. La firma electrónica avanzada (Ley 19.799) se gestionará posteriormente.</p>
+                <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                  {[
+                    {icon:'📖',titulo:'Reglamento Interno de la Asociación GreenTech',desc:'Derechos y deberes de los socios. Incluye obligación de no comercializar los productos recibidos.'},
+                    {icon:'📄',titulo:'Contrato de Previsión y Delegación de Cultivo',desc:'Autoriza a GreenTech a cultivar, cosechar y transportar cannabis medicinal en tu nombre.'},
+                    {icon:'📄',titulo:'Declaración Jurada Especial de Ingreso',desc:'Declaras ser usuario medicinal de cannabis con receta vigente y manifiestas tu voluntad de incorporarte a la asociación.'},
+                  ].map((d,i)=>(
+                    <div key={i} style={{display:'flex',gap:12,padding:'10px 12px',background:'#f9fafb',borderRadius:10,border:'1px solid #e5e7eb'}}>
+                      <span style={{fontSize:20,flexShrink:0}}>{d.icon}</span>
+                      <div>
+                        <div style={{fontSize:12,fontWeight:600,color:'#111',marginBottom:2}}>{d.titulo}</div>
+                        <div style={{fontSize:11,color:'#6b7280',lineHeight:1.6}}>{d.desc}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div style={{display:'flex',justifyContent:'flex-end'}}>
+                <button style={{...s.btnPrimary,padding:'11px 28px',fontSize:14}} onClick={()=>setPaso(1)}>Comenzar solicitud →</button>
+              </div>
+            </div>
+          )}
 
           {/* PASO 1 — Datos personales */}
           {paso===1 && (
