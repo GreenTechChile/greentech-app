@@ -191,19 +191,32 @@ export default function Dispensacion() {
       const añoActual = new Date().getFullYear()
 
       if (BYPASS_PAGO) {
-        // ── MODO BYPASS: usar RPC SECURITY DEFINER para evitar bloqueo RLS ──
+        // ── MODO BYPASS: API route server-side con service role (bypasea RLS) ──
+        const { data: { session } } = await supabase.auth.getSession()
+        const res = await fetch('/api/dispensacion', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            access_token: session?.access_token ?? '',
+            orden,
+            mes: mesActual,
+            ano: añoActual,
+            items: carrito.map(item => ({
+              cepa:   item.cepa.nombre,
+              gramos: item.gramos,
+              monto:  item.precio,
+            })),
+          }),
+        })
+        const resultado = await res.json()
+        if (!res.ok || resultado.error) {
+          console.error('[dispensacion] API error:', resultado.error)
+          alert('Error al registrar la dispensación: ' + resultado.error)
+          setProcesando(false)
+          return
+        }
+        // Actualizar stock de cepas
         for (const item of carrito) {
-          const { data: rpcResult, error: errDisp } = await supabase.rpc('registrar_dispensacion', {
-            p_cepa:       item.cepa.nombre,
-            p_gramos:     item.gramos,
-            p_monto:      item.precio,
-            p_orden:      orden,
-            p_mes:        mesActual,
-            p_ano:        añoActual,
-            p_medio_pago: 'BYPASS',
-          })
-          if (errDisp) console.error('[dispensacion] RPC error:', errDisp)
-          if (rpcResult?.error) console.error('[dispensacion] RPC lógico error:', rpcResult.error)
           await supabase.from('cepas').update({ stock_gramos: item.cepa.stock_gramos - item.gramos }).eq('id', item.cepa.id)
         }
         setOrdenNumero(orden)
