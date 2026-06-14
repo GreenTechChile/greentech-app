@@ -18,7 +18,7 @@ export default function Login() {
     setError('')
 
     try {
-      // Buscar socio por RUT usando RPC (evita bloqueo RLS pre-autenticación)
+      // Usar RPC SECURITY DEFINER para evitar bloqueo RLS pre-autenticación
       const { data: rows, error: socioError } = await supabase
         .rpc('login_by_rut', { p_rut: rut.trim() })
 
