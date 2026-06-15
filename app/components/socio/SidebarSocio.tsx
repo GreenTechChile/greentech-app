@@ -21,36 +21,42 @@ interface Props {
 export default function SidebarSocio({ nombre, rut }: Props) {
   const pathname = usePathname()
   const [esAdmin, setEsAdmin] = useState(false)
+  const [nombreLocal, setNombreLocal] = useState('')
 
   useEffect(() => {
-    const fetchRoles = async () => {
-      // Intentar con rut primero (cuando esté disponible)
-      if (rut) {
-        const { data } = await supabase
-          .from('socios')
-          .select('rol_admin, rol_cultivador, rol_despachador')
-          .eq('rut', rut)
-          .single()
+    const fetchDatos = async () => {
+      let rutBuscado = rut
 
-        if (data) {
-          setEsAdmin(
-            data.rol_admin === true ||
-            data.rol_cultivador === true ||
-            data.rol_despachador === true
-          )
-          return
+      // Fallback: obtener rut desde localStorage si no viene como prop
+      if (!rutBuscado) {
+        try {
+          const keys = Object.keys(localStorage).filter(k => k.startsWith('sb-') && k.endsWith('-auth-token'))
+          if (keys.length > 0) {
+            const token = JSON.parse(localStorage.getItem(keys[0]) || '{}')
+            rutBuscado = token?.user?.user_metadata?.rut || ''
+          }
+        } catch {}
+      }
+
+      // Fallback 2: usar email de la sesión activa
+      if (!rutBuscado) {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session?.user?.email) {
+          const { data: d } = await supabase
+            .from('socios')
+            .select('rut')
+            .eq('email', session.user.email)
+            .single()
+          rutBuscado = d?.rut || ''
         }
       }
 
-      // Fallback: usar el email de la sesión activa
-      // Cubre el caso donde rut llega tarde o RLS requiere autenticación
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session?.user?.email) return
+      if (!rutBuscado) return
 
       const { data } = await supabase
         .from('socios')
-        .select('rol_admin, rol_cultivador, rol_despachador')
-        .eq('email', session.user.email)
+        .select('nombre, rol_admin, rol_cultivador, rol_despachador')
+        .eq('rut', rutBuscado)
         .single()
 
       if (data) {
@@ -59,10 +65,11 @@ export default function SidebarSocio({ nombre, rut }: Props) {
           data.rol_cultivador === true ||
           data.rol_despachador === true
         )
+        if (data.nombre) setNombreLocal(data.nombre)
       }
     }
 
-    fetchRoles()
+    fetchDatos()
   }, [rut])
 
   const cerrarSesion = async () => {
@@ -73,39 +80,48 @@ export default function SidebarSocio({ nombre, rut }: Props) {
     window.location.href = '/'
   }
 
+  const displayNombre = nombre || nombreLocal
+
   return (
     <>
     {/* Placeholder mantiene el espacio en el flex layout */}
     <div style={{ width: 210, flexShrink: 0 }} />
 
-    {/* Sidebar fijo — independiente del scroll del main */}
-    <div style={{ position: 'fixed', top: 0, left: 0, width: 210, height: '100vh', background: '#f9fafb', borderRight: '1px solid #e5e7eb', overflowY: 'auto' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '16px 16px 14px', borderBottom: '1px solid #e5e7eb', flexShrink: 0 }}>
+    {/* Sidebar fijo */}
+    <div style={{
+      position: 'fixed', top: 0, left: 0, width: 210,
+      minHeight: '100vh',
+      background: '#f9fafb', borderRight: '1px solid #e5e7eb',
+      display: 'flex', flexDirection: 'column',
+    }}>
+      {/* Logo */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '16px 16px 14px', borderBottom: '1px solid #e5e7eb' }}>
         <div style={{ width: 28, height: 28, background: '#EAF3DE', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>🌿</div>
         <span style={{ fontSize: 13, fontWeight: 600 }}>GreenTech</span>
       </div>
 
+      {/* Nav items */}
       <div style={{ padding: '8px 0' }}>
-      {navItems.map(item => {
-        const active = pathname === item.href
-        return (
-          <Link key={item.href} href={item.href} style={{
-            display: 'flex', alignItems: 'center', gap: 10,
-            padding: '9px 16px', fontSize: 13,
-            color: active ? '#3B6D11' : '#6b7280',
-            fontWeight: active ? 600 : 400,
-            background: active ? '#fff' : 'transparent',
-            borderRight: active ? '2px solid #3B6D11' : '2px solid transparent',
-            textDecoration: 'none',
-          }}>
-            <span>{item.icon}</span>
-            {item.label}
-          </Link>
-        )
-      })}
-
+        {navItems.map(item => {
+          const active = pathname === item.href
+          return (
+            <Link key={item.href} href={item.href} style={{
+              display: 'flex', alignItems: 'center', gap: 10,
+              padding: '9px 16px', fontSize: 13,
+              color: active ? '#3B6D11' : '#6b7280',
+              fontWeight: active ? 600 : 400,
+              background: active ? '#fff' : 'transparent',
+              borderRight: active ? '2px solid #3B6D11' : '2px solid transparent',
+              textDecoration: 'none',
+            }}>
+              <span>{item.icon}</span>
+              {item.label}
+            </Link>
+          )
+        })}
       </div>
 
+      {/* Panel administrador */}
       {esAdmin && (
         <div style={{ padding: '8px 10px', borderTop: '1px solid #e5e7eb' }}>
           <Link href="/admin" style={{
@@ -120,9 +136,9 @@ export default function SidebarSocio({ nombre, rut }: Props) {
         </div>
       )}
 
-      <div style={{ height: 4, background: 'red' }} />
+      {/* Usuario */}
       <div style={{ padding: '10px 16px', borderTop: '1px solid #e5e7eb' }}>
-        <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 2 }}>{nombre}</div>
+        <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 2 }}>{displayNombre}</div>
         <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 10 }}>{rut}</div>
         <button onClick={cerrarSesion} style={{
           width: '100%', padding: '7px 10px',

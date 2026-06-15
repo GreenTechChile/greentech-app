@@ -98,8 +98,13 @@ export default function SidebarAdmin() {
     {/* Placeholder mantiene el espacio en el flex layout */}
     <div style={{ width: 210, flexShrink: 0 }} />
 
-    {/* Sidebar fijo — independiente del scroll del main */}
-    <div style={{ position: 'fixed', top: 0, left: 0, width: 210, height: '100vh', background: '#f9fafb', borderRight: '1px solid #e5e7eb', overflowY: 'auto' }}>
+    {/* Sidebar fijo */}
+    <div style={{
+      position: 'fixed', top: 0, left: 0, width: 210,
+      minHeight: '100vh',
+      background: '#f9fafb', borderRight: '1px solid #e5e7eb',
+      display: 'flex', flexDirection: 'column',
+    }}>
 
       {/* Logo */}
       <div style={{ padding: '16px 16px 12px', borderBottom: '1px solid #e5e7eb', flexShrink: 0 }}>
