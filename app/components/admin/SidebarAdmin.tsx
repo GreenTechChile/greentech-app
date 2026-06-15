@@ -147,38 +147,38 @@ export default function SidebarAdmin() {
       })}
       </div>
 
-      {/* Botón portal socio — solo si tiene rol_socio */}
-      {roles.rol_socio && (
-        <div style={{ padding: '8px 10px', borderTop: '1px solid #e5e7eb' }}>
-          <Link href="/socio" style={{
-            display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px',
-            background: '#EAF3DE', borderRadius: 8, textDecoration: 'none',
-            fontSize: 12, color: '#3B6D11', fontWeight: 600,
-          }}>
-            <span>🌿</span>
-            <span>Mi portal de socio</span>
-            <span style={{ marginLeft: 'auto' }}>→</span>
-          </Link>
-        </div>
-      )}
-
-      {/* Usuario + cerrar sesión */}
-      <div style={{ padding: '10px 16px', borderTop: '1px solid #e5e7eb' }}>
-        {nombre && (
-          <div style={{ marginBottom: 8 }}>
-            <div style={{ fontSize: 12, fontWeight: 600 }}>{nombre}</div>
-            <div style={{ fontSize: 11, color: '#9ca3af' }}>{rut}</div>
+      {/* Portal socio + Usuario: en un solo bloque para que nunca se separen */}
+      <div>
+        {roles.rol_socio && (
+          <div style={{ padding: '8px 10px', borderTop: '1px solid #e5e7eb' }}>
+            <Link href="/socio" style={{
+              display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px',
+              background: '#EAF3DE', borderRadius: 8, textDecoration: 'none',
+              fontSize: 12, color: '#3B6D11', fontWeight: 600,
+            }}>
+              <span>🌿</span>
+              <span>Mi portal de socio</span>
+              <span style={{ marginLeft: 'auto' }}>→</span>
+            </Link>
           </div>
         )}
-        <button onClick={cerrarSesion} style={{
-          width: '100%', padding: '7px 10px',
-          border: '1px solid #e5e7eb', borderRadius: 8,
-          background: '#fff', color: '#6b7280', fontSize: 12,
-          cursor: 'pointer', textAlign: 'left' as const,
-          display: 'flex', alignItems: 'center', gap: 8,
-        }}>
-          <span>🚪</span> Cerrar sesión
-        </button>
+        <div style={{ padding: '10px 16px', borderTop: '1px solid #e5e7eb' }}>
+          {nombre && (
+            <div style={{ marginBottom: 8 }}>
+              <div style={{ fontSize: 12, fontWeight: 600 }}>{nombre}</div>
+              <div style={{ fontSize: 11, color: '#9ca3af' }}>{rut}</div>
+            </div>
+          )}
+          <button onClick={cerrarSesion} style={{
+            width: '100%', padding: '7px 10px',
+            border: '1px solid #e5e7eb', borderRadius: 8,
+            background: '#fff', color: '#6b7280', fontSize: 12,
+            cursor: 'pointer', textAlign: 'left' as const,
+            display: 'flex', alignItems: 'center', gap: 8,
+          }}>
+            <span>🚪</span> Cerrar sesión
+          </button>
+        </div>
       </div>
     </div>
     </>
