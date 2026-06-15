@@ -99,7 +99,7 @@ export default function SidebarAdmin() {
     <div style={{ width: 210, flexShrink: 0 }} />
 
     {/* Sidebar fijo — independiente del scroll del main */}
-    <div style={{ position: 'fixed', top: 0, left: 0, width: 210, height: '100vh', background: '#f9fafb', borderRight: '1px solid #e5e7eb', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+    <div style={{ position: 'fixed', top: 0, left: 0, width: 210, height: '100vh', background: '#f9fafb', borderRight: '1px solid #e5e7eb', overflowY: 'auto' }}>
 
       {/* Logo */}
       <div style={{ padding: '16px 16px 12px', borderBottom: '1px solid #e5e7eb', flexShrink: 0 }}>
@@ -144,7 +144,7 @@ export default function SidebarAdmin() {
 
       {/* Botón portal socio — solo si tiene rol_socio */}
       {roles.rol_socio && (
-        <div style={{ padding: '8px 10px', borderTop: '1px solid #e5e7eb', flexShrink: 0 }}>
+        <div style={{ padding: '8px 10px', borderTop: '1px solid #e5e7eb' }}>
           <Link href="/socio" style={{
             display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px',
             background: '#EAF3DE', borderRadius: 8, textDecoration: 'none',
@@ -158,7 +158,7 @@ export default function SidebarAdmin() {
       )}
 
       {/* Usuario + cerrar sesión */}
-      <div style={{ padding: '10px 16px', borderTop: '1px solid #e5e7eb', flexShrink: 0 }}>
+      <div style={{ padding: '10px 16px', borderTop: '1px solid #e5e7eb' }}>
         {nombre && (
           <div style={{ marginBottom: 8 }}>
             <div style={{ fontSize: 12, fontWeight: 600 }}>{nombre}</div>

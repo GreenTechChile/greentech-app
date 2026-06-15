@@ -79,7 +79,7 @@ export default function SidebarSocio({ nombre, rut }: Props) {
     <div style={{ width: 210, flexShrink: 0 }} />
 
     {/* Sidebar fijo — independiente del scroll del main */}
-    <div style={{ position: 'fixed', top: 0, left: 0, width: 210, height: '100vh', background: '#f9fafb', borderRight: '1px solid #e5e7eb', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+    <div style={{ position: 'fixed', top: 0, left: 0, width: 210, height: '100vh', background: '#f9fafb', borderRight: '1px solid #e5e7eb', overflowY: 'auto' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '16px 16px 14px', borderBottom: '1px solid #e5e7eb', flexShrink: 0 }}>
         <div style={{ width: 28, height: 28, background: '#EAF3DE', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>🌿</div>
         <span style={{ fontSize: 13, fontWeight: 600 }}>GreenTech</span>
@@ -107,7 +107,7 @@ export default function SidebarSocio({ nombre, rut }: Props) {
       </div>
 
       {esAdmin && (
-        <div style={{ padding: '8px 10px', borderTop: '1px solid #e5e7eb', flexShrink: 0 }}>
+        <div style={{ padding: '8px 10px', borderTop: '1px solid #e5e7eb' }}>
           <Link href="/admin" style={{
             display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px',
             background: '#E6F1FB', borderRadius: 8, textDecoration: 'none',
@@ -120,7 +120,7 @@ export default function SidebarSocio({ nombre, rut }: Props) {
         </div>
       )}
 
-      <div style={{ padding: '10px 16px', borderTop: '1px solid #e5e7eb', flexShrink: 0 }}>
+      <div style={{ padding: '10px 16px', borderTop: '1px solid #e5e7eb' }}>
         <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 2 }}>{nombre}</div>
         <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 10 }}>{rut}</div>
         <button onClick={cerrarSesion} style={{
