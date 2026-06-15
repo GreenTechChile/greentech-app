@@ -94,7 +94,12 @@ export default function SidebarAdmin() {
   ]
 
   return (
-    <div style={{ width: 210, flexShrink: 0, alignSelf: 'flex-start', position: 'sticky', top: 0, height: '100vh', overflow: 'hidden', borderRight: '1px solid #e5e7eb', background: '#f9fafb', display: 'flex', flexDirection: 'column' }}>
+    <>
+    {/* Placeholder mantiene el espacio en el flex layout */}
+    <div style={{ width: 210, flexShrink: 0 }} />
+
+    {/* Sidebar fijo — independiente del scroll del main */}
+    <div style={{ position: 'fixed', top: 0, left: 0, width: 210, height: '100vh', background: '#f9fafb', borderRight: '1px solid #e5e7eb', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
       {/* Logo */}
       <div style={{ padding: '16px 16px 12px', borderBottom: '1px solid #e5e7eb', flexShrink: 0 }}>
@@ -105,8 +110,8 @@ export default function SidebarAdmin() {
         <span style={{ fontSize: 10, background: '#E6F1FB', color: '#185FA5', padding: '2px 7px', borderRadius: 20 }}>Administrador</span>
       </div>
 
-      {/* Nav — scrollable si hay muchos ítems */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '8px 0' }}>
+      {/* Nav — minHeight:0 es crítico para que overflowY funcione en flex */}
+      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '8px 0' }}>
       {sections.filter(s => s.visible).map(section => {
         const itemsVisibles = section.items.filter(i => i.visible)
         if (itemsVisibles.length === 0) return null
@@ -171,5 +176,6 @@ export default function SidebarAdmin() {
         </button>
       </div>
     </div>
+    </>
   )
 }
