@@ -74,7 +74,7 @@ export default function SidebarSocio({ nombre, rut }: Props) {
   }
 
   return (
-    <div style={{ width: 210, flexShrink: 0, borderRight: '1px solid #e5e7eb', padding: '16px 0', background: '#f9fafb', display: 'flex', flexDirection: 'column', height: '100vh', position: 'sticky', top: 0, overflowY: 'auto' }}>
+    <div style={{ width: 210, flexShrink: 0, borderRight: '1px solid #e5e7eb', padding: '16px 0', background: '#f9fafb', display: 'flex', flexDirection: 'column', height: '100vh', position: 'sticky', top: 0, overflowY: 'auto', alignSelf: 'flex-start' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 16px 14px', borderBottom: '1px solid #e5e7eb', marginBottom: 10 }}>
         <div style={{ width: 28, height: 28, background: '#EAF3DE', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>🌿</div>
         <span style={{ fontSize: 13, fontWeight: 600 }}>GreenTech</span>
@@ -112,7 +112,7 @@ export default function SidebarSocio({ nombre, rut }: Props) {
         </div>
       )}
 
-      <div style={{ marginTop: 'auto', padding: '12px 16px', borderTop: '1px solid #e5e7eb' }}>
+      <div style={{ marginTop: 8, padding: '12px 16px', borderTop: '1px solid #e5e7eb' }}>
         <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 2 }}>{nombre}</div>
         <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 10 }}>{rut}</div>
         <button onClick={cerrarSesion} style={{

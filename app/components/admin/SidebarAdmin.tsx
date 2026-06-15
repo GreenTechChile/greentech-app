@@ -94,7 +94,7 @@ export default function SidebarAdmin() {
   ]
 
   return (
-    <div style={{ width: 210, flexShrink: 0, borderRight: '1px solid #e5e7eb', padding: '16px 0', background: '#f9fafb', display: 'flex', flexDirection: 'column', height: '100vh', position: 'sticky', top: 0, overflowY: 'auto' }}>
+    <div style={{ width: 210, flexShrink: 0, borderRight: '1px solid #e5e7eb', padding: '16px 0', background: '#f9fafb', display: 'flex', flexDirection: 'column', height: '100vh', position: 'sticky', top: 0, overflowY: 'auto', alignSelf: 'flex-start' }}>
 
       {/* Logo */}
       <div style={{ padding: '0 16px 12px', borderBottom: '1px solid #e5e7eb', marginBottom: 8 }}>
@@ -135,11 +135,9 @@ export default function SidebarAdmin() {
         )
       })}
 
-      <div style={{ flex: 1 }} />
-
       {/* Botón portal socio — solo si tiene rol_socio */}
       {roles.rol_socio && (
-        <div style={{ padding: '0 10px 8px' }}>
+        <div style={{ padding: '8px 10px 0', marginTop: 8, borderTop: '1px solid #e5e7eb' }}>
           <Link href="/socio" style={{
             display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px',
             background: '#EAF3DE', borderRadius: 8, textDecoration: 'none',
