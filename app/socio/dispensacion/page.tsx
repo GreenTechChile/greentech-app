@@ -124,13 +124,14 @@ export default function Dispensacion() {
         }
 
         if (rutCargado) {
-          setRutSocio(rutCargado)
-          // Cargar datos del socio
+          // Cargar datos del socio PRIMERO, luego setear estados juntos (React 18 los batchea)
           const { data: socio } = await supabase
             .from('socios')
             .select('nombre,email,cuota_mensual,tbk_user,tbk_tarjeta_tipo,tbk_tarjeta_ultimos4')
             .eq('rut', rutCargado)
             .single()
+          // Setear rut y nombre juntos → un solo render, sidebar recibe nombre desde el inicio
+          setRutSocio(rutCargado)
           if (socio?.nombre) setNombreSocio(socio.nombre)
           if (socio?.email) setEmailSocio(socio.email)
           if (socio?.cuota_mensual) setCuota(socio.cuota_mensual)

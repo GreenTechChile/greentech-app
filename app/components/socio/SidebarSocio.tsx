@@ -84,30 +84,29 @@ export default function SidebarSocio({ nombre, rut }: Props) {
 
   return (
     <>
-    {/* Placeholder mantiene el espacio en el flex layout */}
-    <div style={{ width: 210, flexShrink: 0 }} />
+    {/* Placeholder — reserva el espacio en el flex layout de la página */}
+    <div style={{ width: 210, flexShrink: 0, flexGrow: 0 }} />
 
-    {/* Fondo visual del sidebar — solo color y borde, sin contenido */}
-    <div style={{
-      position: 'fixed', top: 0, left: 0, width: 210, height: '100vh',
-      background: '#f9fafb', borderRight: '1px solid #e5e7eb',
-      zIndex: 40,
-    }} />
-
-    {/* Contenido del sidebar — altura automática, layout de bloque puro */}
+    {/* Sidebar: un solo div fixed con altura = contenido (height:fit-content previene stretch flex) */}
     <div style={{
       position: 'fixed', top: 0, left: 0, width: 210,
-      maxHeight: '100vh', overflowY: 'auto',
-      zIndex: 41,
+      height: 'fit-content', maxHeight: '100vh', overflowY: 'auto',
+      background: '#f9fafb', borderRight: '1px solid #e5e7eb',
+      zIndex: 40,
+      display: 'flex', flexDirection: 'column', alignItems: 'stretch',
     }}>
+
       {/* Logo */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '16px 16px 14px', borderBottom: '1px solid #e5e7eb', background: '#f9fafb' }}>
+      <div style={{
+        flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8,
+        padding: '16px 16px 14px', borderBottom: '1px solid #e5e7eb',
+      }}>
         <div style={{ width: 28, height: 28, background: '#EAF3DE', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>🌿</div>
         <span style={{ fontSize: 13, fontWeight: 600 }}>GreenTech</span>
       </div>
 
       {/* Nav items */}
-      <div style={{ padding: '8px 0', background: '#f9fafb' }}>
+      <div style={{ flexShrink: 0, padding: '8px 0' }}>
         {navItems.map(item => {
           const active = pathname === item.href
           return (
@@ -127,8 +126,8 @@ export default function SidebarSocio({ nombre, rut }: Props) {
         })}
       </div>
 
-      {/* Panel admin + Usuario en un bloque continuo */}
-      <div style={{ background: '#f9fafb' }}>
+      {/* Panel admin + Usuario */}
+      <div style={{ flexShrink: 0 }}>
         {esAdmin && (
           <div style={{ padding: '8px 10px', borderTop: '1px solid #e5e7eb' }}>
             <Link href="/admin" style={{
@@ -156,6 +155,7 @@ export default function SidebarSocio({ nombre, rut }: Props) {
           </button>
         </div>
       </div>
+
     </div>
     </>
   )

@@ -95,25 +95,20 @@ export default function SidebarAdmin() {
 
   return (
     <>
-    {/* Placeholder mantiene el espacio en el flex layout */}
-    <div style={{ width: 210, flexShrink: 0 }} />
+    {/* Placeholder — reserva el espacio en el flex layout de la página */}
+    <div style={{ width: 210, flexShrink: 0, flexGrow: 0 }} />
 
-    {/* Fondo visual del sidebar */}
-    <div style={{
-      position: 'fixed', top: 0, left: 0, width: 210, height: '100vh',
-      background: '#f9fafb', borderRight: '1px solid #e5e7eb',
-      zIndex: 40,
-    }} />
-
-    {/* Contenido del sidebar — altura automática, layout de bloque puro */}
+    {/* Sidebar: un solo div fixed con altura = contenido (height:fit-content previene stretch flex) */}
     <div style={{
       position: 'fixed', top: 0, left: 0, width: 210,
-      maxHeight: '100vh', overflowY: 'auto',
-      zIndex: 41,
+      height: 'fit-content', maxHeight: '100vh', overflowY: 'auto',
+      background: '#f9fafb', borderRight: '1px solid #e5e7eb',
+      zIndex: 40,
+      display: 'flex', flexDirection: 'column', alignItems: 'stretch',
     }}>
 
       {/* Logo */}
-      <div style={{ padding: '16px 16px 12px', borderBottom: '1px solid #e5e7eb', background: '#f9fafb' }}>
+      <div style={{ flexShrink: 0, padding: '16px 16px 12px', borderBottom: '1px solid #e5e7eb' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
           <div style={{ width: 28, height: 28, background: '#E6F1FB', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>🛡️</div>
           <span style={{ fontSize: 13, fontWeight: 600 }}>GreenTech</span>
@@ -122,7 +117,7 @@ export default function SidebarAdmin() {
       </div>
 
       {/* Nav */}
-      <div style={{ padding: '8px 0', background: '#f9fafb' }}>
+      <div style={{ flexShrink: 0, padding: '8px 0' }}>
       {sections.filter(s => s.visible).map(section => {
         const itemsVisibles = section.items.filter(i => i.visible)
         if (itemsVisibles.length === 0) return null
@@ -153,8 +148,8 @@ export default function SidebarAdmin() {
       })}
       </div>
 
-      {/* Portal socio + Usuario: en un solo bloque */}
-      <div style={{ background: '#f9fafb' }}>
+      {/* Portal socio + Usuario */}
+      <div style={{ flexShrink: 0 }}>
         {roles.rol_socio && (
           <div style={{ padding: '8px 10px', borderTop: '1px solid #e5e7eb' }}>
             <Link href="/socio" style={{
@@ -186,6 +181,7 @@ export default function SidebarAdmin() {
           </button>
         </div>
       </div>
+
     </div>
     </>
   )
