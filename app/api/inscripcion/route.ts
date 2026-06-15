@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { sendEmail } from '@/lib/email'
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -57,6 +58,16 @@ export async function POST(req: NextRequest) {
     if (insertError) {
       console.error('[api/inscripcion] insert error:', insertError)
       return NextResponse.json({ error: insertError.message }, { status: 500 })
+    }
+
+    // Enviar correo de confirmación (sin bloquear la respuesta si falla)
+    try {
+      await sendEmail('inscripcion_recibida', email.trim().toLowerCase(), {
+        nombre: nombre.trim(),
+        rut,
+      })
+    } catch (emailErr) {
+      console.error('[api/inscripcion] email error:', emailErr)
     }
 
     return NextResponse.json({ ok: true })

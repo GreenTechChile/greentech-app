@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import SidebarAdmin from '@/components/admin/SidebarAdmin'
 import { supabase } from '@/lib/supabase'
+import { sendEmail } from '@/lib/email'
 
 interface Socio {
   nombre: string; telefono?: string; direccion?: string
@@ -269,6 +270,22 @@ export default function Despachos() {
     setDespachos(prev => prev.map(d => ordenBase(d.orden_numero) === orden.ordenBase ? { ...d, estado: cfg.next } : d))
     setMensaje(`✅ Orden ${orden.ordenBase} → "${estadoConfig[cfg.next]?.label}"`)
     setTimeout(() => setMensaje(''), 3000)
+    // Correo despacho_enviado al pasar a "despachado"
+    if (cfg.next === 'despachado' && orden.socio_rut) {
+      try {
+        const { data: socioData } = await supabase.from('socios').select('email').eq('rut', orden.socio_rut).single()
+        if (socioData?.email) {
+          await sendEmail('despacho_enviado', socioData.email, {
+            nombre: orden.socio_nombre || '',
+            cepa: orden.items.map(i => `${i.cepa} ${i.gramos}gr`).join(', '),
+            gramos: String(orden.gramosTotal),
+            orden: orden.ordenBase,
+          })
+        }
+      } catch (emailErr) {
+        console.error('[despachos] email error:', emailErr)
+      }
+    }
     setProcesando(null)
   }
 

@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import SidebarAdmin from '@/components/admin/SidebarAdmin'
 import { supabase } from '@/lib/supabase'
+import { sendEmail } from '@/lib/email'
 
 interface Socio {
   id: string; rut: string; nombre: string; email: string; telefono: string
@@ -39,6 +40,13 @@ export default function AdminSocios() {
       const tempPassword = `GT${socio.rut.replace(/\./g,'').replace('-','').slice(-6)}!`
       setMensaje(`✅ ${socio.nombre} aprobado correctamente. Contraseña temporal asignada: ${tempPassword} — Ve a Supabase Auth para crear el usuario con este email y contraseña.`)
       setSocios(prev => prev.filter(s => s.id !== socio.id))
+      // Correos de aprobación y credenciales
+      try {
+        await sendEmail('aprobacion_solicitud', socio.email, { nombre: socio.nombre, rut: socio.rut })
+        await sendEmail('credenciales_enviadas', socio.email, { nombre: socio.nombre, rut: socio.rut, contrasena: tempPassword })
+      } catch (emailErr) {
+        console.error('[aprobar] email error:', emailErr)
+      }
     } catch {
       setMensaje('❌ Error al aprobar. Intenta nuevamente.')
     } finally {
@@ -54,6 +62,13 @@ export default function AdminSocios() {
     setSocios(prev => prev.filter(s => s.id !== socio.id))
     setProcesando(null)
     setTimeout(() => setMensaje(''), 4000)
+    // Correo de rechazo
+    try {
+      const motivo = notas[socio.id] || 'No se especificó motivo.'
+      await sendEmail('rechazo_solicitud', socio.email, { nombre: socio.nombre, motivo })
+    } catch (emailErr) {
+      console.error('[rechazar] email error:', emailErr)
+    }
   }
 
   const diasDesde = (fecha: string) => Math.floor((Date.now() - new Date(fecha).getTime()) / (1000*60*60*24))
