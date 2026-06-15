@@ -456,7 +456,7 @@ export default function Inscripcion() {
                   {rutValido === false && <span style={{fontSize:11, color:'#A32D2D'}}>⚠️ RUT inválido — verifica el dígito verificador</span>}
                   {rutValido === true && <span style={{fontSize:11, color:'#3B6D11'}}>✓ RUT válido</span>}
                 </div>
-                <div style={s.field}><label style={s.label}>Fecha de nacimiento <span style={s.req}>*</span></label><input style={s.input} type="date" value={form.fecha_nacimiento} onChange={e=>update('fecha_nacimiento',e.target.value)}/></div>
+                <div style={s.field}><label style={s.label}>Fecha de nacimiento <span style={s.req}>*</span></label><input style={s.input} type="date" value={form.fecha_nacimiento} max={(() => { const d = new Date(); d.setFullYear(d.getFullYear() - 18); return d.toISOString().split('T')[0] })()} onChange={e=>update('fecha_nacimiento',e.target.value)}/></div>
                 <div style={s.field}><label style={s.label}>Estado civil <span style={s.req}>*</span></label>
                   <select style={s.input} value={form.estado_civil} onChange={e=>update('estado_civil',e.target.value)}>
                     <option value="">Seleccionar...</option>
@@ -469,9 +469,11 @@ export default function Inscripcion() {
               </div>
               <div style={{display:'flex',justifyContent:'flex-end'}}>
                 <button style={s.btnPrimary} onClick={()=>{
-                  if(!form.nombre||!form.rut||!form.estado_civil||!form.profesion||!form.telefono||!form.email){setError('Completa todos los campos obligatorios.');return}
+                  if(!form.nombre||!form.rut||!form.fecha_nacimiento||!form.estado_civil||!form.profesion||!form.telefono||!form.email){setError('Completa todos los campos obligatorios.');return}
                   if(!validarRut(form.rut)){setError('El RUT ingresado no es válido. Verifica el dígito verificador.');return}
                   if(!validarEmail(form.email)){setError('El correo electrónico no tiene un formato válido. Debe ser tipo correo@dominio.com');return}
+                  const hoy = new Date(); const nac = new Date(form.fecha_nacimiento); const edad = hoy.getFullYear()-nac.getFullYear()-(hoy<new Date(hoy.getFullYear(),nac.getMonth(),nac.getDate())?1:0)
+                  if(edad<18){setError('Debes tener al menos 18 años para solicitar incorporación.');return}
                   setError('');setPaso(2)
                 }}>Siguiente →</button>
               </div>
