@@ -74,8 +74,8 @@ export default function SidebarSocio({ nombre, rut }: Props) {
   }
 
   return (
-    <div style={{ width: 210, flexShrink: 0 }}>
-    <div style={{ position: 'fixed', top: 0, left: 0, width: 210, height: '100vh', borderRight: '1px solid #e5e7eb', padding: '16px 0', background: '#f9fafb', display: 'flex', flexDirection: 'column', overflowY: 'auto', zIndex: 100 }}>
+    <div style={{ width: 210, flexShrink: 0, minHeight: '100vh' }}>
+    <div style={{ position: 'fixed', top: 0, left: 0, width: 210, maxHeight: '100vh', borderRight: '1px solid #e5e7eb', padding: '16px 0', background: '#f9fafb', display: 'flex', flexDirection: 'column', overflowY: 'auto', zIndex: 100 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 16px 14px', borderBottom: '1px solid #e5e7eb', marginBottom: 10 }}>
         <div style={{ width: 28, height: 28, background: '#EAF3DE', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>🌿</div>
         <span style={{ fontSize: 13, fontWeight: 600 }}>GreenTech</span>
