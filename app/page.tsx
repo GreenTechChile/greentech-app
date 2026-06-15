@@ -18,18 +18,10 @@ export default function Home() {
     <main style={{ fontFamily: 'system-ui, sans-serif' }}>
 
       {/* NAVBAR */}
-      <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 32px', borderBottom: '1px solid #e5e7eb', background: '#fff', position: 'sticky', top: 0, zIndex: 10 }}>
+      <nav style={{ display: 'flex', alignItems: 'center', padding: '14px 32px', borderBottom: '1px solid #e5e7eb', background: '#fff', position: 'sticky', top: 0, zIndex: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ width: 36, height: 36, background: '#EAF3DE', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>🌿</div>
           <span style={{ fontSize: 15, fontWeight: 600 }}>GreenTech</span>
-        </div>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <Link href="/inscripcion" style={{ padding: '8px 18px', border: '1px solid #d1d5db', borderRadius: 8, fontSize: 13, color: '#111', fontWeight: 500 }}>
-            Solicitar incorporación ↗
-          </Link>
-          <Link href="/login" style={{ padding: '8px 18px', background: '#3B6D11', borderRadius: 8, fontSize: 13, color: '#EAF3DE', fontWeight: 500 }}>
-            Login
-          </Link>
         </div>
       </nav>
 
