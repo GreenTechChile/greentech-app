@@ -100,12 +100,9 @@ function template(evento: string, datos: Datos): { subject: string; html: string
       const html = layout('Solicitud aprobada — GreenTech', `
         ${h1('¡Tu solicitud fue aprobada! 🎉')}
         ${p(`Hola <strong>${nombre}</strong>, nos alegra informarte que la directiva ha aprobado tu solicitud de ingreso a la Asociación GreenTech.`)}
-        ${infoBox(`<strong>Próximos pasos:</strong><br>
-          1. Debes realizar el pago de incorporación para activar tu cuenta.<br>
-          2. Recibirás tus credenciales de acceso una vez confirmado el pago.<br>
-          3. Tendrás acceso al portal del socio donde podrás gestionar tus dispensaciones.`)}
-        ${tabla(dato('RUT', rut))}
-        ${btn('Ir al portal', APP_URL)}
+        ${infoBox(`Recibirás tus credenciales de acceso en un correo separado que te enviamos ahora mismo. Con ellas podrás ingresar al portal del socio y comenzar a gestionar tus dispensaciones.`)}
+        ${tabla(dato('RUT', rut) + dato('Estado', '✅ Aprobado'))}
+        ${btn('Ir al portal', `${APP_URL}/login`)}
       `)
       return { subject: '¡Tu solicitud a GreenTech fue aprobada!', html }
     }
