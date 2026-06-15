@@ -95,16 +95,34 @@ export default function SidebarAdmin() {
 
   return (
     <>
+    {/* Estilos !important para neutralizar cualquier CSS global que cause el gap */}
+    <style>{`
+      .gt-sb-admin {
+        justify-content: flex-start !important;
+        height: fit-content !important;
+        min-height: 0 !important;
+        align-items: stretch !important;
+      }
+      .gt-sb-admin > div {
+        flex-grow: 0 !important;
+        flex-shrink: 0 !important;
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+        height: auto !important;
+        min-height: 0 !important;
+      }
+    `}</style>
+
     {/* Placeholder — reserva el espacio en el flex layout de la página */}
     <div style={{ width: 210, flexShrink: 0, flexGrow: 0 }} />
 
-    {/* Sidebar: un solo div fixed con altura = contenido (height:fit-content previene stretch flex) */}
-    <div style={{
+    {/* Sidebar fijo con altura = contenido */}
+    <div className="gt-sb-admin" style={{
       position: 'fixed', top: 0, left: 0, width: 210,
       height: 'fit-content', maxHeight: '100vh', overflowY: 'auto',
       background: '#f9fafb', borderRight: '1px solid #e5e7eb',
       zIndex: 40,
-      display: 'flex', flexDirection: 'column', alignItems: 'stretch',
+      display: 'flex', flexDirection: 'column',
     }}>
 
       {/* Logo */}
