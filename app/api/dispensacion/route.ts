@@ -41,14 +41,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Socio no encontrado o inactivo' }, { status: 403 })
     }
 
-    // Insertar cada item del carrito
-    for (const item of items) {
+    // Insertar cada item del carrito con sufijo único en orden_numero
+    for (let idx = 0; idx < items.length; idx++) {
+      const item = items[idx]
+      // Un ítem → sin sufijo. Varios → GT-2026-XXXXX-1, GT-2026-XXXXX-2, etc.
+      const ordenNumero = items.length === 1 ? orden : `${orden}-${idx + 1}`
       const { error } = await supabaseAdmin.from('dispensaciones').insert({
         rut_socio: socio.rut,
         cepa:       item.cepa,
         gramos:     item.gramos,
         monto:      item.monto,
-        orden_numero: orden,
+        orden_numero: ordenNumero,
         mes,
         año:        ano,
         medio_pago: 'BYPASS',
