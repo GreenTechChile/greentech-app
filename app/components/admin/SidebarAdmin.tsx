@@ -49,7 +49,6 @@ export default function SidebarAdmin() {
     window.location.href = '/'
   }
 
-  // Visibilidad de cada item según roles
   const verTodo = roles.rol_admin
   const verDespachos = roles.rol_admin || roles.rol_despachador
   const verCultivo = roles.rol_admin || roles.rol_cultivador
@@ -93,40 +92,21 @@ export default function SidebarAdmin() {
     },
   ]
 
+  // Sidebar in-flow (no position:fixed) con display:block para evitar cualquier
+  // interferencia de flex. Los elementos se apilan top→bottom sin gaps.
   return (
-    <>
-    {/* Estilos !important para neutralizar cualquier CSS global que cause el gap */}
-    <style>{`
-      .gt-sb-admin {
-        justify-content: flex-start !important;
-        height: fit-content !important;
-        min-height: 0 !important;
-        align-items: stretch !important;
-      }
-      .gt-sb-admin > div {
-        flex-grow: 0 !important;
-        flex-shrink: 0 !important;
-        margin-top: 0 !important;
-        margin-bottom: 0 !important;
-        height: auto !important;
-        min-height: 0 !important;
-      }
-    `}</style>
-
-    {/* Placeholder — reserva el espacio en el flex layout de la página */}
-    <div style={{ width: 210, flexShrink: 0, flexGrow: 0 }} />
-
-    {/* Sidebar fijo con altura = contenido */}
-    <div className="gt-sb-admin" style={{
-      position: 'fixed', top: 0, left: 0, width: 210,
-      height: 'fit-content', maxHeight: '100vh', overflowY: 'auto',
-      background: '#f9fafb', borderRight: '1px solid #e5e7eb',
-      zIndex: 40,
-      display: 'flex', flexDirection: 'column',
+    <div style={{
+      width: 210,
+      flexShrink: 0,
+      flexGrow: 0,
+      display: 'block',
+      minHeight: '100vh',
+      background: '#f9fafb',
+      borderRight: '1px solid #e5e7eb',
     }}>
 
       {/* Logo */}
-      <div style={{ flexShrink: 0, padding: '16px 16px 12px', borderBottom: '1px solid #e5e7eb' }}>
+      <div style={{ padding: '16px 16px 12px', borderBottom: '1px solid #e5e7eb' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
           <div style={{ width: 28, height: 28, background: '#E6F1FB', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>🛡️</div>
           <span style={{ fontSize: 13, fontWeight: 600 }}>GreenTech</span>
@@ -135,72 +115,71 @@ export default function SidebarAdmin() {
       </div>
 
       {/* Nav */}
-      <div style={{ flexShrink: 0, padding: '8px 0' }}>
-      {sections.filter(s => s.visible).map(section => {
-        const itemsVisibles = section.items.filter(i => i.visible)
-        if (itemsVisibles.length === 0) return null
-        return (
-          <div key={section.label}>
-            <div style={{ fontSize: 10, color: '#9ca3af', padding: '8px 16px 4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              {section.label}
+      <div style={{ padding: '8px 0' }}>
+        {sections.filter(s => s.visible).map(section => {
+          const itemsVisibles = section.items.filter(i => i.visible)
+          if (itemsVisibles.length === 0) return null
+          return (
+            <div key={section.label}>
+              <div style={{ fontSize: 10, color: '#9ca3af', padding: '8px 16px 4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                {section.label}
+              </div>
+              {itemsVisibles.map(item => {
+                const active = pathname === item.href
+                return (
+                  <Link key={item.href} href={item.href} style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '9px 16px', fontSize: 13,
+                    color: active ? '#185FA5' : '#6b7280',
+                    fontWeight: active ? 600 : 400,
+                    background: active ? '#fff' : '#f9fafb',
+                    borderRight: active ? '2px solid #185FA5' : '2px solid transparent',
+                    textDecoration: 'none',
+                  }}>
+                    <span>{item.icon}</span>
+                    <span style={{ flex: 1 }}>{item.label}</span>
+                  </Link>
+                )
+              })}
             </div>
-            {itemsVisibles.map(item => {
-              const active = pathname === item.href
-              return (
-                <Link key={item.href} href={item.href} style={{
-                  display: 'flex', alignItems: 'center', gap: 10,
-                  padding: '9px 16px', fontSize: 13,
-                  color: active ? '#185FA5' : '#6b7280',
-                  fontWeight: active ? 600 : 400,
-                  background: active ? '#fff' : '#f9fafb',
-                  borderRight: active ? '2px solid #185FA5' : '2px solid transparent',
-                  textDecoration: 'none',
-                }}>
-                  <span>{item.icon}</span>
-                  <span style={{ flex: 1 }}>{item.label}</span>
-                </Link>
-              )
-            })}
-          </div>
-        )
-      })}
+          )
+        })}
       </div>
 
-      {/* Portal socio + Usuario */}
-      <div style={{ flexShrink: 0 }}>
-        {roles.rol_socio && (
-          <div style={{ padding: '8px 10px', borderTop: '1px solid #e5e7eb' }}>
-            <Link href="/socio" style={{
-              display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px',
-              background: '#EAF3DE', borderRadius: 8, textDecoration: 'none',
-              fontSize: 12, color: '#3B6D11', fontWeight: 600,
-            }}>
-              <span>🌿</span>
-              <span>Mi portal de socio</span>
-              <span style={{ marginLeft: 'auto' }}>→</span>
-            </Link>
+      {/* Portal socio (si tiene rol_socio) */}
+      {roles.rol_socio && (
+        <div style={{ padding: '8px 10px', borderTop: '1px solid #e5e7eb' }}>
+          <Link href="/socio" style={{
+            display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px',
+            background: '#EAF3DE', borderRadius: 8, textDecoration: 'none',
+            fontSize: 12, color: '#3B6D11', fontWeight: 600,
+          }}>
+            <span>🌿</span>
+            <span>Mi portal de socio</span>
+            <span style={{ marginLeft: 'auto' }}>→</span>
+          </Link>
+        </div>
+      )}
+
+      {/* Nombre / RUT / Cerrar sesión — directamente bajo el último item */}
+      <div style={{ padding: '10px 16px', borderTop: '1px solid #e5e7eb' }}>
+        {nombre && (
+          <div style={{ marginBottom: 8 }}>
+            <div style={{ fontSize: 12, fontWeight: 600 }}>{nombre}</div>
+            <div style={{ fontSize: 11, color: '#9ca3af' }}>{rut}</div>
           </div>
         )}
-        <div style={{ padding: '10px 16px', borderTop: '1px solid #e5e7eb' }}>
-          {nombre && (
-            <div style={{ marginBottom: 8 }}>
-              <div style={{ fontSize: 12, fontWeight: 600 }}>{nombre}</div>
-              <div style={{ fontSize: 11, color: '#9ca3af' }}>{rut}</div>
-            </div>
-          )}
-          <button onClick={cerrarSesion} style={{
-            width: '100%', padding: '7px 10px',
-            border: '1px solid #e5e7eb', borderRadius: 8,
-            background: '#fff', color: '#6b7280', fontSize: 12,
-            cursor: 'pointer', textAlign: 'left' as const,
-            display: 'flex', alignItems: 'center', gap: 8,
-          }}>
-            <span>🚪</span> Cerrar sesión
-          </button>
-        </div>
+        <button onClick={cerrarSesion} style={{
+          width: '100%', padding: '7px 10px',
+          border: '1px solid #e5e7eb', borderRadius: 8,
+          background: '#fff', color: '#6b7280', fontSize: 12,
+          cursor: 'pointer', textAlign: 'left' as const,
+          display: 'flex', alignItems: 'center', gap: 8,
+        }}>
+          <span>🚪</span> Cerrar sesión
+        </button>
       </div>
 
     </div>
-    </>
   )
 }

@@ -27,7 +27,6 @@ export default function SidebarSocio({ nombre, rut }: Props) {
     const fetchDatos = async () => {
       let rutBuscado = rut
 
-      // Fallback: obtener rut desde localStorage si no viene como prop
       if (!rutBuscado) {
         try {
           const keys = Object.keys(localStorage).filter(k => k.startsWith('sb-') && k.endsWith('-auth-token'))
@@ -38,7 +37,6 @@ export default function SidebarSocio({ nombre, rut }: Props) {
         } catch {}
       }
 
-      // Fallback 2: usar email de la sesión activa
       if (!rutBuscado) {
         const { data: { session } } = await supabase.auth.getSession()
         if (session?.user?.email) {
@@ -82,49 +80,33 @@ export default function SidebarSocio({ nombre, rut }: Props) {
 
   const displayNombre = nombre || nombreLocal
 
+  // Sidebar in-flow (no position:fixed) con display:block para evitar cualquier
+  // interferencia de flex. Los elementos se apilan top→bottom sin gaps.
   return (
-    <>
-    {/* Estilos !important para neutralizar cualquier CSS global que cause el gap */}
-    <style>{`
-      .gt-sb-socio {
-        justify-content: flex-start !important;
-        height: fit-content !important;
-        min-height: 0 !important;
-        align-items: stretch !important;
-      }
-      .gt-sb-socio > div {
-        flex-grow: 0 !important;
-        flex-shrink: 0 !important;
-        margin-top: 0 !important;
-        margin-bottom: 0 !important;
-        height: auto !important;
-        min-height: 0 !important;
-      }
-    `}</style>
-
-    {/* Placeholder — reserva el espacio en el flex layout de la página */}
-    <div style={{ width: 210, flexShrink: 0, flexGrow: 0 }} />
-
-    {/* Sidebar fijo con altura = contenido */}
-    <div className="gt-sb-socio" style={{
-      position: 'fixed', top: 0, left: 0, width: 210,
-      height: 'fit-content', maxHeight: '100vh', overflowY: 'auto',
-      background: '#f9fafb', borderRight: '1px solid #e5e7eb',
-      zIndex: 40,
-      display: 'flex', flexDirection: 'column',
+    <div style={{
+      width: 210,
+      flexShrink: 0,
+      flexGrow: 0,
+      display: 'block',
+      minHeight: '100vh',
+      background: '#f9fafb',
+      borderRight: '1px solid #e5e7eb',
     }}>
 
       {/* Logo */}
       <div style={{
-        flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8,
+        display: 'flex', alignItems: 'center', gap: 8,
         padding: '16px 16px 14px', borderBottom: '1px solid #e5e7eb',
       }}>
-        <div style={{ width: 28, height: 28, background: '#EAF3DE', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>🌿</div>
+        <div style={{
+          width: 28, height: 28, background: '#EAF3DE', borderRadius: 6,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16,
+        }}>🌿</div>
         <span style={{ fontSize: 13, fontWeight: 600 }}>GreenTech</span>
       </div>
 
       {/* Nav items */}
-      <div style={{ flexShrink: 0, padding: '8px 0' }}>
+      <div style={{ padding: '8px 0' }}>
         {navItems.map(item => {
           const active = pathname === item.href
           return (
@@ -144,37 +126,38 @@ export default function SidebarSocio({ nombre, rut }: Props) {
         })}
       </div>
 
-      {/* Panel admin + Usuario */}
-      <div style={{ flexShrink: 0 }}>
-        {esAdmin && (
-          <div style={{ padding: '8px 10px', borderTop: '1px solid #e5e7eb' }}>
-            <Link href="/admin" style={{
-              display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px',
-              background: '#E6F1FB', borderRadius: 8, textDecoration: 'none',
-              fontSize: 12, color: '#185FA5', fontWeight: 600,
-            }}>
-              <span>🛡️</span>
-              <span>Panel administrador</span>
-              <span style={{ marginLeft: 'auto' }}>→</span>
-            </Link>
-          </div>
-        )}
-        <div style={{ padding: '10px 16px', borderTop: '1px solid #e5e7eb' }}>
-          <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 2 }}>{displayNombre}</div>
-          <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 10 }}>{rut}</div>
-          <button onClick={cerrarSesion} style={{
-            width: '100%', padding: '7px 10px',
-            border: '1px solid #e5e7eb', borderRadius: 8,
-            background: '#fff', color: '#6b7280', fontSize: 12,
-            cursor: 'pointer', textAlign: 'left' as const,
-            display: 'flex', alignItems: 'center', gap: 8,
+      {/* Panel administrador (solo si tiene rol operativo) */}
+      {esAdmin && (
+        <div style={{ padding: '8px 10px', borderTop: '1px solid #e5e7eb' }}>
+          <Link href="/admin" style={{
+            display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px',
+            background: '#E6F1FB', borderRadius: 8, textDecoration: 'none',
+            fontSize: 12, color: '#185FA5', fontWeight: 600,
           }}>
-            <span>🚪</span> Cerrar sesión
-          </button>
+            <span>🛡️</span>
+            <span>Panel administrador</span>
+            <span style={{ marginLeft: 'auto' }}>→</span>
+          </Link>
         </div>
+      )}
+
+      {/* Nombre / RUT / Cerrar sesión — directamente bajo el último item */}
+      <div style={{ padding: '10px 16px', borderTop: '1px solid #e5e7eb' }}>
+        {displayNombre && (
+          <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 2 }}>{displayNombre}</div>
+        )}
+        <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 10 }}>{rut}</div>
+        <button onClick={cerrarSesion} style={{
+          width: '100%', padding: '7px 10px',
+          border: '1px solid #e5e7eb', borderRadius: 8,
+          background: '#fff', color: '#6b7280', fontSize: 12,
+          cursor: 'pointer', textAlign: 'left' as const,
+          display: 'flex', alignItems: 'center', gap: 8,
+        }}>
+          <span>🚪</span> Cerrar sesión
+        </button>
       </div>
 
     </div>
-    </>
   )
 }
