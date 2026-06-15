@@ -74,12 +74,13 @@ export default function SidebarSocio({ nombre, rut }: Props) {
   }
 
   return (
-    <div style={{ width: 210, flexShrink: 0, alignSelf: 'flex-start', position: 'sticky', top: 0, maxHeight: '100vh', overflowY: 'auto', borderRight: '1px solid #e5e7eb', padding: '16px 0', background: '#f9fafb', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 16px 14px', borderBottom: '1px solid #e5e7eb', marginBottom: 10 }}>
+    <div style={{ width: 210, flexShrink: 0, position: 'sticky', top: 0, height: '100vh', overflow: 'hidden', borderRight: '1px solid #e5e7eb', background: '#f9fafb', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '16px 16px 14px', borderBottom: '1px solid #e5e7eb', flexShrink: 0 }}>
         <div style={{ width: 28, height: 28, background: '#EAF3DE', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>🌿</div>
         <span style={{ fontSize: 13, fontWeight: 600 }}>GreenTech</span>
       </div>
 
+      <div style={{ flex: 1, overflowY: 'auto', padding: '8px 0' }}>
       {navItems.map(item => {
         const active = pathname === item.href
         return (
@@ -98,8 +99,10 @@ export default function SidebarSocio({ nombre, rut }: Props) {
         )
       })}
 
+      </div>
+
       {esAdmin && (
-        <div style={{ padding: '12px 10px 0', marginTop: 8, borderTop: '1px solid #e5e7eb' }}>
+        <div style={{ padding: '8px 10px', borderTop: '1px solid #e5e7eb', flexShrink: 0 }}>
           <Link href="/admin" style={{
             display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px',
             background: '#E6F1FB', borderRadius: 8, textDecoration: 'none',
@@ -112,7 +115,7 @@ export default function SidebarSocio({ nombre, rut }: Props) {
         </div>
       )}
 
-      <div style={{ marginTop: 8, padding: '12px 16px', borderTop: '1px solid #e5e7eb' }}>
+      <div style={{ padding: '10px 16px', borderTop: '1px solid #e5e7eb', flexShrink: 0 }}>
         <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 2 }}>{nombre}</div>
         <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 10 }}>{rut}</div>
         <button onClick={cerrarSesion} style={{

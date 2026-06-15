@@ -94,10 +94,10 @@ export default function SidebarAdmin() {
   ]
 
   return (
-    <div style={{ width: 210, flexShrink: 0, alignSelf: 'flex-start', position: 'sticky', top: 0, maxHeight: '100vh', overflowY: 'auto', borderRight: '1px solid #e5e7eb', padding: '16px 0', background: '#f9fafb', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ width: 210, flexShrink: 0, position: 'sticky', top: 0, height: '100vh', overflow: 'hidden', borderRight: '1px solid #e5e7eb', background: '#f9fafb', display: 'flex', flexDirection: 'column' }}>
 
       {/* Logo */}
-      <div style={{ padding: '0 16px 12px', borderBottom: '1px solid #e5e7eb', marginBottom: 8 }}>
+      <div style={{ padding: '16px 16px 12px', borderBottom: '1px solid #e5e7eb', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
           <div style={{ width: 28, height: 28, background: '#E6F1FB', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>🛡️</div>
           <span style={{ fontSize: 13, fontWeight: 600 }}>GreenTech</span>
@@ -105,7 +105,8 @@ export default function SidebarAdmin() {
         <span style={{ fontSize: 10, background: '#E6F1FB', color: '#185FA5', padding: '2px 7px', borderRadius: 20 }}>Administrador</span>
       </div>
 
-      {/* Nav */}
+      {/* Nav — scrollable si hay muchos ítems */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '8px 0' }}>
       {sections.filter(s => s.visible).map(section => {
         const itemsVisibles = section.items.filter(i => i.visible)
         if (itemsVisibles.length === 0) return null
@@ -134,10 +135,11 @@ export default function SidebarAdmin() {
           </div>
         )
       })}
+      </div>
 
       {/* Botón portal socio — solo si tiene rol_socio */}
       {roles.rol_socio && (
-        <div style={{ padding: '8px 10px 0', marginTop: 8, borderTop: '1px solid #e5e7eb' }}>
+        <div style={{ padding: '8px 10px', borderTop: '1px solid #e5e7eb', flexShrink: 0 }}>
           <Link href="/socio" style={{
             display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px',
             background: '#EAF3DE', borderRadius: 8, textDecoration: 'none',
@@ -151,7 +153,7 @@ export default function SidebarAdmin() {
       )}
 
       {/* Usuario + cerrar sesión */}
-      <div style={{ padding: '10px 16px', borderTop: '1px solid #e5e7eb' }}>
+      <div style={{ padding: '10px 16px', borderTop: '1px solid #e5e7eb', flexShrink: 0 }}>
         {nombre && (
           <div style={{ marginBottom: 8 }}>
             <div style={{ fontSize: 12, fontWeight: 600 }}>{nombre}</div>
