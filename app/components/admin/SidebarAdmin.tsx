@@ -94,7 +94,7 @@ export default function SidebarAdmin() {
   ]
 
   return (
-    <div style={{ width: 210, flexShrink: 0, borderRight: '1px solid #e5e7eb', padding: '16px 0', background: '#f9fafb', display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+    <div style={{ width: 210, flexShrink: 0, borderRight: '1px solid #e5e7eb', padding: '16px 0', background: '#f9fafb', display: 'flex', flexDirection: 'column', height: '100vh', position: 'sticky', top: 0, overflowY: 'auto' }}>
 
       {/* Logo */}
       <div style={{ padding: '0 16px 12px', borderBottom: '1px solid #e5e7eb', marginBottom: 8 }}>
