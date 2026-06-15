@@ -120,6 +120,7 @@ export default function SidebarSocio({ nombre, rut }: Props) {
         </div>
       )}
 
+      <div style={{ height: 4, background: 'red' }} />
       <div style={{ padding: '10px 16px', borderTop: '1px solid #e5e7eb' }}>
         <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 2 }}>{nombre}</div>
         <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 10 }}>{rut}</div>
