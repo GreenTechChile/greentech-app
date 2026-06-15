@@ -99,7 +99,7 @@ export default function SidebarAdmin() {
     <div style={{ width: 210, flexShrink: 0 }} />
 
     {/* Sidebar fijo — independiente del scroll del main */}
-    <div style={{ position: 'fixed', top: 0, left: 0, width: 210, height: '100vh', background: '#f9fafb', borderRight: '1px solid #e5e7eb', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+    <div style={{ position: 'fixed', top: 0, left: 0, width: 210, height: '100vh', background: '#f9fafb', borderRight: '1px solid #e5e7eb', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
 
       {/* Logo */}
       <div style={{ padding: '16px 16px 12px', borderBottom: '1px solid #e5e7eb', flexShrink: 0 }}>
@@ -110,8 +110,8 @@ export default function SidebarAdmin() {
         <span style={{ fontSize: 10, background: '#E6F1FB', color: '#185FA5', padding: '2px 7px', borderRadius: 20 }}>Administrador</span>
       </div>
 
-      {/* Nav — minHeight:0 es crítico para que overflowY funcione en flex */}
-      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '8px 0' }}>
+      {/* Nav — altura natural, sin flex:1 para que portal/usuario queden pegados abajo */}
+      <div style={{ padding: '8px 0' }}>
       {sections.filter(s => s.visible).map(section => {
         const itemsVisibles = section.items.filter(i => i.visible)
         if (itemsVisibles.length === 0) return null
