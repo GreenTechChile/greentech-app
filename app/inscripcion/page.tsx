@@ -615,7 +615,12 @@ export default function Inscripcion() {
               ))}
               <div style={{display:'flex',justifyContent:'space-between',marginTop:20}}>
                 <button style={s.btnOutline} onClick={()=>setPaso(3)}>← Anterior</button>
-                <button style={s.btnPrimary} onClick={()=>{setError('');setPaso(5)}}>Siguiente →</button>
+                <button
+                  style={{...s.btnPrimary,opacity:(archivos.cedula_anverso&&archivos.cedula_reverso&&archivos.receta&&archivos.antecedentes)?1:0.4,cursor:(archivos.cedula_anverso&&archivos.cedula_reverso&&archivos.receta&&archivos.antecedentes)?'pointer':'not-allowed'}}
+                  onClick={()=>{
+                    if(!archivos.cedula_anverso||!archivos.cedula_reverso||!archivos.receta||!archivos.antecedentes){setError('Debes subir todos los documentos requeridos para continuar.');return}
+                    setError('');setPaso(5)
+                  }}>Siguiente →</button>
               </div>
             </div>
           )}
