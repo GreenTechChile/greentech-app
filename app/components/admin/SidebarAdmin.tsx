@@ -18,6 +18,15 @@ export default function SidebarAdmin() {
   })
   const [nombre, setNombre] = useState('')
   const [rut, setRut] = useState('')
+  const [isMobile, setIsMobile] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
 
   useEffect(() => {
     try {
@@ -92,17 +101,9 @@ export default function SidebarAdmin() {
     },
   ]
 
-  // Outer div: background + border a full height. Inner div: block nativo, items al tope.
-  return (
-    <div style={{
-      width: 210,
-      flexShrink: 0,
-      alignSelf: 'stretch',
-      background: '#f9fafb',
-      borderRight: '1px solid #e5e7eb',
-    }}>
-      <div>
-
+  // ── Contenido del nav (reutilizado) ──
+  const navContent = (onClickLink?: () => void) => (
+    <div>
       {/* Logo */}
       <div style={{ padding: '16px 16px 12px', borderBottom: '1px solid #e5e7eb' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
@@ -125,9 +126,9 @@ export default function SidebarAdmin() {
               {itemsVisibles.map(item => {
                 const active = pathname === item.href
                 return (
-                  <Link key={item.href} href={item.href} style={{
+                  <Link key={item.href} href={item.href} onClick={onClickLink} style={{
                     display: 'flex', alignItems: 'center', gap: 10,
-                    padding: '9px 16px', fontSize: 13,
+                    padding: '11px 16px', fontSize: 13,
                     color: active ? '#185FA5' : '#6b7280',
                     fontWeight: active ? 600 : 400,
                     background: active ? '#fff' : '#f9fafb',
@@ -144,10 +145,10 @@ export default function SidebarAdmin() {
         })}
       </div>
 
-      {/* Portal socio (si tiene rol_socio) */}
+      {/* Portal socio */}
       {roles.rol_socio && (
         <div style={{ padding: '8px 10px', borderTop: '1px solid #e5e7eb' }}>
-          <Link href="/socio" style={{
+          <Link href="/socio" onClick={onClickLink} style={{
             display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px',
             background: '#EAF3DE', borderRadius: 8, textDecoration: 'none',
             fontSize: 12, color: '#3B6D11', fontWeight: 600,
@@ -159,7 +160,7 @@ export default function SidebarAdmin() {
         </div>
       )}
 
-      {/* Nombre / RUT / Cerrar sesión — directamente bajo el último item */}
+      {/* Nombre / RUT / Cerrar sesión */}
       <div style={{ padding: '10px 16px', borderTop: '1px solid #e5e7eb' }}>
         {nombre && (
           <div style={{ marginBottom: 8 }}>
@@ -177,8 +178,79 @@ export default function SidebarAdmin() {
           <span>🚪</span> Cerrar sesión
         </button>
       </div>
-
     </div>
+  )
+
+  // ── MÓVIL: top bar + drawer ──
+  if (isMobile) {
+    return (
+      <>
+        {/* Top bar */}
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '0 16px', height: 52,
+          background: '#f9fafb', borderBottom: '1px solid #e5e7eb',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ width: 28, height: 28, background: '#E6F1FB', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>🛡️</div>
+            <span style={{ fontSize: 13, fontWeight: 600 }}>GreenTech</span>
+            <span style={{ fontSize: 10, background: '#E6F1FB', color: '#185FA5', padding: '2px 7px', borderRadius: 20 }}>Admin</span>
+          </div>
+          <button onClick={() => setMenuOpen(true)} style={{
+            background: 'none', border: 'none', cursor: 'pointer', fontSize: 22, padding: 4, color: '#374151',
+          }}>☰</button>
+        </div>
+
+        {/* Spacer */}
+        <div style={{ height: 52 }} />
+
+        {/* Overlay */}
+        {menuOpen && (
+          <div
+            onClick={() => setMenuOpen(false)}
+            style={{
+              position: 'fixed', inset: 0, zIndex: 200,
+              background: 'rgba(0,0,0,0.4)',
+            }}
+          />
+        )}
+
+        {/* Drawer */}
+        <div style={{
+          position: 'fixed', top: 0, left: 0, bottom: 0, zIndex: 300,
+          width: 240,
+          background: '#f9fafb',
+          borderRight: '1px solid #e5e7eb',
+          transform: menuOpen ? 'translateX(0)' : 'translateX(-100%)',
+          transition: 'transform 0.22s ease',
+          overflowY: 'auto',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderBottom: '1px solid #e5e7eb' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ width: 28, height: 28, background: '#E6F1FB', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>🛡️</div>
+              <span style={{ fontSize: 13, fontWeight: 600 }}>GreenTech</span>
+            </div>
+            <button onClick={() => setMenuOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: '#9ca3af' }}>✕</button>
+          </div>
+          {navContent(() => setMenuOpen(false))}
+        </div>
+      </>
+    )
+  }
+
+  // ── ESCRITORIO: sidebar normal ──
+  return (
+    <div style={{
+      width: 210,
+      flexShrink: 0,
+      alignSelf: 'stretch',
+      background: '#f9fafb',
+      borderRight: '1px solid #e5e7eb',
+    }}>
+      <div>
+        {navContent()}
+      </div>
     </div>
   )
 }
