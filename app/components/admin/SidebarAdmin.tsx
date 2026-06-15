@@ -98,16 +98,22 @@ export default function SidebarAdmin() {
     {/* Placeholder mantiene el espacio en el flex layout */}
     <div style={{ width: 210, flexShrink: 0 }} />
 
-    {/* Sidebar fijo */}
+    {/* Fondo visual del sidebar */}
+    <div style={{
+      position: 'fixed', top: 0, left: 0, width: 210, height: '100vh',
+      background: '#f9fafb', borderRight: '1px solid #e5e7eb',
+      zIndex: 40,
+    }} />
+
+    {/* Contenido del sidebar — altura automática, layout de bloque puro */}
     <div style={{
       position: 'fixed', top: 0, left: 0, width: 210,
-      minHeight: '100vh',
-      background: '#f9fafb', borderRight: '1px solid #e5e7eb',
-      display: 'flex', flexDirection: 'column',
+      maxHeight: '100vh', overflowY: 'auto',
+      zIndex: 41,
     }}>
 
       {/* Logo */}
-      <div style={{ padding: '16px 16px 12px', borderBottom: '1px solid #e5e7eb', flexShrink: 0 }}>
+      <div style={{ padding: '16px 16px 12px', borderBottom: '1px solid #e5e7eb', background: '#f9fafb' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
           <div style={{ width: 28, height: 28, background: '#E6F1FB', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>🛡️</div>
           <span style={{ fontSize: 13, fontWeight: 600 }}>GreenTech</span>
@@ -115,8 +121,8 @@ export default function SidebarAdmin() {
         <span style={{ fontSize: 10, background: '#E6F1FB', color: '#185FA5', padding: '2px 7px', borderRadius: 20 }}>Administrador</span>
       </div>
 
-      {/* Nav — altura natural, sin flex:1 para que portal/usuario queden pegados abajo */}
-      <div style={{ padding: '8px 0' }}>
+      {/* Nav */}
+      <div style={{ padding: '8px 0', background: '#f9fafb' }}>
       {sections.filter(s => s.visible).map(section => {
         const itemsVisibles = section.items.filter(i => i.visible)
         if (itemsVisibles.length === 0) return null
@@ -133,7 +139,7 @@ export default function SidebarAdmin() {
                   padding: '9px 16px', fontSize: 13,
                   color: active ? '#185FA5' : '#6b7280',
                   fontWeight: active ? 600 : 400,
-                  background: active ? '#fff' : 'transparent',
+                  background: active ? '#fff' : '#f9fafb',
                   borderRight: active ? '2px solid #185FA5' : '2px solid transparent',
                   textDecoration: 'none',
                 }}>
@@ -147,8 +153,8 @@ export default function SidebarAdmin() {
       })}
       </div>
 
-      {/* Portal socio + Usuario: en un solo bloque para que nunca se separen */}
-      <div>
+      {/* Portal socio + Usuario: en un solo bloque */}
+      <div style={{ background: '#f9fafb' }}>
         {roles.rol_socio && (
           <div style={{ padding: '8px 10px', borderTop: '1px solid #e5e7eb' }}>
             <Link href="/socio" style={{

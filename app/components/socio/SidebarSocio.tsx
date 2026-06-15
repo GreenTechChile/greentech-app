@@ -87,21 +87,27 @@ export default function SidebarSocio({ nombre, rut }: Props) {
     {/* Placeholder mantiene el espacio en el flex layout */}
     <div style={{ width: 210, flexShrink: 0 }} />
 
-    {/* Sidebar fijo */}
+    {/* Fondo visual del sidebar — solo color y borde, sin contenido */}
+    <div style={{
+      position: 'fixed', top: 0, left: 0, width: 210, height: '100vh',
+      background: '#f9fafb', borderRight: '1px solid #e5e7eb',
+      zIndex: 40,
+    }} />
+
+    {/* Contenido del sidebar — altura automática, layout de bloque puro */}
     <div style={{
       position: 'fixed', top: 0, left: 0, width: 210,
-      minHeight: '100vh',
-      background: '#f9fafb', borderRight: '1px solid #e5e7eb',
-      display: 'flex', flexDirection: 'column',
+      maxHeight: '100vh', overflowY: 'auto',
+      zIndex: 41,
     }}>
       {/* Logo */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '16px 16px 14px', borderBottom: '1px solid #e5e7eb' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '16px 16px 14px', borderBottom: '1px solid #e5e7eb', background: '#f9fafb' }}>
         <div style={{ width: 28, height: 28, background: '#EAF3DE', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>🌿</div>
         <span style={{ fontSize: 13, fontWeight: 600 }}>GreenTech</span>
       </div>
 
       {/* Nav items */}
-      <div style={{ padding: '8px 0' }}>
+      <div style={{ padding: '8px 0', background: '#f9fafb' }}>
         {navItems.map(item => {
           const active = pathname === item.href
           return (
@@ -110,7 +116,7 @@ export default function SidebarSocio({ nombre, rut }: Props) {
               padding: '9px 16px', fontSize: 13,
               color: active ? '#3B6D11' : '#6b7280',
               fontWeight: active ? 600 : 400,
-              background: active ? '#fff' : 'transparent',
+              background: active ? '#fff' : '#f9fafb',
               borderRight: active ? '2px solid #3B6D11' : '2px solid transparent',
               textDecoration: 'none',
             }}>
@@ -121,8 +127,8 @@ export default function SidebarSocio({ nombre, rut }: Props) {
         })}
       </div>
 
-      {/* Panel admin + Usuario: en un solo bloque para que nunca se separen */}
-      <div>
+      {/* Panel admin + Usuario en un bloque continuo */}
+      <div style={{ background: '#f9fafb' }}>
         {esAdmin && (
           <div style={{ padding: '8px 10px', borderTop: '1px solid #e5e7eb' }}>
             <Link href="/admin" style={{
