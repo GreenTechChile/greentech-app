@@ -283,6 +283,7 @@ export default function Inscripcion() {
         'QUINTO: Vengo en hacer presente que, además, AUTORIZO al Directorio de MI ASOCIACIÓN para que, de ser necesario, pueda utilizar los residuos de mi Cannabis Medicinal y pueda realizar todo tipo de productos y subproductos de carácter medicinal. EN NINGÚN CASO SE AUTORIZA LA COMERCIALIZACIÓN DE LA SUSTANCIA.',
         `SEXTO: FACULTO expresamente al Directorio de LA ASOCIACIÓN para que, en caso de ser necesario, ejerza todas las acciones legales que sean pertinentes en beneficio de nuestra comunidad y que me notifiquen cualquier resolución o información al correo electrónico ${form.email}.`,
         `SÉPTIMO: En ${form.ciudad}, a ${fecha}.`,
+        `OCTAVO: DECLARO que la receta médica con folio número ${form.folio_receta}, extendida por el/la Dr./Dra. ${form.medico_nombre}, RUT ${form.medico_rut}, con vigencia hasta el ${form.vencimiento_receta}, ha sido entregada en custodia a la Asociación GreenTech como único dispensador autorizado de mi tratamiento bajo dicha prescripción. En consecuencia, ME OBLIGO a no presentar ni utilizar la referida receta, ni copia de ella, en ningún otro establecimiento, farmacia, asociación o recinto de dispensación durante el período de vigencia del presente contrato. El incumplimiento de esta obligación constituirá una infracción grave a los estatutos de LA ASOCIACIÓN, causal de expulsión inmediata, y podrá configurar el delito de uso malicioso de instrumento privado contemplado en el artículo 197 del Código Penal de la República de Chile.`,
       ]
 
       for (const p of parrafosDeclaracion) {
@@ -818,6 +819,9 @@ export default function Inscripcion() {
                   <p style={{marginTop:10}}><strong>SEXTO:</strong> <strong>FACULTO</strong> expresamente al Directorio de LA ASOCIACIÓN para que, en caso de ser necesario, ejerza todas las acciones legales que sean pertinentes en beneficio de nuestra comunidad y que me notifiquen cualquier resolución o información al correo electrónico <strong>{form.email||'_______________'}</strong>.</p>
 
                   <p style={{marginTop:10}}><strong>SÉPTIMO:</strong> En <strong>{ciudad}</strong>, a <strong>{fecha}</strong>.</p>
+
+                  <p style={{marginTop:10}}><strong>OCTAVO:</strong> <strong>DECLARO</strong> que la receta médica con folio número <strong>{form.folio_receta||'_______________'}</strong>, extendida por el/la Dr./Dra. <strong>{form.medico_nombre||'_______________'}</strong>, RUT <strong>{form.medico_rut||'_______________'}</strong>, con vigencia hasta el <strong>{form.vencimiento_receta||'_______________'}</strong>, ha sido entregada en custodia a la Asociación GreenTech como único dispensador autorizado de mi tratamiento bajo dicha prescripción. En consecuencia, <strong>ME OBLIGO</strong> a no presentar ni utilizar la referida receta, ni copia de ella, en ningún otro establecimiento, farmacia, asociación o recinto de dispensación durante el período de vigencia del presente contrato. El incumplimiento de esta obligación constituirá una infracción grave a los estatutos de LA ASOCIACIÓN, causal de expulsión inmediata, y podrá configurar el delito de uso malicioso de instrumento privado contemplado en el artículo 197 del Código Penal de la República de Chile.</p>
+
                   <div style={{marginTop:16,borderTop:'1px dashed #d1d5db',paddingTop:12,color:'#9ca3af',fontStyle:'italic',textAlign:'center'}}>
                     Firma electrónica avanzada de: {form.nombre||'_______________'} · RUT {form.rut||'_______________'}
                   </div>
