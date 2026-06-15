@@ -92,14 +92,15 @@ export default function SidebarAdmin() {
     },
   ]
 
-  // Sidebar in-flow (no position:fixed) con display:block para evitar cualquier
-  // interferencia de flex. Los elementos se apilan top→bottom sin gaps.
+  // Sidebar con display:grid + alignContent:start — todos los items van al tope.
+  // Grid ignora justify-content y marginTop:auto de flex, garantizando stacking correcto.
   return (
     <div style={{
       width: 210,
       flexShrink: 0,
       flexGrow: 0,
-      display: 'block',
+      display: 'grid',
+      alignContent: 'start',
       minHeight: '100vh',
       background: '#f9fafb',
       borderRight: '1px solid #e5e7eb',
