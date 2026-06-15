@@ -3,26 +3,21 @@ import { useState, useEffect } from 'react'
 import SidebarSocio from '@/components/socio/SidebarSocio'
 import { supabase } from '@/lib/supabase'
 
-// Documentos esperados en el expediente — la página verifica cuáles existen en Storage
 const documentosEsperados = [
-  { id:'contrato',          nombre:'Contrato de previsión y delegación de cultivo', tipo:'contrato',    detalle:'Firma electrónica · Ley 19.799',      icon:'📋', storageKey:'contrato' },
-  { id:'declaracion',       nombre:'Declaración jurada especial de ingreso',         tipo:'declaracion', detalle:'Firma electrónica · Ley 19.799',      icon:'✍️', storageKey:'declaracion_jurada' },
-  { id:'reglamento',        nombre:'Reglamento interno — aceptación',                tipo:'reglamento',  detalle:'Aceptado en línea · IP registrada',   icon:'📖', storageKey:'reglamento' },
-  { id:'cedula_anverso',    nombre:'Cédula de identidad — Anverso (frente)',         tipo:'cedula',      detalle:'Verificada por la directiva',         icon:'🪪', storageKey:'cedula_anverso' },
-  { id:'cedula_reverso',    nombre:'Cédula de identidad — Reverso (dorso)',          tipo:'cedula',      detalle:'Verificada por la directiva',         icon:'🪪', storageKey:'cedula_reverso' },
-  { id:'receta',            nombre:'Receta médica vigente',                          tipo:'receta',      detalle:'',                                    icon:'🩺', storageKey:'receta' },
-  { id:'antecedentes',      nombre:'Certificado de antecedentes penales',            tipo:'cedula',      detalle:'Verificado por la directiva',         icon:'📋', storageKey:'antecedentes' },
+  { id:'contrato',       nombre:'Contrato de previsión y delegación de cultivo', tipo:'contrato',    detalle:'Firma electrónica · Ley 19.799',    icon:'📋', storageKey:'contrato' },
+  { id:'declaracion',    nombre:'Declaración jurada especial de ingreso',         tipo:'declaracion', detalle:'Firma electrónica · Ley 19.799',    icon:'✍️', storageKey:'declaracion_jurada' },
+  { id:'reglamento',     nombre:'Reglamento interno — aceptación',                tipo:'reglamento',  detalle:'Aceptado en línea · IP registrada', icon:'📖', storageKey:'reglamento' },
+  { id:'cedula_anverso', nombre:'Cédula de identidad — Anverso (frente)',         tipo:'cedula',      detalle:'Verificada por la directiva',       icon:'🪪', storageKey:'cedula_anverso' },
+  { id:'cedula_reverso', nombre:'Cédula de identidad — Reverso (dorso)',          tipo:'cedula',      detalle:'Verificada por la directiva',       icon:'🪪', storageKey:'cedula_reverso' },
+  { id:'receta',         nombre:'Receta médica vigente',                          tipo:'receta',      detalle:'',                                  icon:'🩺', storageKey:'receta' },
+  { id:'antecedentes',   nombre:'Certificado de antecedentes penales',            tipo:'cedula',      detalle:'Verificado por la directiva',       icon:'📋', storageKey:'antecedentes' },
 ]
 
 const tipoColor: Record<string,string> = {
   contrato:'#E6F1FB', declaracion:'#EEEDFE', reglamento:'#EAF3DE', cedula:'#FDF5E6', receta:'#FCEBEB',
 }
 
-interface DocEstado {
-  existe: boolean
-  path: string | null
-  fecha: string | null
-}
+interface DocEstado { existe: boolean; path: string | null; fecha: string | null }
 
 export default function MisDocumentos() {
   const [rutSocio, setRutSocio] = useState('')
@@ -31,6 +26,7 @@ export default function MisDocumentos() {
   const [archivoNuevo, setArchivoNuevo] = useState<File|null>(null)
   const [mensaje, setMensaje] = useState('')
   const [vencimientoReceta, setVencimientoReceta] = useState<string|null>(null)
+  const [reglamentoAceptadoAt, setReglamentoAceptadoAt] = useState<string|null>(null)
   const [docEstados, setDocEstados] = useState<Record<string, DocEstado>>({})
   const [cargandoDocs, setCargandoDocs] = useState(true)
 
@@ -42,25 +38,37 @@ export default function MisDocumentos() {
         const rut = token?.user?.user_metadata?.rut
         if (rut) {
           setRutSocio(rut)
-          supabase.from('socios').select('nombre,vencimiento_receta').eq('rut', rut).single()
+          supabase.from('socios')
+            .select('nombre, vencimiento_receta, reglamento_aceptado_at')
+            .eq('rut', rut)
+            .single()
             .then(({ data }) => {
               if (data?.nombre) setNombreSocio(data.nombre)
               if (data?.vencimiento_receta) setVencimientoReceta(data.vencimiento_receta)
+              if (data?.reglamento_aceptado_at) setReglamentoAceptadoAt(data.reglamento_aceptado_at)
+              verificarDocumentos(rut, data?.reglamento_aceptado_at || null)
             })
-          verificarDocumentos(rut)
         }
       }
     } catch {}
   }, [])
 
-  const verificarDocumentos = async (rut: string) => {
+  const verificarDocumentos = async (rut: string, reglamentoAt: string | null) => {
     setCargandoDocs(true)
-    // Listar todos los archivos en la carpeta del socio
     const { data: archivos } = await supabase.storage.from('documentos').list(rut)
     const estados: Record<string, DocEstado> = {}
 
     for (const doc of documentosEsperados) {
-      // Buscar cualquier archivo que empiece con el storageKey del documento
+      if (doc.id === 'reglamento') {
+        // El reglamento se verifica por BD, no por Storage
+        if (reglamentoAt) {
+          const fecha = new Date(reglamentoAt).toLocaleDateString('es-CL', { day:'2-digit', month:'short', year:'numeric' })
+          estados[doc.id] = { existe: true, path: null, fecha }
+        } else {
+          estados[doc.id] = { existe: false, path: null, fecha: null }
+        }
+        continue
+      }
       const archivo = archivos?.find(f => f.name.split('.')[0] === doc.storageKey || f.name.split('.')[0] === doc.storageKey + '_nueva')
       if (archivo) {
         const fecha = archivo.updated_at
@@ -93,7 +101,6 @@ export default function MisDocumentos() {
 
   const verDocumento = async (storageKey: string) => {
     if (!rutSocio) return
-    // Listar carpeta y buscar el archivo
     const { data: archivos } = await supabase.storage.from('documentos').list(rutSocio)
     const archivo = archivos?.find(f => f.name.split('.')[0] === storageKey)
     if (archivo) {
@@ -111,11 +118,8 @@ export default function MisDocumentos() {
     if (archivo) {
       const { data } = await supabase.storage.from('documentos').createSignedUrl(`${rutSocio}/${archivo.name}`, 120)
       if (data?.signedUrl) {
-        const a = document.createElement('a')
-        a.href = data.signedUrl
-        a.download = nombre + '.' + archivo.name.split('.').pop()
-        a.click()
-        return
+        const a = document.createElement('a'); a.href = data.signedUrl
+        a.download = nombre + '.' + archivo.name.split('.').pop(); a.click(); return
       }
     }
     setMensaje('❌ Documento no encontrado.')
@@ -129,7 +133,7 @@ export default function MisDocumentos() {
     if (error) { setMensaje('❌ Error al subir: ' + error.message); return }
     setMensaje('✅ Receta enviada. La directiva la revisará en 5 días hábiles.')
     setSubiendoReceta(false); setArchivoNuevo(null)
-    await verificarDocumentos(rutSocio)
+    await verificarDocumentos(rutSocio, reglamentoAceptadoAt)
     setTimeout(() => setMensaje(''), 5000)
   }
 
@@ -158,7 +162,7 @@ export default function MisDocumentos() {
           ].map((m,i) => (
             <div key={i} style={{ background:'#fff', border:'1px solid #e5e7eb', borderRadius:12, padding:14 }}>
               <div style={{ fontSize:11, color:'#6b7280', marginBottom:5 }}>{m.label}</div>
-              <div style={{ fontSize:18, fontWeight:600, color:m.color||'#111' }}>{m.value}</div>
+              <div style={{ fontSize:18, fontWeight:600, color:(m as {color?:string}).color||'#111' }}>{m.value}</div>
               <div style={{ fontSize:11, color:'#9ca3af', marginTop:2 }}>{m.sub}</div>
             </div>
           ))}
@@ -193,7 +197,8 @@ export default function MisDocumentos() {
                   ) : (
                     <span style={{ fontSize:10, padding:'2px 8px', borderRadius:20, background:'#FCEBEB', color:'#A32D2D', whiteSpace:'nowrap' }}>⏳ Pendiente</span>
                   )}
-                  {existe ? (
+                  {/* El reglamento no tiene archivo descargable */}
+                  {existe && doc.id !== 'reglamento' ? (
                     <>
                       <button onClick={() => verDocumento(doc.storageKey)}
                         style={{ padding:'5px 10px', border:'1px solid #185FA5', borderRadius:6, background:'transparent', color:'#185FA5', fontSize:11, cursor:'pointer' }}>
@@ -204,9 +209,9 @@ export default function MisDocumentos() {
                         📥
                       </button>
                     </>
-                  ) : (
+                  ) : !existe ? (
                     <span style={{ fontSize:11, color:'#9ca3af', fontStyle:'italic' }}>No subido aún</span>
-                  )}
+                  ) : null}
                 </div>
               </div>
             )

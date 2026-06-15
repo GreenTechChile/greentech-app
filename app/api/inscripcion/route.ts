@@ -53,6 +53,7 @@ export async function POST(req: NextRequest) {
       vencimiento_receta: vencimiento_receta || null,
       observaciones: observaciones?.trim() || null,
       estado: 'pendiente',
+      reglamento_aceptado_at: new Date().toISOString(),
     })
 
     if (insertError) {
