@@ -39,6 +39,7 @@ export default function Roles() {
     const { data } = await supabase
       .from('socios')
       .select('id, rut, nombre, email, estado, rol_socio, rol_admin, rol_cultivador, rol_despachador, created_at')
+      .neq('estado', 'rechazado')
       .order('nombre')
     if (data) setSocios(data)
     setLoading(false)
