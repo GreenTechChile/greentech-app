@@ -94,8 +94,7 @@ export default function SidebarAdmin() {
   ]
 
   return (
-    <div style={{ width: 210, flexShrink: 0, minHeight: '100vh' }}>
-    <div style={{ position: 'fixed', top: 0, left: 0, width: 210, maxHeight: '100vh', borderRight: '1px solid #e5e7eb', padding: '16px 0', background: '#f9fafb', display: 'flex', flexDirection: 'column', overflowY: 'auto', zIndex: 100 }}>
+    <div style={{ width: 210, flexShrink: 0, alignSelf: 'flex-start', position: 'sticky', top: 0, maxHeight: '100vh', overflowY: 'auto', borderRight: '1px solid #e5e7eb', padding: '16px 0', background: '#f9fafb', display: 'flex', flexDirection: 'column' }}>
 
       {/* Logo */}
       <div style={{ padding: '0 16px 12px', borderBottom: '1px solid #e5e7eb', marginBottom: 8 }}>
@@ -169,7 +168,6 @@ export default function SidebarAdmin() {
           <span>🚪</span> Cerrar sesión
         </button>
       </div>
-    </div>
     </div>
   )
 }
