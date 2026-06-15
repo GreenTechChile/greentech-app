@@ -4,6 +4,7 @@ import { Resend } from 'resend'
 const resend = new Resend(process.env.RESEND_API_KEY)
 const FROM = 'GreenTech <no-reply@asociaciongreentech.cl>'
 const APP_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://greentech-app.vercel.app'
+const WEBSITE_URL = 'https://www.asociaciongreentech.cl'
 
 // ─── Colores de marca ────────────────────────────────────────────────
 const C = {
@@ -36,7 +37,7 @@ function layout(titulo: string, cuerpo: string): string {
         <tr>
           <td style="background:${C.fondo};border-top:1px solid #e5e7eb;padding:20px 32px;text-align:center;">
             <p style="margin:0;font-size:11px;color:#9ca3af;">Este es un correo automático, no respondas a este mensaje.</p>
-            <p style="margin:4px 0 0;font-size:11px;color:#9ca3af;"><a href="${APP_URL}" style="color:${C.verde};text-decoration:none;">${APP_URL}</a></p>
+            <p style="margin:4px 0 0;font-size:11px;color:#9ca3af;"><a href="${WEBSITE_URL}" style="color:${C.verde};text-decoration:none;">${WEBSITE_URL}</a></p>
           </td>
         </tr>
       </table>
@@ -83,7 +84,7 @@ function template(evento: string, datos: Datos): { subject: string; html: string
         ${infoBox(`<strong>¿Qué pasa ahora?</strong><br>
           1. La directiva revisará tu solicitud y documentos adjuntos.<br>
           2. Recibirás un correo con la resolución en un plazo máximo de <strong>5 días hábiles</strong>.<br>
-          3. Si es aprobada, se te informará los pasos para el pago de incorporación y firma de documentos.`)}
+          3. Si es aprobada, se te informará los pasos para generar tu contraseña de acceso.`)}
         ${tabla(
           dato('RUT', rut) +
           dato('Estado', 'En revisión')
