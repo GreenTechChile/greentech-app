@@ -92,20 +92,16 @@ export default function SidebarAdmin() {
     },
   ]
 
-  // Sidebar flex column con justifyContent flex-start.
-  // Ningún hijo tiene marginTop:auto, por lo que todos quedan al tope sin gap.
+  // Outer div: background + border a full height. Inner div: block nativo, items al tope.
   return (
     <div style={{
       width: 210,
       flexShrink: 0,
-      flexGrow: 0,
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'flex-start',
-      minHeight: '100vh',
+      alignSelf: 'stretch',
       background: '#f9fafb',
       borderRight: '1px solid #e5e7eb',
     }}>
+      <div>
 
       {/* Logo */}
       <div style={{ padding: '16px 16px 12px', borderBottom: '1px solid #e5e7eb' }}>
@@ -182,6 +178,7 @@ export default function SidebarAdmin() {
         </button>
       </div>
 
+    </div>
     </div>
   )
 }

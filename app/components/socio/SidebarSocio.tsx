@@ -80,86 +80,84 @@ export default function SidebarSocio({ nombre, rut }: Props) {
 
   const displayNombre = nombre || nombreLocal
 
-  // Sidebar flex column con justifyContent flex-start.
-  // Ningún hijo tiene marginTop:auto, por lo que todos quedan al tope sin gap.
+  // Outer div: provee background + border a full height (como flex item estirado).
+  // Inner div: block nativo sin flex/grid — hijos se apilan top→bottom sin gap posible.
   return (
     <div style={{
       width: 210,
       flexShrink: 0,
-      flexGrow: 0,
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'flex-start',
-      minHeight: '100vh',
+      alignSelf: 'stretch',
       background: '#f9fafb',
       borderRight: '1px solid #e5e7eb',
     }}>
+      <div>
 
-      {/* Logo */}
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 8,
-        padding: '16px 16px 14px', borderBottom: '1px solid #e5e7eb',
-      }}>
+        {/* Logo */}
         <div style={{
-          width: 28, height: 28, background: '#EAF3DE', borderRadius: 6,
-          display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16,
-        }}>🌿</div>
-        <span style={{ fontSize: 13, fontWeight: 600 }}>GreenTech</span>
-      </div>
-
-      {/* Nav items */}
-      <div style={{ padding: '8px 0' }}>
-        {navItems.map(item => {
-          const active = pathname === item.href
-          return (
-            <Link key={item.href} href={item.href} style={{
-              display: 'flex', alignItems: 'center', gap: 10,
-              padding: '9px 16px', fontSize: 13,
-              color: active ? '#3B6D11' : '#6b7280',
-              fontWeight: active ? 600 : 400,
-              background: active ? '#fff' : '#f9fafb',
-              borderRight: active ? '2px solid #3B6D11' : '2px solid transparent',
-              textDecoration: 'none',
-            }}>
-              <span>{item.icon}</span>
-              {item.label}
-            </Link>
-          )
-        })}
-      </div>
-
-      {/* Panel administrador (solo si tiene rol operativo) */}
-      {esAdmin && (
-        <div style={{ padding: '8px 10px', borderTop: '1px solid #e5e7eb' }}>
-          <Link href="/admin" style={{
-            display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px',
-            background: '#E6F1FB', borderRadius: 8, textDecoration: 'none',
-            fontSize: 12, color: '#185FA5', fontWeight: 600,
-          }}>
-            <span>🛡️</span>
-            <span>Panel administrador</span>
-            <span style={{ marginLeft: 'auto' }}>→</span>
-          </Link>
-        </div>
-      )}
-
-      {/* Nombre / RUT / Cerrar sesión — directamente bajo el último item */}
-      <div style={{ padding: '10px 16px', borderTop: '1px solid #e5e7eb' }}>
-        {displayNombre && (
-          <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 2 }}>{displayNombre}</div>
-        )}
-        <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 10 }}>{rut}</div>
-        <button onClick={cerrarSesion} style={{
-          width: '100%', padding: '7px 10px',
-          border: '1px solid #e5e7eb', borderRadius: 8,
-          background: '#fff', color: '#6b7280', fontSize: 12,
-          cursor: 'pointer', textAlign: 'left' as const,
           display: 'flex', alignItems: 'center', gap: 8,
+          padding: '16px 16px 14px', borderBottom: '1px solid #e5e7eb',
         }}>
-          <span>🚪</span> Cerrar sesión
-        </button>
-      </div>
+          <div style={{
+            width: 28, height: 28, background: '#EAF3DE', borderRadius: 6,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16,
+          }}>🌿</div>
+          <span style={{ fontSize: 13, fontWeight: 600 }}>GreenTech</span>
+        </div>
 
+        {/* Nav items */}
+        <div style={{ padding: '8px 0' }}>
+          {navItems.map(item => {
+            const active = pathname === item.href
+            return (
+              <Link key={item.href} href={item.href} style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                padding: '9px 16px', fontSize: 13,
+                color: active ? '#3B6D11' : '#6b7280',
+                fontWeight: active ? 600 : 400,
+                background: active ? '#fff' : '#f9fafb',
+                borderRight: active ? '2px solid #3B6D11' : '2px solid transparent',
+                textDecoration: 'none',
+              }}>
+                <span>{item.icon}</span>
+                {item.label}
+              </Link>
+            )
+          })}
+        </div>
+
+        {/* Panel administrador (solo si tiene rol operativo) */}
+        {esAdmin && (
+          <div style={{ padding: '8px 10px', borderTop: '1px solid #e5e7eb' }}>
+            <Link href="/admin" style={{
+              display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px',
+              background: '#E6F1FB', borderRadius: 8, textDecoration: 'none',
+              fontSize: 12, color: '#185FA5', fontWeight: 600,
+            }}>
+              <span>🛡️</span>
+              <span>Panel administrador</span>
+              <span style={{ marginLeft: 'auto' }}>→</span>
+            </Link>
+          </div>
+        )}
+
+        {/* Nombre / RUT / Cerrar sesión — directamente bajo el último item */}
+        <div style={{ padding: '10px 16px', borderTop: '1px solid #e5e7eb' }}>
+          {displayNombre && (
+            <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 2 }}>{displayNombre}</div>
+          )}
+          <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 10 }}>{rut}</div>
+          <button onClick={cerrarSesion} style={{
+            width: '100%', padding: '7px 10px',
+            border: '1px solid #e5e7eb', borderRadius: 8,
+            background: '#fff', color: '#6b7280', fontSize: 12,
+            cursor: 'pointer', textAlign: 'left' as const,
+            display: 'flex', alignItems: 'center', gap: 8,
+          }}>
+            <span>🚪</span> Cerrar sesión
+          </button>
+        </div>
+
+      </div>
     </div>
   )
 }

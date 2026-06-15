@@ -124,22 +124,30 @@ export default function Dispensacion() {
         }
 
         if (rutCargado) {
-          // Cargar datos del socio PRIMERO, luego setear estados juntos (React 18 los batchea)
+          // Query 1: columnas base (siempre existen) — setear rut+nombre juntos para un solo render
           const { data: socio } = await supabase
             .from('socios')
-            .select('nombre,email,cuota_mensual,tbk_user,tbk_tarjeta_tipo,tbk_tarjeta_ultimos4')
+            .select('nombre,email,cuota_mensual')
             .eq('rut', rutCargado)
             .single()
-          // Setear rut y nombre juntos → un solo render, sidebar recibe nombre desde el inicio
           setRutSocio(rutCargado)
           if (socio?.nombre) setNombreSocio(socio.nombre)
           if (socio?.email) setEmailSocio(socio.email)
           if (socio?.cuota_mensual) setCuota(socio.cuota_mensual)
-          if (socio?.tbk_user) {
-            setTbkUser(socio.tbk_user)
-            setTarjetaInfo({ tipo: socio.tbk_tarjeta_tipo || 'Tarjeta', ultimos4: socio.tbk_tarjeta_ultimos4 || '****' })
-            setMedioPago('oneclick')
-          }
+
+          // Query 2: columnas Transbank (opcionales — pueden no existir aún)
+          try {
+            const { data: tbkData } = await supabase
+              .from('socios')
+              .select('tbk_user,tbk_tarjeta_tipo,tbk_tarjeta_ultimos4')
+              .eq('rut', rutCargado)
+              .single()
+            if (tbkData?.tbk_user) {
+              setTbkUser(tbkData.tbk_user)
+              setTarjetaInfo({ tipo: tbkData.tbk_tarjeta_tipo || 'Tarjeta', ultimos4: tbkData.tbk_tarjeta_ultimos4 || '****' })
+              setMedioPago('oneclick')
+            }
+          } catch { /* Transbank no configurado aún */ }
           // Total dispensado este mes
           const mesActual = new Date().getMonth() + 1
           const añoActual2 = new Date().getFullYear()
