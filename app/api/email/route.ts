@@ -130,7 +130,7 @@ function template(evento: string, datos: Datos): { subject: string; html: string
           <strong>Portal:</strong> <a href="${APP_URL}/login" style="color:${C.verde};">${APP_URL}/login</a><br>
           <strong>Usuario (RUT):</strong> ${rut}<br>
           <strong>Contraseña:</strong> <span style="font-family:monospace;background:#fff;padding:2px 6px;border-radius:4px;border:1px solid ${C.borde};">${contrasena}</span>`)}
-        ${p(`Por seguridad, te recomendamos cambiar tu contraseña después del primer inicio de sesión.`)}
+        ${p(`Por seguridad, te recomendamos cambiar tu contraseña después del primer inicio de sesión. Puedes hacerlo en <strong>Mi perfil → Cambiar contraseña</strong> dentro del portal.`)}
         ${btn('Iniciar sesión', `${APP_URL}/login`)}
         ${p(`<small style="color:${C.gris};">Si no solicitaste una cuenta, ignora este correo.</small>`)}
       `)

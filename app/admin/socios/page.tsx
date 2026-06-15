@@ -36,19 +36,17 @@ export default function AdminSocios() {
   const aprobar = async (socio: Socio) => {
     setProcesando(socio.id)
     try {
-      await supabase.from('socios').update({ estado: 'activo', notas_admin: notas[socio.id] || null }).eq('id', socio.id)
-      const tempPassword = `GT${socio.rut.replace(/\./g,'').replace('-','').slice(-6)}!`
-      setMensaje(`✅ ${socio.nombre} aprobado correctamente. Contraseña temporal asignada: ${tempPassword} — Ve a Supabase Auth para crear el usuario con este email y contraseña.`)
+      const res = await fetch('/api/aprobar-socio', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ socioId: socio.id, notas: notas[socio.id] || null }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Error al aprobar')
+      setMensaje(`✅ ${socio.nombre} aprobado. Usuario creado automáticamente. Contraseña temporal: ${data.tempPassword}`)
       setSocios(prev => prev.filter(s => s.id !== socio.id))
-      // Correos de aprobación y credenciales
-      try {
-        await sendEmail('aprobacion_solicitud', socio.email, { nombre: socio.nombre, rut: socio.rut })
-        await sendEmail('credenciales_enviadas', socio.email, { nombre: socio.nombre, rut: socio.rut, contrasena: tempPassword })
-      } catch (emailErr) {
-        console.error('[aprobar] email error:', emailErr)
-      }
-    } catch {
-      setMensaje('❌ Error al aprobar. Intenta nuevamente.')
+    } catch (err) {
+      setMensaje(`❌ Error al aprobar: ${err instanceof Error ? err.message : 'Intenta nuevamente.'}`)
     } finally {
       setProcesando(null)
       setTimeout(() => setMensaje(''), 10000)
@@ -62,7 +60,6 @@ export default function AdminSocios() {
     setSocios(prev => prev.filter(s => s.id !== socio.id))
     setProcesando(null)
     setTimeout(() => setMensaje(''), 4000)
-    // Correo de rechazo
     try {
       const motivo = notas[socio.id] || 'No se especificó motivo.'
       await sendEmail('rechazo_solicitud', socio.email, { nombre: socio.nombre, motivo })
@@ -111,7 +108,7 @@ export default function AdminSocios() {
           return (
             <div key={socio.id} style={{ border: `1px solid ${urgente ? '#F5C5C5' : '#e5e7eb'}`, borderRadius: 12, marginBottom: 16, overflow: 'hidden' }}>
 
-              {/* Header — clic para expandir */}
+              {/* Header */}
               <div
                 onClick={() => setExpandido(abierto ? null : socio.id)}
                 style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: urgente ? '#FFF8F8' : '#f9fafb', borderBottom: abierto ? '1px solid #e5e7eb' : 'none', cursor: 'pointer' }}
@@ -134,7 +131,7 @@ export default function AdminSocios() {
                 <span style={{ fontSize: 12, color: '#9ca3af', marginLeft: 4 }}>{abierto ? '▲' : '▼'}</span>
               </div>
 
-              {/* Body 3 columnas — solo visible si expandido */}
+              {/* Body */}
               {abierto && (
                 <div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderBottom: tab === 'pendientes' ? '1px solid #e5e7eb' : 'none' }}>
