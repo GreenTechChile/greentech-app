@@ -52,10 +52,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: authError.message }, { status: 500 })
     }
 
-    // 4. Actualizar estado del socio a 'activo'
+    // 4. Actualizar estado del socio a 'activo' y activar rol_socio
     await supabaseAdmin
       .from('socios')
-      .update({ estado: 'activo', notas_admin: notas || null })
+      .update({ estado: 'activo', rol_socio: true, notas_admin: notas || null })
       .eq('id', socioId)
 
     // 5. Enviar emails
