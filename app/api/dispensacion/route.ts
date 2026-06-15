@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { sendEmail } from '@/lib/email'
 
 // Cliente con service role — bypasea RLS completamente
 const supabaseAdmin = createClient(
@@ -31,7 +32,7 @@ export async function POST(req: NextRequest) {
     // Obtener RUT del socio por email
     const { data: socio, error: socioError } = await supabaseAdmin
       .from('socios')
-      .select('rut')
+      .select('rut, nombre')
       .eq('email', user.email)
       .eq('estado', 'activo')
       .single()
@@ -57,6 +58,20 @@ export async function POST(req: NextRequest) {
         console.error('[api/dispensacion] insert error:', error)
         return NextResponse.json({ error: error.message }, { status: 500 })
       }
+    }
+
+    // Correo de confirmación de dispensación
+    try {
+      const cepasResumen = items.map(i => `${i.cepa} ${i.gramos}gr`).join(', ')
+      const gramosTotal = items.reduce((a, i) => a + i.gramos, 0)
+      await sendEmail('dispensacion_confirmada', user.email, {
+        nombre: socio.nombre || user.email,
+        cepa: cepasResumen,
+        gramos: String(gramosTotal),
+        orden,
+      })
+    } catch (emailErr) {
+      console.error('[api/dispensacion] email error:', emailErr)
     }
 
     return NextResponse.json({ ok: true, rut_socio: socio.rut })
