@@ -92,15 +92,16 @@ export default function SidebarAdmin() {
     },
   ]
 
-  // Sidebar con display:grid + alignContent:start — todos los items van al tope.
-  // Grid ignora justify-content y marginTop:auto de flex, garantizando stacking correcto.
+  // Sidebar flex column con justifyContent flex-start.
+  // Ningún hijo tiene marginTop:auto, por lo que todos quedan al tope sin gap.
   return (
     <div style={{
       width: 210,
       flexShrink: 0,
       flexGrow: 0,
-      display: 'grid',
-      alignContent: 'start',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'flex-start',
       minHeight: '100vh',
       background: '#f9fafb',
       borderRight: '1px solid #e5e7eb',
