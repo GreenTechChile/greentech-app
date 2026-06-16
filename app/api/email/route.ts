@@ -114,7 +114,7 @@ function template(evento: string, datos: Datos): { subject: string; html: string
         ${h1('Resolución de tu solicitud')}
         ${p(`Hola <strong>${nombre}</strong>, lamentamos informarte que la directiva no ha podido aprobar tu solicitud de ingreso en esta oportunidad.`)}
         ${warningBox(`<strong>Motivo:</strong> ${motivo}`)}
-        ${p(`Si crees que hay un error o deseas apelar esta decisión, puedes contactarnos respondiendo este correo. También puedes volver a postular si las condiciones cambian.`)}
+        ${p(`Si crees que hay un error o deseas apelar esta decisión, puedes contactarnos enviando un correo a <a href="mailto:contacto@asociaciongreentech.cl" style="color:${C.verde};">contacto@asociaciongreentech.cl</a>. También puedes volver a postular si las condiciones cambian.`)}
       `)
       return { subject: 'Resolución de tu solicitud — GreenTech', html }
     }
