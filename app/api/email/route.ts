@@ -89,7 +89,7 @@ function template(evento: string, datos: Datos): { subject: string; html: string
           dato('RUT', rut) +
           dato('Estado', 'En revisión')
         )}
-        ${p(`Si tienes dudas, responde a este correo o contáctanos por los medios habituales.`)}
+        ${p(`Si tienes dudas, contáctanos a <a href="mailto:contacto@asociaciongreentech.cl" style="color:${C.verde};">contacto@asociaciongreentech.cl</a>.`)}
       `)
       return { subject: 'Solicitud de ingreso recibida — GreenTech', html }
     }
