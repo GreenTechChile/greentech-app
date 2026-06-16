@@ -10,6 +10,7 @@ type Evento =
   | 'pago_incorporacion'
   | 'dispensacion_confirmada'
   | 'despacho_enviado'
+  | 'despacho_entregado'
 
 type Datos = Record<string, string | number | undefined>
 

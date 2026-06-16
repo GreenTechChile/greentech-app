@@ -256,11 +256,31 @@ export default function Despachos() {
   const avanzarEstado = async (orden: OrdenAgrupada) => {
     const cfg = estadoConfig[orden.estado]
     if (!cfg?.next) return
-    // Si va a confirmar entrega, abrir modal de foto primero
+    // Si va a confirmar entrega, hacerlo directamente sin foto
     if (orden.estado === 'despachado') {
-      setModalFotoEntrega(orden)
-      setFotoEntrega(null)
-      setFotoPreview(null)
+      setProcesando(orden.ordenBase)
+      for (const item of orden.items) {
+        await supabase.from('dispensaciones').update({ estado: 'entregado' }).eq('id', item.id)
+      }
+      setDespachos(prev => prev.map(d => ordenBase(d.orden_numero) === orden.ordenBase ? { ...d, estado: 'entregado' } : d))
+      setMensaje(`✅ Orden ${orden.ordenBase} confirmada como entregada`)
+      setTimeout(() => setMensaje(''), 3000)
+      if (orden.socio_rut) {
+        try {
+          const { data: socioData } = await supabase.from('socios').select('email').eq('rut', orden.socio_rut).single()
+          if (socioData?.email) {
+            await sendEmail('despacho_entregado', socioData.email, {
+              nombre: orden.socio_nombre || '',
+              cepa: orden.items.map(i => `${i.cepa} ${i.gramos}gr`).join(', '),
+              gramos: String(orden.gramosTotal),
+              orden: orden.ordenBase,
+            })
+          }
+        } catch (emailErr) {
+          console.error('[despachos] email entregado error:', emailErr)
+        }
+      }
+      setProcesando(null)
       return
     }
     setProcesando(orden.ordenBase)
@@ -308,6 +328,23 @@ export default function Despachos() {
     setDespachos(prev => prev.map(d => ordenBase(d.orden_numero) === orden.ordenBase ? { ...d, estado: 'entregado' } : d))
     setMensaje(`✅ Orden ${orden.ordenBase} confirmada como entregada`)
     setTimeout(() => setMensaje(''), 3000)
+
+    // Correo despacho_entregado
+    if (orden.socio_rut) {
+      try {
+        const { data: socioData } = await supabase.from('socios').select('email').eq('rut', orden.socio_rut).single()
+        if (socioData?.email) {
+          await sendEmail('despacho_entregado', socioData.email, {
+            nombre: orden.socio_nombre || '',
+            cepa: orden.items.map(i => `${i.cepa} ${i.gramos}gr`).join(', '),
+            gramos: String(orden.gramosTotal),
+            orden: orden.ordenBase,
+          })
+        }
+      } catch (emailErr) {
+        console.error('[despachos] email entregado error:', emailErr)
+      }
+    }
 
     setSubiendoFoto(false)
     setModalFotoEntrega(null)

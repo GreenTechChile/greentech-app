@@ -200,6 +200,27 @@ function template(evento: string, datos: Datos): { subject: string; html: string
       return { subject: `Tu dispensación #${orden} fue despachada — GreenTech`, html }
     }
 
+    case 'despacho_entregado': {
+      const nombre = String(datos.nombre || 'Socio')
+      const cepa = String(datos.cepa || '')
+      const gramos = String(datos.gramos || '')
+      const orden = String(datos.orden || '')
+      const html = layout('Dispensación entregada — GreenTech', `
+        ${h1('Tu dispensación fue entregada ✅')}
+        ${p(`Hola <strong>${nombre}</strong>, confirmamos que tu dispensación ha sido entregada exitosamente en tu domicilio.`)}
+        ${tabla(
+          dato('N° de orden', `#${orden}`) +
+          dato('Cepa', cepa) +
+          dato('Cantidad', `${gramos} gr`) +
+          dato('Estado', '✅ Entregada')
+        )}
+        ${infoBox(`Recuerda que el uso de este tratamiento es estrictamente personal y debe seguir las indicaciones de tu médico tratante.`)}
+        ${btn('Ver mi historial', `${APP_URL}/socio/historial`)}
+        ${p(`Si tienes dudas, contáctanos a <a href="mailto:contacto@asociaciongreentech.cl" style="color:${C.verde};">contacto@asociaciongreentech.cl</a>.`)}
+      `)
+      return { subject: `Tu dispensación #${orden} fue entregada — GreenTech`, html }
+    }
+
     default:
       return null
   }
