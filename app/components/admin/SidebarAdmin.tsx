@@ -55,6 +55,7 @@ export default function SidebarAdmin() {
   const cerrarSesion = async () => {
     await supabase.auth.signOut()
     Object.keys(localStorage).filter(k => k.startsWith('sb-')).forEach(k => localStorage.removeItem(k))
+    document.cookie = 'gt_auth=; path=/; max-age=0'
     window.location.href = '/'
   }
 

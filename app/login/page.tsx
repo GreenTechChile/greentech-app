@@ -53,6 +53,9 @@ export default function Login() {
         data: { rut: rut.trim() }
       })
 
+      // Establecer cookie de sesión para el middleware de protección de rutas
+      document.cookie = 'gt_auth=1; path=/; max-age=86400; SameSite=Lax'
+
       // Redirigir según rol
       const tieneRolOperativo = socio.rol_admin || socio.rol_cultivador || socio.rol_despachador
       if (tieneRolOperativo) {

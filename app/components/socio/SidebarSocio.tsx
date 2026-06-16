@@ -84,6 +84,7 @@ export default function SidebarSocio({ nombre, rut }: Props) {
     Object.keys(localStorage)
       .filter(k => k.startsWith('sb-'))
       .forEach(k => localStorage.removeItem(k))
+    document.cookie = 'gt_auth=; path=/; max-age=0'
     window.location.href = '/'
   }
 
