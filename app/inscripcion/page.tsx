@@ -58,6 +58,9 @@ export default function Inscripcion() {
   const [comunasDisponibles, setComunasDisponibles] = useState<string[]>([])
   const [reglamentoLeido, setReglamentoLeido] = useState(false)
   const [reglamentoAceptado, setReglamentoAceptado] = useState(false)
+  const [reglamentoHtml, setReglamentoHtml] = useState<string|null>(null)
+  const [reglamentoPdfUrl, setReglamentoPdfUrl] = useState<string|null>(null)
+  const [cargandoReglamento, setCargandoReglamento] = useState(false)
   const [contratoLeido, setContratoLeido] = useState(false)
   const [contratoAceptado, setContratoAceptado] = useState(false)
   const [declaracionLeida, setDeclaracionLeida] = useState(false)
@@ -146,6 +149,54 @@ export default function Inscripcion() {
     }
     cargar()
   }, [])
+
+  // Cargar reglamento al llegar al paso 5
+  useEffect(() => {
+    if (paso !== 5 || reglamentoHtml || reglamentoPdfUrl) return
+    const cargarReglamento = async () => {
+      setCargandoReglamento(true)
+      try {
+        // Buscar el más reciente en documentos-corporacion
+        const { data: lista } = await supabase.storage
+          .from('documentos-corporacion')
+          .list('institucional', { limit: 100, sortBy: { column: 'updated_at', order: 'desc' } })
+        const archivo = lista?.find(f => f.name.startsWith('reglamento_interno'))
+        if (!archivo) { setCargandoReglamento(false); return }
+
+        const { data: urlData } = await supabase.storage
+          .from('documentos-corporacion')
+          .createSignedUrl(`institucional/${archivo.name}`, 3600)
+        if (!urlData?.signedUrl) { setCargandoReglamento(false); return }
+
+        const ext = archivo.name.split('.').pop()?.toLowerCase()
+
+        if (ext === 'pdf') {
+          setReglamentoPdfUrl(urlData.signedUrl)
+        } else if (ext === 'docx' || ext === 'doc') {
+          // Cargar mammoth.js desde CDN si no está ya en la página
+          if (!(window as any).mammoth) {
+            await new Promise<void>((resolve, reject) => {
+              const s = document.createElement('script')
+              s.src = 'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js'
+              s.onload = () => resolve()
+              s.onerror = () => reject(new Error('No se pudo cargar mammoth'))
+              document.head.appendChild(s)
+            })
+          }
+          const mammoth = (window as any).mammoth
+          const resp = await fetch(urlData.signedUrl)
+          const buffer = await resp.arrayBuffer()
+          const result = await mammoth.convertToHtml({ arrayBuffer: buffer })
+          setReglamentoHtml(result.value)
+        }
+      } catch (e) {
+        console.error('Error cargando reglamento:', e)
+      } finally {
+        setCargandoReglamento(false)
+      }
+    }
+    cargarReglamento()
+  }, [paso])
 
   // Cargar comunas al cambiar ciudad
   const cargarComunas = async (ciudad: string) => {
@@ -631,38 +682,80 @@ export default function Inscripcion() {
             <div>
               <h2 style={{fontSize:15,fontWeight:600,marginBottom:6}}>📖 Reglamento Interno — Asociación GreenTech</h2>
               <p style={{fontSize:12,color:'#6b7280',marginBottom:14}}>Debes leer y aceptar el reglamento antes de enviar tu solicitud.</p>
-              <div style={{background:'#f9fafb',borderRadius:10,padding:12,marginBottom:12,fontSize:12,color:'#6b7280'}}>
-                <div style={{fontWeight:600,marginBottom:8,color:'#111'}}>Contenido del reglamento</div>
-                {['1. Introducción · Marco legal · Misión y visión','2. Estructura y funcionamiento · Ingreso de socios','3. Instancias de representación · Asamblea General','4. Derechos y deberes · De los socios · De la directiva','5. Vigencia, difusión y anexos'].map((item,i)=>(
-                  <div key={i} style={{padding:'4px 0',borderBottom:i<4?'1px solid #e5e7eb':'none'}}>• {item}</div>
-                ))}
-              </div>
-              <div style={{border:'1px solid #e5e7eb',borderRadius:10,height:200,overflowY:'auto',padding:14,fontSize:12,lineHeight:1.7,color:'#374151',marginBottom:14}}
-                onScroll={e=>{const el=e.currentTarget;if(el.scrollTop+el.clientHeight>=el.scrollHeight-10)setReglamentoLeido(true)}}>
-                <strong>1. INTRODUCCIÓN — Marco legal</strong>
-                <p style={{marginTop:6}}>El presente reglamento es el instrumento elaborado por la Corporación con objeto de establecer los derechos y deberes de los asociados. La corporación "Asociación de usuarios de plantas medicinales GreenTech" es una asociación de derecho privado sin fines de lucro que busca proveer de información, desarrollar la investigación y ejecución de tratamientos complementarios orientados a aliviar el sufrimiento humano.</p>
-                <strong style={{display:'block',marginTop:12}}>1.2 Misión y visión</strong>
-                <p style={{marginTop:6}}>La misión de GreenTech es crear, interpretar y difundir conocimiento, además de la realización de actividades que contribuyan con el bienestar físico, social y espiritual de sus miembros. Por medio de un cultivo cooperativo colectivo, la Corporación abastecerá con materia vegetal a un circuito cerrado de usuarios medicinales previamente inscritos y acreditados.</p>
-                <strong style={{display:'block',marginTop:12}}>1.3 Principios generales</strong>
-                <p style={{marginTop:6}}>Dignidad del ser humano · Compasión · Empatía · Libertad · No discriminación · Legalidad · Transparencia · Responsabilidad.</p>
-                <strong style={{display:'block',marginTop:12}}>2. Ingreso de socios</strong>
-                <p style={{marginTop:6}}>La admisión o rechazo se informará en un plazo máximo de 5 días hábiles. La edad mínima es de 18 años.</p>
-                <strong style={{display:'block',marginTop:12}}>4. DERECHOS Y DEBERES</strong>
-                <ul style={{marginTop:4,paddingLeft:20}}>
-                  <li>Pagar las cuotas y aportaciones correspondientes.</li>
-                  <li>Participar en las Asambleas Generales.</li>
-                  <li>Contribuir a la mejora de la imagen social de los usuarios de cannabis.</li>
-                  <li style={{fontWeight:600}}>No vender, transferir ni ceder los productos recibidos. El incumplimiento es causal de expulsión inmediata.</li>
-                </ul>
-                <p style={{marginTop:10,color:'#9ca3af',fontStyle:'italic'}}>— Fin del reglamento —</p>
-              </div>
-              {!reglamentoLeido&&<div style={{fontSize:11,color:'#9ca3af',marginBottom:10,textAlign:'center'}}>↓ Desplázate hasta el final para activar la casilla</div>}
+              {cargandoReglamento && (
+                <div style={{border:'1px solid #e5e7eb',borderRadius:10,height:300,display:'flex',alignItems:'center',justifyContent:'center',marginBottom:14,color:'#9ca3af',fontSize:13}}>
+                  ⏳ Cargando reglamento...
+                </div>
+              )}
+
+              {/* PDF: mostrar en iframe */}
+              {!cargandoReglamento && reglamentoPdfUrl && (
+                <div style={{marginBottom:14}}>
+                  <iframe
+                    src={reglamentoPdfUrl}
+                    style={{width:'100%',height:420,border:'1px solid #e5e7eb',borderRadius:10}}
+                    onLoad={() => {
+                      // Para PDF en iframe no podemos detectar scroll fácilmente
+                      // Se habilita tras 8 segundos de visualización
+                      setTimeout(() => setReglamentoLeido(true), 8000)
+                    }}
+                  />
+                  {!reglamentoLeido && <div style={{fontSize:11,color:'#9ca3af',marginTop:6,textAlign:'center'}}>Lee el documento completo (se habilitará la casilla automáticamente)</div>}
+                </div>
+              )}
+
+              {/* DOCX convertido a HTML */}
+              {!cargandoReglamento && reglamentoHtml && (
+                <div
+                  style={{border:'1px solid #e5e7eb',borderRadius:10,height:420,overflowY:'auto',padding:'16px 20px',fontSize:12.5,lineHeight:1.8,color:'#374151',marginBottom:14}}
+                  onScroll={e=>{const el=e.currentTarget;if(el.scrollTop+el.clientHeight>=el.scrollHeight-20)setReglamentoLeido(true)}}
+                  dangerouslySetInnerHTML={{__html: reglamentoHtml}}
+                />
+              )}
+
+              {/* Fallback: texto estático si no cargó nada */}
+              {!cargandoReglamento && !reglamentoHtml && !reglamentoPdfUrl && (
+                <div style={{border:'1px solid #e5e7eb',borderRadius:10,height:300,overflowY:'auto',padding:14,fontSize:12,lineHeight:1.7,color:'#374151',marginBottom:14}}
+                  onScroll={e=>{const el=e.currentTarget;if(el.scrollTop+el.clientHeight>=el.scrollHeight-10)setReglamentoLeido(true)}}>
+                  <strong>1. INTRODUCCIÓN — Marco legal</strong>
+                  <p style={{marginTop:6}}>El presente reglamento es el instrumento elaborado por la Corporación con objeto de establecer los derechos y deberes de los asociados. La corporación "Asociación de usuarios de plantas medicinales GreenTech" es una asociación de derecho privado sin fines de lucro que busca proveer de información, desarrollar la investigación y ejecución de tratamientos complementarios orientados a aliviar el sufrimiento humano.</p>
+                  <strong style={{display:'block',marginTop:12}}>4. DERECHOS Y DEBERES</strong>
+                  <ul style={{marginTop:4,paddingLeft:20}}>
+                    <li>Pagar las cuotas y aportaciones correspondientes.</li>
+                    <li>Participar en las Asambleas Generales.</li>
+                    <li style={{fontWeight:600}}>No vender, transferir ni ceder los productos recibidos. El incumplimiento es causal de expulsión inmediata.</li>
+                  </ul>
+                  <p style={{marginTop:10,color:'#9ca3af',fontStyle:'italic'}}>— Fin del reglamento —</p>
+                </div>
+              )}
+
+              {!reglamentoLeido && !cargandoReglamento && (reglamentoHtml || !reglamentoPdfUrl) && (
+                <div style={{fontSize:11,color:'#9ca3af',marginBottom:10,textAlign:'center'}}>↓ Desplázate hasta el final para activar la casilla</div>
+              )}
               <button onClick={async () => {
                 const { createClient } = await import('@supabase/supabase-js')
                 const sb = createClient(
                   process.env.NEXT_PUBLIC_SUPABASE_URL!,
                   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
                 )
+                // Buscar la versión más reciente del reglamento en documentos-corporacion
+                const { data: archivos } = await sb.storage
+                  .from('documentos-corporacion')
+                  .list('institucional', { limit: 100, sortBy: { column: 'updated_at', order: 'desc' } })
+                const ultimo = archivos?.find(f => f.name.startsWith('reglamento_interno'))
+                if (ultimo) {
+                  const { data: urlData } = await sb.storage
+                    .from('documentos-corporacion')
+                    .createSignedUrl(`institucional/${ultimo.name}`, 300)
+                  if (urlData?.signedUrl) {
+                    const a = document.createElement('a')
+                    a.href = urlData.signedUrl
+                    a.download = `Reglamento_Interno_GreenTech.${ultimo.name.split('.').pop()}`
+                    a.click()
+                    return
+                  }
+                }
+                // Fallback al archivo legacy
                 const { data } = await sb.storage.from('documentos').createSignedUrl('corporacion/reglamento.pdf', 120)
                 if (data?.signedUrl) {
                   const a = document.createElement('a')
@@ -671,7 +764,7 @@ export default function Inscripcion() {
                   a.click()
                 }
               }} style={{display:'flex',alignItems:'center',gap:8,background:'transparent',border:'1px solid #3B6D11',borderRadius:8,padding:'7px 14px',fontSize:12,color:'#3B6D11',cursor:'pointer',marginBottom:14}}>
-                📥 Descargar Reglamento Interno completo (PDF)
+                📥 Descargar Reglamento Interno completo
               </button>
               <div style={{display:'flex',alignItems:'flex-start',gap:10,background:'#f9fafb',borderRadius:10,padding:14,opacity:reglamentoLeido?1:0.4}}>
                 <input type="checkbox" id="acepta" checked={reglamentoAceptado} onChange={e=>reglamentoLeido&&setReglamentoAceptado(e.target.checked)} disabled={!reglamentoLeido} style={{width:16,height:16,marginTop:2,accentColor:'#3B6D11'}}/>

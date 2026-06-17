@@ -9,6 +9,7 @@ interface Socio {
   diagnostico?: string; medico_nombre?: string; medico_rut?: string
   folio_receta?: string; cuota_mensual?: number; gramos_delegados?: number
   vencimiento_receta?: string; notas_admin?: string
+  reglamento_aceptado_at?: string; reglamento_ip?: string
 }
 interface Dispensacion { id: string; cepa: string; gramos: number; monto: number; orden_numero: string; estado: string; mes: number; año: number; medio_pago: string; created_at: string; rut_socio?: string }
 
@@ -33,7 +34,7 @@ export default function Trazabilidad() {
     setLoading(true)
     const [{ data: disp }, { data: soc }] = await Promise.all([
       supabase.from('dispensaciones').select('*').order('created_at', { ascending: false }),
-      supabase.from('socios').select('id,rut,nombre,email,estado,created_at,telefono,direccion,comuna,ciudad,diagnostico,medico_nombre,medico_rut,folio_receta,cuota_mensual,gramos_delegados,vencimiento_receta,notas_admin').order('nombre'),
+      supabase.from('socios').select('id,rut,nombre,email,estado,created_at,telefono,direccion,comuna,ciudad,diagnostico,medico_nombre,medico_rut,folio_receta,cuota_mensual,gramos_delegados,vencimiento_receta,notas_admin,reglamento_aceptado_at,reglamento_ip').order('nombre'),
     ])
     if (disp) setDispensaciones(disp)
     if (soc) setSocios(soc)
@@ -511,13 +512,17 @@ export default function Trazabilidad() {
                     contrato:          'Contrato de membresía',
                     declaracion_jurada:'Declaración jurada',
                   }
+                  // Claves del bucket documentos-corporacion/institucional/ → etiqueta
                   const CORP_DOC_LABELS: Record<string, string> = {
-                    reglamento:           'Reglamento interno',
-                    acta_constitucion:    'Acta de constitución',
-                    certificado_registro: 'Certificado de registro',
-                    directorio:           'Nómina del directorio',
-                    personeria:           'Personería jurídica',
-                    rut_corporacion:      'RUT corporación',
+                    estatutos:               'Estatutos / Acta de constitución',
+                    rut_corporacion:         'RUT corporación (SII)',
+                    certificado_vigencia:    'Certificado de vigencia',
+                    certificado_directorio:  'Certificado de directorio',
+                    reglamento_interno:      'Reglamento interno',
+                    protocolo_dispensacion:  'Protocolo de dispensación',
+                    protocolo_envios:        'Protocolo de envíos',
+                    poliza_seguro:           'Póliza de seguro',
+                    resolucion_sanitaria:    'Resolución sanitaria',
                   }
 
                   // Devuelve la URL firmada del primer archivo que exista, o null
@@ -566,13 +571,35 @@ export default function Trazabilidad() {
                     </div>`
                   }
 
-                  // ── 1. Documentos corporativos ────────────────────────────
+                  // ── 1. Documentos corporativos (bucket documentos-corporacion) ─
+                  // Listar todos los archivos una sola vez y filtrar por key
+                  const { data: archivosCorpRaw } = await supabase.storage
+                    .from('documentos-corporacion')
+                    .list('institucional', { limit: 200, sortBy: { column: 'updated_at', order: 'desc' } })
+                  const archivosCorp = archivosCorpRaw || []
+
                   const corpDocEntries = await Promise.all(
                     Object.entries(CORP_DOC_LABELS).map(async ([key, label]) => {
-                      const url = await getSignedUrl(`corporacion/${key}`)
-                      if (!url) return `<tr style="border-bottom:1px solid #f3f4f6"><td style="padding:8px 10px;color:#9ca3af">📄 ${label}</td><td style="padding:8px 10px;color:#9ca3af;font-style:italic">No subido</td></tr>`
-                      const emb = await toBase64(url)
-                      if (!emb) return `<tr style="border-bottom:1px solid #f3f4f6"><td style="padding:8px 10px">📄 ${label}</td><td style="padding:8px 10px"><a href="${url}" target="_blank" style="color:#185FA5">Ver documento</a></td></tr>`
+                      // El más reciente que empiece con esta clave
+                      const archivo = archivosCorp.find(f => f.name.startsWith(key + '_') || f.name.startsWith(key + '.'))
+                      if (!archivo) return `<tr style="border-bottom:1px solid #f3f4f6"><td style="padding:8px 10px;color:#9ca3af;width:220px">📄 ${label}</td><td style="padding:8px 10px;color:#9ca3af;font-style:italic">No subido</td></tr>`
+                      const { data: urlData } = await supabase.storage
+                        .from('documentos-corporacion')
+                        .createSignedUrl(`institucional/${archivo.name}`, 7200)
+                      if (!urlData?.signedUrl) return `<tr style="border-bottom:1px solid #f3f4f6"><td style="padding:8px 10px;color:#9ca3af;width:220px">📄 ${label}</td><td style="padding:8px 10px;color:#9ca3af;font-style:italic">Error al obtener URL</td></tr>`
+                      const emb = await toBase64(urlData.signedUrl)
+                      const ext = archivo.name.split('.').pop()?.toLowerCase() || ''
+                      const esDocx = ext === 'docx' || ext === 'doc'
+                      if (!emb || esDocx) {
+                        // DOCX no se puede embeber — mostrar link de descarga
+                        return `<tr style="border-bottom:1px solid #f3f4f6">
+                          <td style="padding:8px 10px;vertical-align:top;width:220px">📄 ${label}</td>
+                          <td style="padding:8px 10px">
+                            <a href="${urlData.signedUrl}" target="_blank" download style="color:#185FA5;font-size:12px">⬇️ Descargar ${archivo.name.split('_').slice(-1)[0] || archivo.name}</a>
+                            <div style="font-size:11px;color:#9ca3af;margin-top:3px">${archivo.name}</div>
+                          </td>
+                        </tr>`
+                      }
                       const esImagen = emb.mime.startsWith('image/')
                       return `<tr style="border-bottom:1px solid #f3f4f6">
                         <td style="padding:8px 10px;vertical-align:top;width:220px">📄 ${label}</td>
@@ -581,6 +608,7 @@ export default function Trazabilidad() {
                             ? `<img src="${emb.b64}" style="max-width:480px;max-height:280px;border-radius:4px;border:1px solid #e5e7eb;display:block"/>`
                             : `<object data="${emb.b64}" type="application/pdf" width="100%" height="380px" style="border:1px solid #e5e7eb;border-radius:4px"><a href="${emb.b64}" download style="color:#185FA5">Descargar PDF</a></object>`
                           }
+                          <div style="font-size:10px;color:#9ca3af;margin-top:3px">${archivo.name}</div>
                         </td>
                       </tr>`
                     })
@@ -606,8 +634,12 @@ export default function Trazabilidad() {
                         </td>
                       </tr>`
                     }))
-                    // Reglamento aceptado digitalmente al inscribirse
-                    docEntries.push(`<tr><td style="padding:7px 10px;width:220px">✅ Reglamento interno</td><td style="padding:7px 10px"><span style="background:#EAF3DE;color:#3B6D11;padding:2px 8px;border-radius:20px;font-size:11px">Aceptado digitalmente al momento de la inscripción</span></td></tr>`)
+                    // Reglamento: aceptación con timestamp e IP
+                    const regAt = s.reglamento_aceptado_at
+                      ? new Date(s.reglamento_aceptado_at).toLocaleString('es-CL', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'})
+                      : '—'
+                    const regIp = s.reglamento_ip || '—'
+                    docEntries.push(`<tr style="border-bottom:1px solid #f3f4f6"><td style="padding:7px 10px;width:220px">✅ Reglamento interno</td><td style="padding:7px 10px"><span style="background:#EAF3DE;color:#3B6D11;padding:2px 8px;border-radius:20px;font-size:11px">Aceptado digitalmente</span><div style="margin-top:5px;font-size:11px;color:#6b7280"><strong>Fecha/hora:</strong> ${regAt} &nbsp;·&nbsp; <strong>IP:</strong> <code style="background:#f3f4f6;padding:1px 5px;border-radius:3px">${regIp}</code></div></td></tr>`)
                     return `<div style="margin-bottom:32px;padding:16px;border:1px solid #e5e7eb;border-radius:10px;${si%2===0?'':'background:#fafafa'}">
                       <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid #e5e7eb">
                         <div style="width:34px;height:34px;border-radius:50%;background:#EAF3DE;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#3B6D11;flex-shrink:0">

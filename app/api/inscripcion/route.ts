@@ -54,6 +54,9 @@ export async function POST(req: NextRequest) {
       observaciones: observaciones?.trim() || null,
       estado: 'pendiente',
       reglamento_aceptado_at: new Date().toISOString(),
+      reglamento_ip: req.headers.get('x-forwarded-for')?.split(',')[0].trim()
+                  || req.headers.get('x-real-ip')
+                  || 'desconocida',
     })
 
     if (insertError) {
