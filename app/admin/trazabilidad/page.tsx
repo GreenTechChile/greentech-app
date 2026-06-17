@@ -23,6 +23,7 @@ export default function Trazabilidad() {
   const [socioDispensaciones, setSocioDispensaciones] = useState<Dispensacion[]>([])
   const [exportTodos, setExportTodos] = useState(true)
   const [exportSocios, setExportSocios] = useState<string[]>([])
+  const [exportando, setExportando] = useState(false)
   const [fechaDesde, setFechaDesde] = useState('2026-03-01')
   const [fechaHasta, setFechaHasta] = useState(new Date().toISOString().split('T')[0])
 
@@ -498,6 +499,130 @@ export default function Trazabilidad() {
                   ⚠️ Este informe contiene datos sensibles. Solo debe generarse ante una fiscalización formal o requerimiento judicial.
                 </div>
                 <button onClick={async () => {
+                  setExportando(true)
+                  try {
+                  // ── helpers ──────────────────────────────────────────────────
+                  const EXTS = ['pdf','jpg','jpeg','png']
+                  const DOC_LABELS: Record<string, string> = {
+                    cedula_anverso:    'Cédula de identidad — Anverso',
+                    cedula_reverso:    'Cédula de identidad — Reverso',
+                    receta:            'Receta médica vigente',
+                    antecedentes:      'Certificado de antecedentes',
+                    contrato:          'Contrato de membresía',
+                    declaracion_jurada:'Declaración jurada',
+                  }
+                  const CORP_DOC_LABELS: Record<string, string> = {
+                    reglamento:           'Reglamento interno',
+                    acta_constitucion:    'Acta de constitución',
+                    certificado_registro: 'Certificado de registro',
+                    directorio:           'Nómina del directorio',
+                    personeria:           'Personería jurídica',
+                    rut_corporacion:      'RUT corporación',
+                  }
+
+                  // Devuelve la URL firmada del primer archivo que exista, o null
+                  const getSignedUrl = async (path: string): Promise<string|null> => {
+                    for (const ext of EXTS) {
+                      const { data } = await supabase.storage.from('documentos')
+                        .createSignedUrl(`${path}.${ext}`, 7200)
+                      if (data?.signedUrl) {
+                        // Verificar que el archivo existe con un HEAD
+                        try {
+                          const r = await fetch(data.signedUrl, { method: 'HEAD' })
+                          if (r.ok) return data.signedUrl
+                        } catch { /* no existe */ }
+                      }
+                    }
+                    return null
+                  }
+
+                  // Convierte URL a base64 para embeber en el HTML
+                  const toBase64 = async (url: string): Promise<{b64:string, mime:string}|null> => {
+                    try {
+                      const r = await fetch(url)
+                      const blob = await r.blob()
+                      const b64 = await new Promise<string>(res => {
+                        const reader = new FileReader()
+                        reader.onload = () => res(reader.result as string)
+                        reader.readAsDataURL(blob)
+                      })
+                      return { b64, mime: blob.type }
+                    } catch { return null }
+                  }
+
+                  // Renderiza un documento (imagen embebida o PDF embebido)
+                  const renderDoc = (label: string, b64: string, mime: string) => {
+                    if (mime.startsWith('image/')) {
+                      return `<div style="margin-bottom:16px">
+                        <div style="font-size:11px;color:#6b7280;margin-bottom:4px;font-weight:600">${label}</div>
+                        <img src="${b64}" style="max-width:480px;max-height:320px;border-radius:6px;border:1px solid #e5e7eb;display:block"/>
+                      </div>`
+                    }
+                    return `<div style="margin-bottom:16px">
+                      <div style="font-size:11px;color:#6b7280;margin-bottom:4px;font-weight:600">${label}</div>
+                      <object data="${b64}" type="application/pdf" width="100%" height="420px" style="border:1px solid #e5e7eb;border-radius:6px">
+                        <a href="${b64}" download style="color:#185FA5;font-size:12px">📄 Descargar ${label}</a>
+                      </object>
+                    </div>`
+                  }
+
+                  // ── 1. Documentos corporativos ────────────────────────────
+                  const corpDocEntries = await Promise.all(
+                    Object.entries(CORP_DOC_LABELS).map(async ([key, label]) => {
+                      const url = await getSignedUrl(`corporacion/${key}`)
+                      if (!url) return `<tr style="border-bottom:1px solid #f3f4f6"><td style="padding:8px 10px;color:#9ca3af">📄 ${label}</td><td style="padding:8px 10px;color:#9ca3af;font-style:italic">No subido</td></tr>`
+                      const emb = await toBase64(url)
+                      if (!emb) return `<tr style="border-bottom:1px solid #f3f4f6"><td style="padding:8px 10px">📄 ${label}</td><td style="padding:8px 10px"><a href="${url}" target="_blank" style="color:#185FA5">Ver documento</a></td></tr>`
+                      const esImagen = emb.mime.startsWith('image/')
+                      return `<tr style="border-bottom:1px solid #f3f4f6">
+                        <td style="padding:8px 10px;vertical-align:top;width:220px">📄 ${label}</td>
+                        <td style="padding:8px 10px">
+                          ${esImagen
+                            ? `<img src="${emb.b64}" style="max-width:480px;max-height:280px;border-radius:4px;border:1px solid #e5e7eb;display:block"/>`
+                            : `<object data="${emb.b64}" type="application/pdf" width="100%" height="380px" style="border:1px solid #e5e7eb;border-radius:4px"><a href="${emb.b64}" download style="color:#185FA5">Descargar PDF</a></object>`
+                          }
+                        </td>
+                      </tr>`
+                    })
+                  )
+                  const corpDocsHtml = corpDocEntries.join('')
+
+                  // ── 2. Documentos por socio (en paralelo) ─────────────────
+                  const sociosDocsHtml = (await Promise.all(socios.map(async (s, si) => {
+                    const docKeys = Object.keys(DOC_LABELS)
+                    const docEntries = await Promise.all(docKeys.map(async (key) => {
+                      const url = await getSignedUrl(`${s.rut}/${key}`)
+                      if (!url) return `<tr style="border-bottom:1px solid #f3f4f6"><td style="padding:7px 10px;color:#9ca3af;width:220px">📄 ${DOC_LABELS[key]}</td><td style="padding:7px 10px;color:#9ca3af;font-style:italic">No subido</td></tr>`
+                      const emb = await toBase64(url)
+                      if (!emb) return `<tr style="border-bottom:1px solid #f3f4f6"><td style="padding:7px 10px;width:220px">📄 ${DOC_LABELS[key]}</td><td style="padding:7px 10px"><a href="${url}" target="_blank" style="color:#185FA5">Ver</a></td></tr>`
+                      const esImagen = emb.mime.startsWith('image/')
+                      return `<tr style="border-bottom:1px solid #f3f4f6">
+                        <td style="padding:7px 10px;vertical-align:top;width:220px">📄 ${DOC_LABELS[key]}</td>
+                        <td style="padding:7px 10px">
+                          ${esImagen
+                            ? `<img src="${emb.b64}" style="max-width:420px;max-height:260px;border-radius:4px;border:1px solid #e5e7eb;display:block"/>`
+                            : `<object data="${emb.b64}" type="application/pdf" width="100%" height="340px" style="border:1px solid #e5e7eb;border-radius:4px"><a href="${emb.b64}" download style="color:#185FA5">Descargar PDF</a></object>`
+                          }
+                        </td>
+                      </tr>`
+                    }))
+                    // Reglamento aceptado digitalmente al inscribirse
+                    docEntries.push(`<tr><td style="padding:7px 10px;width:220px">✅ Reglamento interno</td><td style="padding:7px 10px"><span style="background:#EAF3DE;color:#3B6D11;padding:2px 8px;border-radius:20px;font-size:11px">Aceptado digitalmente al momento de la inscripción</span></td></tr>`)
+                    return `<div style="margin-bottom:32px;padding:16px;border:1px solid #e5e7eb;border-radius:10px;${si%2===0?'':'background:#fafafa'}">
+                      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid #e5e7eb">
+                        <div style="width:34px;height:34px;border-radius:50%;background:#EAF3DE;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#3B6D11;flex-shrink:0">
+                          ${s.nombre.split(' ').map((n: string) => n[0]).join('').slice(0,2)}
+                        </div>
+                        <div>
+                          <div style="font-size:13px;font-weight:700">${s.nombre}</div>
+                          <div style="font-size:11px;color:#6b7280">RUT ${s.rut} · ${s.email} · <span style="background:${s.estado==='activo'?'#EAF3DE':'#f3f4f6'};color:${s.estado==='activo'?'#3B6D11':'#9ca3af'};padding:1px 7px;border-radius:20px;">${s.estado}</span></div>
+                        </div>
+                      </div>
+                      <table style="width:100%;border-collapse:collapse">${docEntries.join('')}</table>
+                    </div>`
+                  }))).join('')
+
+                  // ── 3. Datos tabulares ────────────────────────────────────
                   const dispFiltradas = dispensaciones.filter(d => {
                     const fecha = d.created_at.split('T')[0]
                     return fecha >= fechaDesde && fecha <= fechaHasta
@@ -538,12 +663,13 @@ export default function Trazabilidad() {
                   const totalMontoGlobal = dispFiltradas.reduce((a: number, d: any) => a + d.monto, 0)
                   const sociosActivos = socios.filter(s => s.estado === 'activo').length
 
+                  // ── 4. Generar HTML ───────────────────────────────────────
                   const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
                     <title>Informe Corporativo — Asociación GreenTech</title>
                     <style>
                       body{font-family:Arial,sans-serif;padding:32px 40px;color:#111;font-size:13px;max-width:1100px;margin:0 auto}
                       h1{font-size:22px;margin:0 0 4px;color:#185FA5}
-                      h2{font-size:15px;font-weight:700;margin:32px 0 10px;border-bottom:2px solid #e5e7eb;padding-bottom:6px}
+                      h2{font-size:15px;font-weight:700;margin:36px 0 12px;border-bottom:2px solid #e5e7eb;padding-bottom:6px}
                       .sub{color:#6b7280;font-size:12px;margin-bottom:24px}
                       table{width:100%;border-collapse:collapse;margin-bottom:8px}
                       th{text-align:left;padding:8px 10px;font-size:11px;color:#9ca3af;border-bottom:2px solid #e5e7eb;white-space:nowrap}
@@ -553,6 +679,8 @@ export default function Trazabilidad() {
                       .metric .lbl{font-size:11px;color:#9ca3af}
                       .aviso{background:#FEF3C7;border:1px solid #FCD34D;border-radius:8px;padding:10px 14px;font-size:12px;color:#92400E;margin:16px 0}
                       .footer{margin-top:40px;padding-top:16px;border-top:1px solid #e5e7eb;font-size:11px;color:#9ca3af;text-align:center}
+                      .note{background:#E6F1FB;border:1px solid #A8CBF0;border-radius:8px;padding:8px 12px;font-size:11px;color:#0C447C;margin-bottom:12px}
+                      @media print{body{padding:20px}}
                     </style>
                   </head><body>
                     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
@@ -568,6 +696,7 @@ export default function Trazabilidad() {
                       </div>
                     </div>
                     <div class="aviso">⚠️ Este informe contiene datos sensibles protegidos por la Ley 19.628. Solo debe compartirse ante requerimiento formal de autoridad competente.</div>
+
                     <h2>Resumen ejecutivo</h2>
                     <div class="metrics">
                       <div class="metric"><div class="lbl">Total socios</div><div class="val">${socios.length}</div><div class="lbl">${sociosActivos} activos</div></div>
@@ -575,6 +704,14 @@ export default function Trazabilidad() {
                       <div class="metric"><div class="lbl">Total dispensado</div><div class="val">${totalGrGlobal} gr</div><div class="lbl">en el período</div></div>
                       <div class="metric"><div class="lbl">Aportes recibidos</div><div class="val">$${totalMontoGlobal.toLocaleString('es-CL')}</div><div class="lbl">en el período</div></div>
                     </div>
+
+                    <h2>Documentos corporativos</h2>
+                    <div class="note">ℹ️ Los documentos que no han sido subidos al sistema aparecen como "No subido".</div>
+                    <table style="border:1px solid #e5e7eb;border-radius:8px;overflow:hidden">
+                      <thead><tr><th style="width:220px">Documento</th><th>Archivo</th></tr></thead>
+                      <tbody>${corpDocsHtml}</tbody>
+                    </table>
+
                     <h2>Registro de socios (${socios.length})</h2>
                     <table>
                       <thead><tr>
@@ -583,6 +720,11 @@ export default function Trazabilidad() {
                       </tr></thead>
                       <tbody>${filasSocios}</tbody>
                     </table>
+
+                    <h2>Documentos de socios — expedientes individuales</h2>
+                    <div class="note">ℹ️ Las imágenes están embebidas en este archivo. Los PDFs pueden requerir Adobe Reader para visualizarse correctamente.</div>
+                    ${sociosDocsHtml}
+
                     <h2>Historial de dispensaciones — período seleccionado (${dispFiltradas.length})</h2>
                     ${dispFiltradas.length === 0
                       ? '<p style="color:#9ca3af;font-style:italic">Sin dispensaciones en el período seleccionado.</p>'
@@ -613,9 +755,11 @@ export default function Trazabilidad() {
                   a.download = `Informe_Corporativo_GreenTech_${fechaDesde}_${fechaHasta}.html`
                   a.click()
                   URL.revokeObjectURL(url)
+                  } finally { setExportando(false) }
                 }}
-                  style={{ width:'100%', padding:'9px', border:'none', borderRadius:8, background:'#185FA5', color:'#fff', fontSize:13, fontWeight:600, cursor:'pointer' }}>
-                  📥 Exportar informe corporativo completo
+                  disabled={exportando}
+                  style={{ width:'100%', padding:'9px', border:'none', borderRadius:8, background:exportando?'#6b7280':'#185FA5', color:'#fff', fontSize:13, fontWeight:600, cursor:exportando?'not-allowed':'pointer' }}>
+                  {exportando ? '⏳ Generando informe con documentos...' : '📥 Exportar informe corporativo completo'}
                 </button>
               </div>
             </div>
