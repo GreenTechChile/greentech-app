@@ -10,7 +10,7 @@ interface Socio {
   folio_receta?: string; cuota_mensual?: number; gramos_delegados?: number
   vencimiento_receta?: string; notas_admin?: string
 }
-interface Dispensacion { id: string; cepa: string; gramos: number; monto: number; orden_numero: string; estado: string; mes: number; año: number; medio_pago: string; created_at: string }
+interface Dispensacion { id: string; cepa: string; gramos: number; monto: number; orden_numero: string; estado: string; mes: number; año: number; medio_pago: string; created_at: string; rut_socio?: string }
 
 export default function Trazabilidad() {
   const [tab, setTab] = useState<'log'|'expediente'|'exportar'>('log')
@@ -497,7 +497,124 @@ export default function Trazabilidad() {
                 <div style={{ background:'#FAEEDA', border:'1px solid #EF9F27', borderRadius:8, padding:'8px 10px', fontSize:11, color:'#633806', marginBottom:12, lineHeight:1.6 }}>
                   ⚠️ Este informe contiene datos sensibles. Solo debe generarse ante una fiscalización formal o requerimiento judicial.
                 </div>
-                <button style={{ width:'100%', padding:'9px', border:'none', borderRadius:8, background:'#185FA5', color:'#fff', fontSize:13, fontWeight:600, cursor:'pointer' }}>
+                <button onClick={async () => {
+                  const dispFiltradas = dispensaciones.filter(d => {
+                    const fecha = d.created_at.split('T')[0]
+                    return fecha >= fechaDesde && fecha <= fechaHasta
+                  })
+
+                  const filasSocios = socios.map((s, i) => {
+                    const dispSocio = dispFiltradas.filter((d: any) => d.rut_socio === s.rut)
+                    const totalGr = dispSocio.reduce((a: number, d: any) => a + d.gramos, 0)
+                    const totalMonto = dispSocio.reduce((a: number, d: any) => a + d.monto, 0)
+                    return `<tr style="border-bottom:1px solid #e5e7eb;${i%2===0?'':'background:#f9fafb'}">
+                      <td style="padding:7px 10px">${i+1}</td>
+                      <td style="padding:7px 10px;font-weight:500">${s.nombre}</td>
+                      <td style="padding:7px 10px;color:#6b7280">${s.rut}</td>
+                      <td style="padding:7px 10px">${s.email}</td>
+                      <td style="padding:7px 10px;text-align:center"><span style="background:${s.estado==='activo'?'#EAF3DE':'#f3f4f6'};color:${s.estado==='activo'?'#3B6D11':'#9ca3af'};padding:2px 8px;border-radius:20px;font-size:11px">${s.estado}</span></td>
+                      <td style="padding:7px 10px;text-align:right">${dispSocio.length}</td>
+                      <td style="padding:7px 10px;text-align:right">${totalGr} gr</td>
+                      <td style="padding:7px 10px;text-align:right;color:#185FA5;font-weight:500">$${totalMonto.toLocaleString('es-CL')}</td>
+                    </tr>`
+                  }).join('')
+
+                  const filasDisp = dispFiltradas.map((d: any, i: number) => {
+                    const socio = socios.find(s => s.rut === d.rut_socio)
+                    return `<tr style="border-bottom:1px solid #e5e7eb;${i%2===0?'':'background:#f9fafb'}">
+                      <td style="padding:7px 10px;color:#6b7280">${i+1}</td>
+                      <td style="padding:7px 10px">${new Date(d.created_at).toLocaleDateString('es-CL')}</td>
+                      <td style="padding:7px 10px">Orden #${d.orden_numero||'—'}</td>
+                      <td style="padding:7px 10px;font-weight:500">${socio?.nombre||d.rut_socio||'—'}</td>
+                      <td style="padding:7px 10px">${d.cepa||'—'}</td>
+                      <td style="padding:7px 10px;text-align:right">${d.gramos} gr</td>
+                      <td style="padding:7px 10px;text-align:right">$${d.monto.toLocaleString('es-CL')}</td>
+                      <td style="padding:7px 10px">${d.medio_pago||'—'}</td>
+                      <td style="padding:7px 10px;text-align:center"><span style="background:${d.estado==='entregado'||d.estado==='pagado'?'#EAF3DE':'#FAEEDA'};color:${d.estado==='entregado'||d.estado==='pagado'?'#3B6D11':'#633806'};padding:2px 8px;border-radius:20px;font-size:10px">${d.estado}</span></td>
+                    </tr>`
+                  }).join('')
+
+                  const totalGrGlobal = dispFiltradas.reduce((a: number, d: any) => a + d.gramos, 0)
+                  const totalMontoGlobal = dispFiltradas.reduce((a: number, d: any) => a + d.monto, 0)
+                  const sociosActivos = socios.filter(s => s.estado === 'activo').length
+
+                  const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
+                    <title>Informe Corporativo — Asociación GreenTech</title>
+                    <style>
+                      body{font-family:Arial,sans-serif;padding:32px 40px;color:#111;font-size:13px;max-width:1100px;margin:0 auto}
+                      h1{font-size:22px;margin:0 0 4px;color:#185FA5}
+                      h2{font-size:15px;font-weight:700;margin:32px 0 10px;border-bottom:2px solid #e5e7eb;padding-bottom:6px}
+                      .sub{color:#6b7280;font-size:12px;margin-bottom:24px}
+                      table{width:100%;border-collapse:collapse;margin-bottom:8px}
+                      th{text-align:left;padding:8px 10px;font-size:11px;color:#9ca3af;border-bottom:2px solid #e5e7eb;white-space:nowrap}
+                      .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:20px 0}
+                      .metric{background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px 14px}
+                      .metric .val{font-size:20px;font-weight:700;color:#185FA5;margin:4px 0}
+                      .metric .lbl{font-size:11px;color:#9ca3af}
+                      .aviso{background:#FEF3C7;border:1px solid #FCD34D;border-radius:8px;padding:10px 14px;font-size:12px;color:#92400E;margin:16px 0}
+                      .footer{margin-top:40px;padding-top:16px;border-top:1px solid #e5e7eb;font-size:11px;color:#9ca3af;text-align:center}
+                    </style>
+                  </head><body>
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+                      <div>
+                        <div style="font-size:13px;color:#3B6D11;font-weight:600;margin-bottom:6px">🌿 Asociación de Usuarios de Plantas Medicinales GreenTech</div>
+                        <h1>Informe Corporativo Completo</h1>
+                        <div class="sub">Para uso ante autoridades fiscalizadoras · Registro Nº 390054</div>
+                      </div>
+                      <div style="text-align:right;font-size:11px;color:#6b7280;border:1px solid #e5e7eb;border-radius:8px;padding:10px 14px;background:#f9fafb">
+                        <div style="font-weight:600;margin-bottom:3px">Folio: INF-CORP-${Date.now().toString().slice(-8)}</div>
+                        <div>Generado: ${new Date().toLocaleDateString('es-CL',{day:'2-digit',month:'long',year:'numeric'})}</div>
+                        <div style="margin-top:3px;color:#185FA5">Período: ${new Date(fechaDesde+'T00:00:00').toLocaleDateString('es-CL')} al ${new Date(fechaHasta+'T00:00:00').toLocaleDateString('es-CL')}</div>
+                      </div>
+                    </div>
+                    <div class="aviso">⚠️ Este informe contiene datos sensibles protegidos por la Ley 19.628. Solo debe compartirse ante requerimiento formal de autoridad competente.</div>
+                    <h2>Resumen ejecutivo</h2>
+                    <div class="metrics">
+                      <div class="metric"><div class="lbl">Total socios</div><div class="val">${socios.length}</div><div class="lbl">${sociosActivos} activos</div></div>
+                      <div class="metric"><div class="lbl">Dispensaciones en período</div><div class="val">${dispFiltradas.length}</div><div class="lbl">registros trazables</div></div>
+                      <div class="metric"><div class="lbl">Total dispensado</div><div class="val">${totalGrGlobal} gr</div><div class="lbl">en el período</div></div>
+                      <div class="metric"><div class="lbl">Aportes recibidos</div><div class="val">$${totalMontoGlobal.toLocaleString('es-CL')}</div><div class="lbl">en el período</div></div>
+                    </div>
+                    <h2>Registro de socios (${socios.length})</h2>
+                    <table>
+                      <thead><tr>
+                        <th>#</th><th>Nombre</th><th>RUT</th><th>Email</th><th>Estado</th>
+                        <th style="text-align:right">Dispensaciones</th><th style="text-align:right">Gramos</th><th style="text-align:right">Aportes</th>
+                      </tr></thead>
+                      <tbody>${filasSocios}</tbody>
+                    </table>
+                    <h2>Historial de dispensaciones — período seleccionado (${dispFiltradas.length})</h2>
+                    ${dispFiltradas.length === 0
+                      ? '<p style="color:#9ca3af;font-style:italic">Sin dispensaciones en el período seleccionado.</p>'
+                      : `<table>
+                          <thead><tr>
+                            <th>#</th><th>Fecha</th><th>Orden</th><th>Socio</th><th>Cepa / Producto</th>
+                            <th style="text-align:right">Gramos</th><th style="text-align:right">Monto</th><th>Medio pago</th><th>Estado</th>
+                          </tr></thead>
+                          <tbody>${filasDisp}</tbody>
+                          <tfoot><tr style="border-top:2px solid #e5e7eb;font-weight:700;background:#f9fafb">
+                            <td colspan="5" style="padding:9px 10px">Totales del período</td>
+                            <td style="padding:9px 10px;text-align:right">${totalGrGlobal} gr</td>
+                            <td style="padding:9px 10px;text-align:right;color:#185FA5">$${totalMontoGlobal.toLocaleString('es-CL')}</td>
+                            <td colspan="2"></td>
+                          </tr></tfoot>
+                        </table>`
+                    }
+                    <div class="footer">
+                      Informe generado automáticamente por el sistema GreenTech.<br>
+                      Los registros cumplen con Ley 19.628 (datos personales), Ley 20.000 y Ley 21.575.
+                    </div>
+                  </body></html>`
+
+                  const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
+                  const url = URL.createObjectURL(blob)
+                  const a = document.createElement('a')
+                  a.href = url
+                  a.download = `Informe_Corporativo_GreenTech_${fechaDesde}_${fechaHasta}.html`
+                  a.click()
+                  URL.revokeObjectURL(url)
+                }}
+                  style={{ width:'100%', padding:'9px', border:'none', borderRadius:8, background:'#185FA5', color:'#fff', fontSize:13, fontWeight:600, cursor:'pointer' }}>
                   📥 Exportar informe corporativo completo
                 </button>
               </div>
