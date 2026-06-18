@@ -298,7 +298,7 @@ export default function Inscripcion() {
       docContrato.text('Documento firmado electrónicamente — pendiente de firma avanzada (Ley 19.799)', m, y + 6)
       docContrato.setTextColor(0)
 
-      const pdfContratoB64 = docContrato.output('base64')
+      const pdfContratoB64 = docContrato.output('datauristring').split(',')[1]
       const pdfContrato = docContrato.output('arraybuffer')
       await supabase.storage.from('documentos').upload(`${rut}/contrato.pdf`, pdfContrato, { contentType:'application/pdf', upsert:true })
 
@@ -345,7 +345,7 @@ export default function Inscripcion() {
       docDeclaracion.text('Documento firmado electrónicamente — pendiente de firma avanzada (Ley 19.799)', m, y2)
       docDeclaracion.setTextColor(0)
 
-      const pdfDeclaracionB64 = docDeclaracion.output('base64')
+      const pdfDeclaracionB64 = docDeclaracion.output('datauristring').split(',')[1]
       const pdfDeclaracion = docDeclaracion.output('arraybuffer')
       await supabase.storage.from('documentos').upload(`${rut}/declaracion_jurada.pdf`, pdfDeclaracion, { contentType:'application/pdf', upsert:true })
 
