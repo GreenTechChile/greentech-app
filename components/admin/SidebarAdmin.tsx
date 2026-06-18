@@ -18,6 +18,15 @@ export default function SidebarAdmin() {
   })
   const [nombre, setNombre] = useState('')
   const [rut, setRut] = useState('')
+  const [isMobile, setIsMobile] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
 
   useEffect(() => {
     try {
@@ -46,10 +55,10 @@ export default function SidebarAdmin() {
   const cerrarSesion = async () => {
     await supabase.auth.signOut()
     Object.keys(localStorage).filter(k => k.startsWith('sb-')).forEach(k => localStorage.removeItem(k))
+    document.cookie = 'gt_auth=; path=/; max-age=0'
     window.location.href = '/'
   }
 
-  // Visibilidad de cada item según roles
   const verTodo = roles.rol_admin
   const verDespachos = roles.rol_admin || roles.rol_despachador
   const verCultivo = roles.rol_admin || roles.rol_cultivador
@@ -88,16 +97,17 @@ export default function SidebarAdmin() {
         { href: '/admin/finanzas',      label: 'Finanzas',      icon: '💰', visible: verTodo },
         { href: '/admin/contratos',     label: 'Contratos',     icon: '📋', visible: verTodo },
         { href: '/admin/trazabilidad',  label: 'Trazabilidad',  icon: '🔒', visible: verTodo },
+        { href: '/admin/cumplimiento',  label: 'Cumplimiento',  icon: '⚖️', visible: verTodo },
         { href: '/admin/configuracion', label: 'Configuración', icon: '⚙️', visible: verTodo },
       ]
     },
   ]
 
-  return (
-    <div style={{ width: 210, flexShrink: 0, borderRight: '1px solid #e5e7eb', padding: '16px 0', background: '#f9fafb', display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-
+  // ── Contenido del nav (reutilizado) ──
+  const navContent = (onClickLink?: () => void) => (
+    <div>
       {/* Logo */}
-      <div style={{ padding: '0 16px 12px', borderBottom: '1px solid #e5e7eb', marginBottom: 8 }}>
+      <div style={{ padding: '16px 16px 12px', borderBottom: '1px solid #e5e7eb' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
           <div style={{ width: 28, height: 28, background: '#E6F1FB', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>🛡️</div>
           <span style={{ fontSize: 13, fontWeight: 600 }}>GreenTech</span>
@@ -106,41 +116,41 @@ export default function SidebarAdmin() {
       </div>
 
       {/* Nav */}
-      {sections.filter(s => s.visible).map(section => {
-        const itemsVisibles = section.items.filter(i => i.visible)
-        if (itemsVisibles.length === 0) return null
-        return (
-          <div key={section.label}>
-            <div style={{ fontSize: 10, color: '#9ca3af', padding: '8px 16px 4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              {section.label}
+      <div style={{ padding: '8px 0' }}>
+        {sections.filter(s => s.visible).map(section => {
+          const itemsVisibles = section.items.filter(i => i.visible)
+          if (itemsVisibles.length === 0) return null
+          return (
+            <div key={section.label}>
+              <div style={{ fontSize: 10, color: '#9ca3af', padding: '8px 16px 4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                {section.label}
+              </div>
+              {itemsVisibles.map(item => {
+                const active = pathname === item.href
+                return (
+                  <Link key={item.href} href={item.href} onClick={onClickLink} style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '11px 16px', fontSize: 13,
+                    color: active ? '#185FA5' : '#6b7280',
+                    fontWeight: active ? 600 : 400,
+                    background: active ? '#fff' : '#f9fafb',
+                    borderRight: active ? '2px solid #185FA5' : '2px solid transparent',
+                    textDecoration: 'none',
+                  }}>
+                    <span>{item.icon}</span>
+                    <span style={{ flex: 1 }}>{item.label}</span>
+                  </Link>
+                )
+              })}
             </div>
-            {itemsVisibles.map(item => {
-              const active = pathname === item.href
-              return (
-                <Link key={item.href} href={item.href} style={{
-                  display: 'flex', alignItems: 'center', gap: 10,
-                  padding: '9px 16px', fontSize: 13,
-                  color: active ? '#185FA5' : '#6b7280',
-                  fontWeight: active ? 600 : 400,
-                  background: active ? '#fff' : 'transparent',
-                  borderRight: active ? '2px solid #185FA5' : '2px solid transparent',
-                  textDecoration: 'none',
-                }}>
-                  <span>{item.icon}</span>
-                  <span style={{ flex: 1 }}>{item.label}</span>
-                </Link>
-              )
-            })}
-          </div>
-        )
-      })}
+          )
+        })}
+      </div>
 
-      <div style={{ flex: 1 }} />
-
-      {/* Botón portal socio — solo si tiene rol_socio */}
+      {/* Portal socio */}
       {roles.rol_socio && (
-        <div style={{ padding: '0 10px 8px' }}>
-          <Link href="/socio" style={{
+        <div style={{ padding: '8px 10px', borderTop: '1px solid #e5e7eb' }}>
+          <Link href="/socio" onClick={onClickLink} style={{
             display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px',
             background: '#EAF3DE', borderRadius: 8, textDecoration: 'none',
             fontSize: 12, color: '#3B6D11', fontWeight: 600,
@@ -152,7 +162,7 @@ export default function SidebarAdmin() {
         </div>
       )}
 
-      {/* Usuario + cerrar sesión */}
+      {/* Nombre / RUT / Cerrar sesión */}
       <div style={{ padding: '10px 16px', borderTop: '1px solid #e5e7eb' }}>
         {nombre && (
           <div style={{ marginBottom: 8 }}>
@@ -172,4 +182,78 @@ export default function SidebarAdmin() {
       </div>
     </div>
   )
+
+  // ── MÓVIL: top bar + drawer ──
+  if (isMobile) {
+    return (
+      <>
+        {/* Top bar */}
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '0 16px', height: 52,
+          background: '#f9fafb', borderBottom: '1px solid #e5e7eb',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ width: 28, height: 28, background: '#E6F1FB', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>🛡️</div>
+            <span style={{ fontSize: 13, fontWeight: 600 }}>GreenTech</span>
+            <span style={{ fontSize: 10, background: '#E6F1FB', color: '#185FA5', padding: '2px 7px', borderRadius: 20 }}>Admin</span>
+          </div>
+          <button onClick={() => setMenuOpen(true)} style={{
+            background: 'none', border: 'none', cursor: 'pointer', fontSize: 22, padding: 4, color: '#374151',
+          }}>☰</button>
+        </div>
+
+        {/* Spacer */}
+        <div style={{ height: 52 }} />
+
+        {/* Overlay */}
+        {menuOpen && (
+          <div
+            onClick={() => setMenuOpen(false)}
+            style={{
+              position: 'fixed', inset: 0, zIndex: 200,
+              background: 'rgba(0,0,0,0.4)',
+            }}
+          />
+        )}
+
+        {/* Drawer */}
+        <div style={{
+          position: 'fixed', top: 0, left: 0, bottom: 0, zIndex: 300,
+          width: 240,
+          background: '#f9fafb',
+          borderRight: '1px solid #e5e7eb',
+          transform: menuOpen ? 'translateX(0)' : 'translateX(-100%)',
+          transition: 'transform 0.22s ease',
+          overflowY: 'auto',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderBottom: '1px solid #e5e7eb' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ width: 28, height: 28, background: '#E6F1FB', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>🛡️</div>
+              <span style={{ fontSize: 13, fontWeight: 600 }}>GreenTech</span>
+            </div>
+            <button onClick={() => setMenuOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: '#9ca3af' }}>✕</button>
+          </div>
+          {navContent(() => setMenuOpen(false))}
+        </div>
+      </>
+    )
+  }
+
+  // ── ESCRITORIO: sidebar normal ──
+  return (
+    <div style={{
+      width: 210,
+      flexShrink: 0,
+      alignSelf: 'stretch',
+      background: '#f9fafb',
+      borderRight: '1px solid #e5e7eb',
+    }}>
+      <div>
+        {navContent()}
+      </div>
+    </div>
+  )
 }
+
