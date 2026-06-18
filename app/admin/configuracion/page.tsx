@@ -60,6 +60,18 @@ export default function Configuracion() {
   const [subiendo, setSubiendo] = useState<string | null>(null)
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
 
+  // Actas de asambleas
+  interface Acta { name: string; url: string; size: number; fecha: string; titulo: string }
+  const [actas, setActas] = useState<Acta[]>([])
+  const [mostrandoFormActa, setMostrandoFormActa] = useState(false)
+  const [nuevaActaFecha, setNuevaActaFecha] = useState(new Date().toISOString().split('T')[0])
+  const [nuevaActaTitulo, setNuevaActaTitulo] = useState('')
+  const [nuevaActaFile, setNuevaActaFile] = useState<File | null>(null)
+  const [subiendoActa, setSubiendoActa] = useState(false)
+  const [eliminandoActa, setEliminandoActa] = useState<string | null>(null)
+  const [confirmEliminarActa, setConfirmEliminarActa] = useState<string | null>(null)
+  const fileActaRef = useRef<HTMLInputElement | null>(null)
+
   const [rutError, setRutError] = useState('')
   const [editando, setEditando] = useState(false)
   const [datosBancarios, setDatosBancarios] = useState({ banco:'', tipo_cuenta:'', numero_cuenta:'', titular:'', rut_titular:'' })
@@ -116,7 +128,7 @@ export default function Configuracion() {
   })
 
   useEffect(() => { cargarCobertura(); cargarCorporacion(); cargarDatosBancarios(); cargarEnvioGratis() }, [])
-  useEffect(() => { if (tabActiva === 'documentos') cargarDocsInstitucionales() }, [tabActiva])
+  useEffect(() => { if (tabActiva === 'documentos') { cargarDocsInstitucionales(); cargarActas() } }, [tabActiva])
 
   const cargarCobertura = async () => {
     setLoading(true)
@@ -207,6 +219,72 @@ export default function Configuracion() {
       }
     } catch {
       // bucket puede no existir aún, no es error crítico
+    }
+  }
+
+  const cargarActas = async () => {
+    try {
+      const { data } = await supabase.storage.from('documentos-corporacion').list('actas', { limit: 200, sortBy: { column: 'updated_at', order: 'desc' } })
+      if (!data) return
+      const lista: Acta[] = []
+      for (const file of data) {
+        if (!file.name.includes('.') || file.name === '.emptyFolderPlaceholder') continue
+        const { data: urlData } = await supabase.storage
+          .from('documentos-corporacion')
+          .createSignedUrl(`actas/${file.name}`, 3600)
+        if (!urlData?.signedUrl) continue
+        // Formato nombre: acta_YYYY-MM-DD_titulo-sanitizado.ext
+        const sinExt = file.name.replace(/\.[^.]+$/, '')
+        const partes = sinExt.split('_')
+        const fecha = partes[1] || ''
+        const titulo = partes.slice(2).join(' ').replace(/-/g, ' ') || file.name
+        lista.push({ name: file.name, url: urlData.signedUrl, size: file.metadata?.size || 0, fecha, titulo })
+      }
+      setActas(lista)
+    } catch { /* bucket puede no tener carpeta actas aún */ }
+  }
+
+  const subirActa = async () => {
+    if (!nuevaActaFile || !nuevaActaFecha) return
+    setSubiendoActa(true)
+    setMensaje('')
+    try {
+      const ext = nuevaActaFile.name.split('.').pop()
+      const tituloSanitizado = (nuevaActaTitulo || 'asamblea').toLowerCase()
+        .normalize('NFD').replace(/[̀-ͯ]/g, '')
+        .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+      const nombre = `acta_${nuevaActaFecha}_${tituloSanitizado}.${ext}`
+      const { error } = await supabase.storage
+        .from('documentos-corporacion')
+        .upload(`actas/${nombre}`, nuevaActaFile, { upsert: true, contentType: nuevaActaFile.type })
+      if (error) throw error
+      setMostrandoFormActa(false)
+      setNuevaActaTitulo('')
+      setNuevaActaFile(null)
+      await cargarActas()
+      setMensaje('✅ Acta subida correctamente')
+      setTimeout(() => setMensaje(''), 3000)
+    } catch {
+      setMensaje('❌ Error al subir el acta.')
+      setTimeout(() => setMensaje(''), 5000)
+    } finally {
+      setSubiendoActa(false)
+    }
+  }
+
+  const eliminarActa = async (name: string) => {
+    setEliminandoActa(name)
+    try {
+      await supabase.storage.from('documentos-corporacion').remove([`actas/${name}`])
+      setActas(prev => prev.filter(a => a.name !== name))
+      setConfirmEliminarActa(null)
+      setMensaje('✅ Acta eliminada')
+      setTimeout(() => setMensaje(''), 3000)
+    } catch {
+      setMensaje('❌ Error al eliminar')
+      setTimeout(() => setMensaje(''), 3000)
+    } finally {
+      setEliminandoActa(null)
     }
   }
 
@@ -635,6 +713,112 @@ export default function Configuracion() {
                   </div>
                 )
               })}
+            </div>
+
+            {/* ── ACTAS DE ASAMBLEAS ── */}
+            <div style={{ marginTop: 32, borderTop: '1px solid #e5e7eb', paddingTop: 24 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                <div>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: '#111' }}>📋 Actas de Asambleas</div>
+                  <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>Registro oficial de las actas de asamblea de socios</div>
+                </div>
+                <button
+                  onClick={() => { setMostrandoFormActa(true); setNuevaActaTitulo(''); setNuevaActaFile(null) }}
+                  style={{ fontSize: 12, padding: '8px 16px', border: 'none', borderRadius: 8, background: '#185FA5', color: '#fff', cursor: 'pointer', fontWeight: 500 }}>
+                  + Nueva acta
+                </button>
+              </div>
+
+              {/* Formulario nueva acta */}
+              {mostrandoFormActa && (
+                <div style={{ background: '#f0f7ff', border: '1px solid #A8CBF0', borderRadius: 12, padding: 20, marginBottom: 16 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#185FA5', marginBottom: 14 }}>Nueva acta de asamblea</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 12, marginBottom: 12 }}>
+                    <div>
+                      <label style={{ fontSize: 11, color: '#6b7280', fontWeight: 500, display: 'block', marginBottom: 4 }}>Fecha de la asamblea</label>
+                      <input
+                        type="date"
+                        value={nuevaActaFecha}
+                        onChange={e => setNuevaActaFecha(e.target.value)}
+                        style={{ width: '100%', padding: '8px 10px', border: '1px solid #d1d5db', borderRadius: 8, fontSize: 13, boxSizing: 'border-box' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: 11, color: '#6b7280', fontWeight: 500, display: 'block', marginBottom: 4 }}>Título / descripción</label>
+                      <input
+                        type="text"
+                        placeholder="Ej: Asamblea ordinaria anual, Elección directiva..."
+                        value={nuevaActaTitulo}
+                        onChange={e => setNuevaActaTitulo(e.target.value)}
+                        style={{ width: '100%', padding: '8px 10px', border: '1px solid #d1d5db', borderRadius: 8, fontSize: 13, boxSizing: 'border-box' }}
+                      />
+                    </div>
+                  </div>
+                  <div style={{ marginBottom: 14 }}>
+                    <label style={{ fontSize: 11, color: '#6b7280', fontWeight: 500, display: 'block', marginBottom: 4 }}>Documento (PDF, Word)</label>
+                    <input
+                      type="file"
+                      accept=".pdf,.doc,.docx"
+                      ref={fileActaRef}
+                      onChange={e => setNuevaActaFile(e.target.files?.[0] || null)}
+                      style={{ fontSize: 12 }}
+                    />
+                    {nuevaActaFile && <div style={{ fontSize: 11, color: '#6b7280', marginTop: 4 }}>{nuevaActaFile.name}</div>}
+                  </div>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button
+                      onClick={subirActa}
+                      disabled={subiendoActa || !nuevaActaFile || !nuevaActaFecha}
+                      style={{ fontSize: 13, padding: '8px 18px', border: 'none', borderRadius: 8, background: (subiendoActa || !nuevaActaFile || !nuevaActaFecha) ? '#9ca3af' : '#185FA5', color: '#fff', cursor: (subiendoActa || !nuevaActaFile || !nuevaActaFecha) ? 'not-allowed' : 'pointer', fontWeight: 500 }}>
+                      {subiendoActa ? '⏳ Subiendo...' : '⬆ Subir acta'}
+                    </button>
+                    <button
+                      onClick={() => setMostrandoFormActa(false)}
+                      style={{ fontSize: 13, padding: '8px 14px', border: '1px solid #d1d5db', borderRadius: 8, background: '#fff', color: '#374151', cursor: 'pointer' }}>
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Lista de actas */}
+              {actas.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '32px 20px', color: '#9ca3af', fontSize: 13, border: '1px dashed #e5e7eb', borderRadius: 10 }}>
+                  No hay actas registradas aún
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gap: 10 }}>
+                  {actas.map(acta => (
+                    <div key={acta.name} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', border: '1px solid #e5e7eb', borderRadius: 10, background: '#fff' }}>
+                      <div style={{ fontSize: 24, flexShrink: 0 }}>📋</div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: '#111' }}>{acta.titulo || acta.name}</div>
+                        <div style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>
+                          {acta.fecha ? new Date(acta.fecha + 'T12:00:00').toLocaleDateString('es-CL', { day: 'numeric', month: 'long', year: 'numeric' }) : ''}
+                          {acta.size > 0 && ` · ${(acta.size / 1024 / 1024).toFixed(1)} MB`}
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                        <a href={acta.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, padding: '6px 12px', border: '1px solid #e5e7eb', borderRadius: 7, background: '#f9fafb', color: '#374151', cursor: 'pointer', fontWeight: 500, textDecoration: 'none' }}>
+                          👁 Ver
+                        </a>
+                        {confirmEliminarActa === acta.name ? (
+                          <div style={{ display: 'flex', gap: 4 }}>
+                            <button onClick={() => eliminarActa(acta.name)} disabled={eliminandoActa === acta.name} style={{ fontSize: 12, padding: '6px 10px', border: 'none', borderRadius: 7, background: '#A32D2D', color: '#fff', cursor: 'pointer' }}>
+                              {eliminandoActa === acta.name ? '...' : 'Eliminar'}
+                            </button>
+                            <button onClick={() => setConfirmEliminarActa(null)} style={{ fontSize: 12, padding: '6px 10px', border: '1px solid #e5e7eb', borderRadius: 7, background: '#fff', color: '#374151', cursor: 'pointer' }}>Cancelar</button>
+                          </div>
+                        ) : (
+                          <button onClick={() => setConfirmEliminarActa(acta.name)} style={{ fontSize: 12, padding: '6px 12px', border: '1px solid #fecaca', borderRadius: 7, background: '#fff5f5', color: '#A32D2D', cursor: 'pointer' }}>
+                            🗑
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}

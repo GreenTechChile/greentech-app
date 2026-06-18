@@ -150,30 +150,20 @@ export default function Inscripcion() {
     cargar()
   }, [])
 
-  // Cargar reglamento al llegar al paso 5
+  // Cargar reglamento al llegar al paso 5 (via API route con service role key)
   useEffect(() => {
     if (paso !== 5 || reglamentoHtml || reglamentoPdfUrl) return
     const cargarReglamento = async () => {
       setCargandoReglamento(true)
       try {
-        // Buscar el más reciente en documentos-corporacion
-        const { data: lista } = await supabase.storage
-          .from('documentos-corporacion')
-          .list('institucional', { limit: 100, sortBy: { column: 'updated_at', order: 'desc' } })
-        const archivo = lista?.find(f => f.name.startsWith('reglamento_interno'))
-        if (!archivo) { setCargandoReglamento(false); return }
-
-        const { data: urlData } = await supabase.storage
-          .from('documentos-corporacion')
-          .createSignedUrl(`institucional/${archivo.name}`, 3600)
-        if (!urlData?.signedUrl) { setCargandoReglamento(false); return }
-
-        const ext = archivo.name.split('.').pop()?.toLowerCase()
+        const res = await fetch('/api/reglamento-url')
+        const { url, ext } = await res.json()
+        if (!url) { setCargandoReglamento(false); return }
 
         if (ext === 'pdf') {
-          setReglamentoPdfUrl(urlData.signedUrl)
+          setReglamentoPdfUrl(url)
         } else if (ext === 'docx' || ext === 'doc') {
-          // Cargar mammoth.js desde CDN si no está ya en la página
+          // Cargar mammoth.js desde CDN
           if (!(window as any).mammoth) {
             await new Promise<void>((resolve, reject) => {
               const s = document.createElement('script')
@@ -184,7 +174,7 @@ export default function Inscripcion() {
             })
           }
           const mammoth = (window as any).mammoth
-          const resp = await fetch(urlData.signedUrl)
+          const resp = await fetch(url)
           const buffer = await resp.arrayBuffer()
           const result = await mammoth.convertToHtml({ arrayBuffer: buffer })
           setReglamentoHtml(result.value)
