@@ -28,12 +28,20 @@ async function getFVToken(): Promise<string> {
   })
   const data = await res.json()
   if (!res.ok) throw new Error(`FirmaVirtual login error: ${JSON.stringify(data)}`)
-  // El token viene en data.message según la documentación
-  const token = data.message || data.token || data.jwt
-  if (!token || typeof token !== 'string') {
+
+  // La respuesta tiene estructura: { message: { Authorization: "Bearer eyJ...", userID, ... } }
+  const authHeader: string =
+    data.message?.Authorization ||   // objeto con Authorization
+    data.Authorization ||             // directamente en raíz
+    data.token ||                     // fallback token simple
+    (typeof data.message === 'string' ? data.message : null) // string directo
+
+  if (!authHeader) {
     throw new Error(`FirmaVirtual: token no encontrado en respuesta: ${JSON.stringify(data)}`)
   }
-  return token
+
+  // Quitar el prefijo "Bearer " para retornar solo el JWT
+  return authHeader.replace(/^Bearer\s+/i, '').trim()
 }
 
 /** Une dos PDFs en base64 usando la API de merge de FirmaVirtual. */
