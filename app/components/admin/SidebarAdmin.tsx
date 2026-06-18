@@ -97,6 +97,7 @@ export default function SidebarAdmin() {
         { href: '/admin/finanzas',      label: 'Finanzas',      icon: '💰', visible: verTodo },
         { href: '/admin/contratos',     label: 'Contratos',     icon: '📋', visible: verTodo },
         { href: '/admin/trazabilidad',  label: 'Trazabilidad',  icon: '🔒', visible: verTodo },
+        { href: '/admin/cumplimiento',  label: 'Cumplimiento',  icon: '⚖️', visible: verTodo },
         { href: '/admin/configuracion', label: 'Configuración', icon: '⚙️', visible: verTodo },
       ]
     },
