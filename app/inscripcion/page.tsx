@@ -298,6 +298,7 @@ export default function Inscripcion() {
       docContrato.text('Documento firmado electrónicamente — pendiente de firma avanzada (Ley 19.799)', m, y + 6)
       docContrato.setTextColor(0)
 
+      const pdfContratoB64 = docContrato.output('base64')
       const pdfContrato = docContrato.output('arraybuffer')
       await supabase.storage.from('documentos').upload(`${rut}/contrato.pdf`, pdfContrato, { contentType:'application/pdf', upsert:true })
 
@@ -344,8 +345,34 @@ export default function Inscripcion() {
       docDeclaracion.text('Documento firmado electrónicamente — pendiente de firma avanzada (Ley 19.799)', m, y2)
       docDeclaracion.setTextColor(0)
 
+      const pdfDeclaracionB64 = docDeclaracion.output('base64')
       const pdfDeclaracion = docDeclaracion.output('arraybuffer')
       await supabase.storage.from('documentos').upload(`${rut}/declaracion_jurada.pdf`, pdfDeclaracion, { contentType:'application/pdf', upsert:true })
+
+      // 4. Enviar a FirmaVirtual para Firma Electrónica Avanzada (FEA)
+      let fvContractId: string | null = null
+      try {
+        const fvRes = await fetch('/api/firmavirtual', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            pdfContrato: pdfContratoB64,
+            pdfDeclaracion: pdfDeclaracionB64,
+            socio: { nombre: form.nombre, rut: form.rut, email: form.email, telefono: form.telefono },
+          }),
+        })
+        const fvData = await fvRes.json()
+        if (fvData.ok && fvData.contractId) {
+          fvContractId = fvData.contractId
+          // Guardar el ID del trámite FEA en Supabase
+          await supabase.from('socios').update({ fv_contract_id: fvContractId }).eq('rut', rut)
+        } else {
+          console.warn('FirmaVirtual no retornó contractId:', fvData)
+        }
+      } catch (fvErr) {
+        // FEA no es bloqueante: la solicitud continúa igualmente
+        console.warn('Error al enviar a FirmaVirtual:', fvErr)
+      }
 
       setPaso(10)
     } catch (e: unknown) {
@@ -970,13 +997,17 @@ export default function Inscripcion() {
               <h2 style={{fontSize:20,fontWeight:600,marginBottom:8,color:'#3B6D11'}}>¡Solicitud enviada correctamente!</h2>
               <p style={{fontSize:14,color:'#6b7280',marginBottom:6,lineHeight:1.7}}>Tu solicitud fue recibida. La directiva la revisará en un plazo máximo de <strong>5 días hábiles</strong>.</p>
               <p style={{fontSize:13,color:'#6b7280',marginBottom:28}}>Recibirás un correo en <strong>{form.email}</strong> con el resultado.</p>
-              <div style={{background:'#EAF3DE',border:'1px solid #97C459',borderRadius:12,padding:16,marginBottom:24,textAlign:'left',fontSize:12,color:'#3B6D11',lineHeight:1.7}}>
+              <div style={{background:'#EAF3DE',border:'1px solid #97C459',borderRadius:12,padding:16,marginBottom:12,textAlign:'left',fontSize:12,color:'#3B6D11',lineHeight:1.7}}>
                 <strong>¿Qué sigue?</strong><br/>
                 1. La directiva revisará tus documentos y antecedentes.<br/>
                 2. Si es aprobada, recibirás tus credenciales de acceso por correo.<br/>
-                3. Podrás ingresar con tu RUT y la contraseña asignada.<br/>
-                4. Se generarán tu Contrato de Previsión y Declaración Jurada para firma electrónica avanzada.<br/>
-                5. Recibirás un link en tu celular para firmar ambos documentos.
+                3. Podrás ingresar con tu RUT y la contraseña asignada.
+              </div>
+              <div style={{background:'#E6F1FB',border:'1px solid #A8CBF0',borderRadius:12,padding:16,marginBottom:24,textAlign:'left',fontSize:12,color:'#185FA5',lineHeight:1.7}}>
+                <strong>✍️ Firma Electrónica Avanzada (FEA)</strong><br/>
+                Tu Contrato de Previsión y Declaración Jurada ya fueron enviados a FirmaVirtual para su firma electrónica avanzada (Ley 19.799).<br/>
+                <strong>Recibirás un correo en {form.email} con el enlace para firmar desde tu celular</strong> usando tu Clave Única.<br/>
+                <span style={{fontSize:11,color:'#6b7280'}}>El proceso de firma toma menos de 2 minutos.</span>
               </div>
               <Link href="/" style={{...s.btnPrimary,textDecoration:'none',display:'inline-block'}}>Volver al inicio</Link>
             </div>
