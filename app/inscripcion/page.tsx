@@ -86,7 +86,7 @@ export default function Inscripcion() {
           fecha: new Date().toISOString(),
         })
         await supabase.from('socios').update({ pago_incorporacion: true }).eq('rut', form.rut)
-        setPaso(7)
+        setPaso(2)
       } catch {
         setError('Error al registrar el pago.')
       } finally {
@@ -136,7 +136,7 @@ export default function Inscripcion() {
   const [rutValido, setRutValido] = useState<boolean|null>(null)
   const [rutMedicoValido, setRutMedicoValido] = useState<boolean|null>(null)
   const update = (field: keyof FormData, value: string) => setForm(prev => ({...prev,[field]:value}))
-  const pasos = ['Datos personales','Domicilio','Info médica','Documentos','Reglamento','Pago','Contrato','Declaración','Envío']
+  const pasos = ['Pago','Datos personales','Domicilio','Info médica','Documentos','Reglamento','Contrato','Declaración','Envío']
 
   // Cargar ciudades con cobertura activa
   useEffect(() => {
@@ -150,9 +150,9 @@ export default function Inscripcion() {
     cargar()
   }, [])
 
-  // Cargar reglamento al llegar al paso 5 (via API route con service role key)
+  // Cargar reglamento al llegar al paso 6 (via API route con service role key)
   useEffect(() => {
-    if (paso !== 5 || reglamentoHtml || reglamentoPdfUrl) return
+    if (paso !== 6 || reglamentoHtml || reglamentoPdfUrl) return
     const cargarReglamento = async () => {
       setCargandoReglamento(true)
       try {
@@ -298,7 +298,6 @@ export default function Inscripcion() {
       docContrato.text('Documento firmado electrónicamente — pendiente de firma avanzada (Ley 19.799)', m, y + 6)
       docContrato.setTextColor(0)
 
-      const pdfContratoB64 = docContrato.output('datauristring').split(',')[1]
       const pdfContrato = docContrato.output('arraybuffer')
       await supabase.storage.from('documentos').upload(`${rut}/contrato.pdf`, pdfContrato, { contentType:'application/pdf', upsert:true })
 
@@ -345,34 +344,8 @@ export default function Inscripcion() {
       docDeclaracion.text('Documento firmado electrónicamente — pendiente de firma avanzada (Ley 19.799)', m, y2)
       docDeclaracion.setTextColor(0)
 
-      const pdfDeclaracionB64 = docDeclaracion.output('datauristring').split(',')[1]
       const pdfDeclaracion = docDeclaracion.output('arraybuffer')
       await supabase.storage.from('documentos').upload(`${rut}/declaracion_jurada.pdf`, pdfDeclaracion, { contentType:'application/pdf', upsert:true })
-
-      // 4. Enviar a FirmaVirtual para Firma Electrónica Avanzada (FEA)
-      let fvContractId: string | null = null
-      try {
-        const fvRes = await fetch('/api/firmavirtual', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            pdfContrato: pdfContratoB64,
-            pdfDeclaracion: pdfDeclaracionB64,
-            socio: { nombre: form.nombre, rut: form.rut, email: form.email, telefono: form.telefono },
-          }),
-        })
-        const fvData = await fvRes.json()
-        if (fvData.ok && fvData.contractId) {
-          fvContractId = fvData.contractId
-          // Guardar el ID del trámite FEA en Supabase
-          await supabase.from('socios').update({ fv_contract_id: fvContractId }).eq('rut', rut)
-        } else {
-          console.warn('FirmaVirtual no retornó contractId:', fvData)
-        }
-      } catch (fvErr) {
-        // FEA no es bloqueante: la solicitud continúa igualmente
-        console.warn('Error al enviar a FirmaVirtual:', fvErr)
-      }
 
       setPaso(10)
     } catch (e: unknown) {
@@ -502,8 +475,52 @@ export default function Inscripcion() {
             </div>
           )}
 
-          {/* PASO 1 — Datos personales */}
+          {/* PASO 1 — Pago de incorporación */}
           {paso===1 && (
+            <div>
+              <h2 style={{fontSize:15,fontWeight:600,marginBottom:6}}>💳 Pago de incorporación</h2>
+              <p style={{fontSize:12,color:'#6b7280',marginBottom:20}}>Para continuar con el proceso de incorporación, realiza primero el pago.</p>
+              <div style={{background:'#f0f9ff',border:'1px solid #7dd3fc',borderRadius:10,padding:'10px 14px',fontSize:12,color:'#0369a1',marginBottom:20,display:'flex',alignItems:'center',gap:8}}>
+                🔵 <span><strong>Pago seguro con Mercado Pago</strong> — Acepta tarjetas de débito, crédito y transferencia bancaria.</span>
+              </div>
+              <div style={{border:'1px solid #e5e7eb',borderRadius:12,overflow:'hidden',marginBottom:20}}>
+                <div style={{background:'#f9fafb',padding:'12px 16px',borderBottom:'1px solid #e5e7eb'}}>
+                  <div style={{fontSize:11,fontWeight:600,color:'#9ca3af',textTransform:'uppercase',letterSpacing:'0.05em'}}>Detalle del cobro</div>
+                </div>
+                <div style={{padding:'14px 16px'}}>
+                  <div style={{display:'flex',justifyContent:'space-between',fontSize:13,padding:'7px 0',borderBottom:'1px solid #f3f4f6'}}>
+                    <span style={{color:'#374151'}}>Proceso de incorporación como socio GreenTech</span>
+                    <span style={{fontWeight:500}}>$25.000</span>
+                  </div>
+                  <div style={{display:'flex',justifyContent:'space-between',fontSize:15,fontWeight:700,padding:'10px 0 4px',marginTop:4,borderTop:'2px solid #e5e7eb'}}>
+                    <span>Total a pagar</span>
+                    <span style={{color:'#3B6D11'}}>$25.000</span>
+                  </div>
+                </div>
+              </div>
+              <div style={{background:'#EAF3DE',border:'1px solid #97C459',borderRadius:10,padding:'12px 14px',fontSize:12,color:'#3B6D11',marginBottom:24,lineHeight:1.7}}>
+                <strong>¿Qué incluye este pago?</strong><br/>
+                ✓ Revisión de tu solicitud por la directiva<br/>
+                ✓ Generación de contratos personalizados con tus datos<br/>
+                ✓ Firma manual de contrato y declaración jurada<br/>
+                ✓ Alta en el sistema GreenTech
+              </div>
+              {error && <div style={{background:'#FCEBEB',border:'1px solid #F5C5C5',borderRadius:8,padding:'10px 12px',fontSize:12,color:'#A32D2D',marginBottom:14}}>⚠️ {error}</div>}
+              <button onClick={handlePagoMP} disabled={mpLoading}
+                style={{width:'100%',padding:'14px',border:'none',borderRadius:12,background:mpLoading?'#9ca3af':'#009ee3',color:'#fff',fontSize:15,fontWeight:700,cursor:mpLoading?'not-allowed':'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:10,marginBottom:10}}>
+                {mpLoading ? '⏳ Procesando pago...' : '💳 Pagar $25.000 con Mercado Pago →'}
+              </button>
+              <div style={{textAlign:'center',fontSize:11,color:'#9ca3af',marginBottom:16}}>
+                🔒 Pago seguro · Mercado Pago · SSL
+              </div>
+              <div style={{display:'flex',justifyContent:'flex-start'}}>
+                <button style={s.btnOutline} onClick={()=>setPaso(0)}>← Anterior</button>
+              </div>
+            </div>
+          )}
+
+          {/* PASO 2 — Datos personales */}
+          {paso===2 && (
             <div>
               <h2 style={{fontSize:15,fontWeight:600,marginBottom:20}}>👤 Datos personales</h2>
               <div style={{...s.grid2,marginBottom:12}}>
@@ -536,21 +553,22 @@ export default function Inscripcion() {
                 <div style={s.field}><label style={s.label}>Teléfono móvil <span style={s.req}>*</span></label><input style={s.input} value={form.telefono} onChange={e=>update('telefono',e.target.value)} placeholder="+569XXXXXXXX"/></div>
                 <div style={{...s.field,gridColumn:'1/-1'}}><label style={s.label}>Correo electrónico <span style={s.req}>*</span></label><input style={s.input} type="email" value={form.email} onChange={e=>update('email',e.target.value)} placeholder="correo@ejemplo.com"/></div>
               </div>
-              <div style={{display:'flex',justifyContent:'flex-end'}}>
+              <div style={{display:'flex',justifyContent:'space-between'}}>
+                <button style={s.btnOutline} onClick={()=>setPaso(1)}>← Anterior</button>
                 <button style={s.btnPrimary} onClick={()=>{
                   if(!form.nombre||!form.rut||!form.fecha_nacimiento||!form.estado_civil||!form.profesion||!form.telefono||!form.email){setError('Completa todos los campos obligatorios.');return}
                   if(!validarRut(form.rut)){setError('El RUT ingresado no es válido. Verifica el dígito verificador.');return}
                   if(!validarEmail(form.email)){setError('El correo electrónico no tiene un formato válido. Debe ser tipo correo@dominio.com');return}
                   const hoy = new Date(); const nac = new Date(form.fecha_nacimiento); const edad = hoy.getFullYear()-nac.getFullYear()-(hoy<new Date(hoy.getFullYear(),nac.getMonth(),nac.getDate())?1:0)
                   if(edad<18){setError('Debes tener al menos 18 años para solicitar incorporación.');return}
-                  setError('');setPaso(2)
+                  setError('');setPaso(3)
                 }}>Siguiente →</button>
               </div>
             </div>
           )}
 
-          {/* PASO 2 — Domicilio */}
-          {paso===2 && (
+          {/* PASO 3 — Domicilio */}
+          {paso===3 && (
             <div>
               <h2 style={{fontSize:15,fontWeight:600,marginBottom:16}}>📍 Domicilio</h2>
               <div style={{background:'#E6F1FB',border:'1px solid #A8CBF0',borderRadius:8,padding:'10px 14px',fontSize:12,color:'#185FA5',marginBottom:16}}>
@@ -591,17 +609,17 @@ export default function Inscripcion() {
                 </div>
               </div>
               <div style={{display:'flex',justifyContent:'space-between',marginTop:20}}>
-                <button style={s.btnOutline} onClick={()=>setPaso(1)}>← Anterior</button>
+                <button style={s.btnOutline} onClick={()=>setPaso(2)}>← Anterior</button>
                 <button style={s.btnPrimary} onClick={()=>{
                   if(!form.direccion||!form.comuna||!form.ciudad){setError('Completa todos los campos obligatorios.');return}
-                  setError('');setPaso(3)
+                  setError('');setPaso(4)
                 }}>Siguiente →</button>
               </div>
             </div>
           )}
 
-          {/* PASO 3 — Info médica */}
-          {paso===3 && (
+          {/* PASO 4 — Info médica */}
+          {paso===4 && (
             <div>
               <h2 style={{fontSize:15,fontWeight:600,marginBottom:20}}>🩺 Información médica y delegación al cultivo</h2>
               <div style={{...s.grid2,marginBottom:12}}>
@@ -647,18 +665,18 @@ export default function Inscripcion() {
               </div>
               <div style={s.field}><label style={s.label}>Observaciones médicas</label><textarea style={{...s.input,height:70,resize:'none'}} value={form.observaciones} onChange={e=>update('observaciones',e.target.value)} placeholder="Observaciones relevantes (opcional)"/></div>
               <div style={{display:'flex',justifyContent:'space-between',marginTop:20}}>
-                <button style={s.btnOutline} onClick={()=>setPaso(2)}>← Anterior</button>
+                <button style={s.btnOutline} onClick={()=>setPaso(3)}>← Anterior</button>
                 <button style={s.btnPrimary} onClick={()=>{
                   if(!form.diagnostico||!form.medico_nombre||!form.medico_rut||!form.folio_receta||!form.cuota_mensual||!form.gramos_delegados||!form.vencimiento_receta){setError('Completa todos los campos obligatorios.');return}
                   if(parseInt(form.gramos_delegados)>parseInt(form.cuota_mensual)){setError('Los gramos delegados no pueden superar los autorizados en receta.');return}
-                  setError('');setPaso(4)
+                  setError('');setPaso(5)
                 }}>Siguiente →</button>
               </div>
             </div>
           )}
 
-          {/* PASO 4 — Documentos */}
-          {paso===4 && (
+          {/* PASO 5 — Documentos */}
+          {paso===5 && (
             <div>
               <h2 style={{fontSize:15,fontWeight:600,marginBottom:20}}>📎 Documentos requeridos</h2>
               <div style={{border:'1px dashed #d1d5db',borderRadius:12,padding:20,textAlign:'center',background:'#f9fafb',marginBottom:16}}>
@@ -683,19 +701,19 @@ export default function Inscripcion() {
                 </div>
               ))}
               <div style={{display:'flex',justifyContent:'space-between',marginTop:20}}>
-                <button style={s.btnOutline} onClick={()=>setPaso(3)}>← Anterior</button>
+                <button style={s.btnOutline} onClick={()=>setPaso(4)}>← Anterior</button>
                 <button
                   style={{...s.btnPrimary,opacity:(archivos.cedula_anverso&&archivos.cedula_reverso&&archivos.receta&&archivos.antecedentes)?1:0.4,cursor:(archivos.cedula_anverso&&archivos.cedula_reverso&&archivos.receta&&archivos.antecedentes)?'pointer':'not-allowed'}}
                   onClick={()=>{
                     if(!archivos.cedula_anverso||!archivos.cedula_reverso||!archivos.receta||!archivos.antecedentes){setError('Debes subir todos los documentos requeridos para continuar.');return}
-                    setError('');setPaso(5)
+                    setError('');setPaso(6)
                   }}>Siguiente →</button>
               </div>
             </div>
           )}
 
-          {/* PASO 5 — Reglamento */}
-          {paso===5 && (
+          {/* PASO 6 — Reglamento */}
+          {paso===6 && (
             <div>
               <h2 style={{fontSize:15,fontWeight:600,marginBottom:6}}>📖 Reglamento Interno — Asociación GreenTech</h2>
               <p style={{fontSize:12,color:'#6b7280',marginBottom:14}}>Debes leer y aceptar el reglamento antes de enviar tu solicitud.</p>
@@ -791,63 +809,12 @@ export default function Inscripcion() {
               </div>
               {reglamentoAceptado&&<div style={{marginTop:8,background:'#EAF3DE',border:'1px solid #97C459',borderRadius:8,padding:'8px 12px',fontSize:11,color:'#3B6D11'}}>✓ Aceptación registrada con fecha, hora e IP en tu expediente.</div>}
               <div style={{display:'flex',justifyContent:'space-between',marginTop:20}}>
-                <button style={s.btnOutline} onClick={()=>setPaso(4)}>← Anterior</button>
-                <button style={{...s.btnPrimary,opacity:reglamentoAceptado?1:0.5,cursor:reglamentoAceptado?'pointer':'not-allowed'}} onClick={()=>reglamentoAceptado&&(setError(''),setPaso(6))}>Siguiente →</button>
-              </div>
-            </div>
-          )}
-
-          {/* PASO 6 — Pago de incorporación */}
-          {paso===6 && (
-            <div>
-              <h2 style={{fontSize:15,fontWeight:600,marginBottom:6}}>💳 Pago de incorporación</h2>
-              <p style={{fontSize:12,color:'#6b7280',marginBottom:20}}>Para continuar con la generación y firma de tus contratos, debes realizar el pago del proceso de incorporación.</p>
-
-              {/* Banner Mercado Pago */}
-              <div style={{background:'#f0f9ff',border:'1px solid #7dd3fc',borderRadius:10,padding:'10px 14px',fontSize:12,color:'#0369a1',marginBottom:20,display:'flex',alignItems:'center',gap:8}}>
-                🔵 <span><strong>Pago seguro con Mercado Pago</strong> — Acepta tarjetas de débito, crédito y transferencia bancaria.</span>
-              </div>
-
-              {/* Detalle del cobro */}
-              <div style={{border:'1px solid #e5e7eb',borderRadius:12,overflow:'hidden',marginBottom:20}}>
-                <div style={{background:'#f9fafb',padding:'12px 16px',borderBottom:'1px solid #e5e7eb'}}>
-                  <div style={{fontSize:11,fontWeight:600,color:'#9ca3af',textTransform:'uppercase',letterSpacing:'0.05em'}}>Detalle del cobro</div>
-                </div>
-                <div style={{padding:'14px 16px'}}>
-                  <div style={{display:'flex',justifyContent:'space-between',fontSize:13,padding:'7px 0',borderBottom:'1px solid #f3f4f6'}}>
-                    <span style={{color:'#374151'}}>Proceso de incorporación como socio GreenTech</span>
-                    <span style={{fontWeight:500}}>$25.000</span>
-                  </div>
-                  <div style={{display:'flex',justifyContent:'space-between',fontSize:15,fontWeight:700,padding:'10px 0 4px',marginTop:4,borderTop:'2px solid #e5e7eb'}}>
-                    <span>Total a pagar</span>
-                    <span style={{color:'#3B6D11'}}>$25.000</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Info del proceso */}
-              <div style={{background:'#EAF3DE',border:'1px solid #97C459',borderRadius:10,padding:'12px 14px',fontSize:12,color:'#3B6D11',marginBottom:24,lineHeight:1.7}}>
-                <strong>¿Qué incluye este pago?</strong><br/>
-                ✓ Revisión de tu solicitud por la directiva<br/>
-                ✓ Generación de contratos personalizados con tus datos<br/>
-                ✓ Firma electrónica avanzada (Ley 19.799)<br/>
-                ✓ Alta en el sistema GreenTech
-              </div>
-
-              {error && <div style={{background:'#FCEBEB',border:'1px solid #F5C5C5',borderRadius:8,padding:'10px 12px',fontSize:12,color:'#A32D2D',marginBottom:14}}>⚠️ {error}</div>}
-
-              <button onClick={handlePagoMP} disabled={mpLoading}
-                style={{width:'100%',padding:'14px',border:'none',borderRadius:12,background:mpLoading?'#9ca3af':'#009ee3',color:'#fff',fontSize:15,fontWeight:700,cursor:mpLoading?'not-allowed':'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:10,marginBottom:10}}>
-                {mpLoading ? '⏳ Redirigiendo a Mercado Pago...' : '💳 Pagar $25.000 con Mercado Pago →'}
-              </button>
-              <div style={{textAlign:'center',fontSize:11,color:'#9ca3af',marginBottom:16}}>
-                🔒 Pago seguro · Mercado Pago · SSL
-              </div>
-              <div style={{display:'flex',justifyContent:'flex-start'}}>
                 <button style={s.btnOutline} onClick={()=>setPaso(5)}>← Anterior</button>
+                <button style={{...s.btnPrimary,opacity:reglamentoAceptado?1:0.5,cursor:reglamentoAceptado?'pointer':'not-allowed'}} onClick={()=>reglamentoAceptado&&(setError(''),setPaso(7))}>Siguiente →</button>
               </div>
             </div>
           )}
+
 
           {/* PASO 7 — Contrato de Previsión y Delegación de Cultivo */}
           {paso===7 && (() => {
@@ -1002,12 +969,6 @@ export default function Inscripcion() {
                 1. La directiva revisará tus documentos y antecedentes.<br/>
                 2. Si es aprobada, recibirás tus credenciales de acceso por correo.<br/>
                 3. Podrás ingresar con tu RUT y la contraseña asignada.
-              </div>
-              <div style={{background:'#E6F1FB',border:'1px solid #A8CBF0',borderRadius:12,padding:16,marginBottom:24,textAlign:'left',fontSize:12,color:'#185FA5',lineHeight:1.7}}>
-                <strong>✍️ Firma Electrónica Avanzada (FEA)</strong><br/>
-                Tu Contrato de Previsión y Declaración Jurada ya fueron enviados a FirmaVirtual para su firma electrónica avanzada (Ley 19.799).<br/>
-                <strong>Recibirás un correo en {form.email} con el enlace para firmar desde tu celular</strong> usando tu Clave Única.<br/>
-                <span style={{fontSize:11,color:'#6b7280'}}>El proceso de firma toma menos de 2 minutos.</span>
               </div>
               <Link href="/" style={{...s.btnPrimary,textDecoration:'none',display:'inline-block'}}>Volver al inicio</Link>
             </div>
