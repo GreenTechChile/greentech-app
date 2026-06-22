@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import SidebarAdmin from '@/components/admin/SidebarAdmin'
 import { supabase } from '@/lib/supabase'
 import { sendEmail } from '@/lib/email'
@@ -14,6 +14,12 @@ interface Socio {
   notas_admin: string; created_at: string
 }
 
+// Qué documentos firmados se requieren antes de poder aprobar
+const DOCS_FIRMA = [
+  { label: 'Contrato de previsión y delegación', storageKey: 'contrato', firmaKey: 'contrato_firmado' },
+  { label: 'Declaración jurada de ingreso',       storageKey: 'declaracion_jurada', firmaKey: 'declaracion_jurada_firmada' },
+]
+
 export default function AdminSocios() {
   const [tab, setTab] = useState<'pendientes'|'aprobados'|'rechazados'>('pendientes')
   const [socios, setSocios] = useState<Socio[]>([])
@@ -23,6 +29,11 @@ export default function AdminSocios() {
   const [mensaje, setMensaje] = useState('')
   const [expandido, setExpandido] = useState<string|null>(null)
 
+  // { [socioId]: { contrato_firmado: true/false, declaracion_jurada_firmada: true/false } }
+  const [firmados, setFirmados] = useState<Record<string, Record<string,boolean>>>({})
+  const [subiendo, setSubiendo] = useState<Record<string,boolean>>({})
+  const fileInputRefs = useRef<Record<string, HTMLInputElement|null>>({})
+
   useEffect(() => { cargarSocios() }, [tab])
 
   const cargarSocios = async () => {
@@ -31,6 +42,68 @@ export default function AdminSocios() {
     const { data } = await supabase.from('socios').select('*').eq('estado', estadoMap[tab]).order('created_at', { ascending: false })
     if (data) setSocios(data)
     setLoading(false)
+  }
+
+  // Verifica en storage si los documentos firmados ya fueron subidos
+  const verificarFirmados = async (socio: Socio) => {
+    const resultados: Record<string,boolean> = {}
+    for (const doc of DOCS_FIRMA) {
+      const { data } = await supabase.storage.from('documentos').list(socio.rut, { search: doc.firmaKey })
+      resultados[doc.firmaKey] = !!(data && data.length > 0)
+    }
+    setFirmados(prev => ({ ...prev, [socio.id]: resultados }))
+  }
+
+  const toggleExpandido = async (socio: Socio) => {
+    const abierto = expandido === socio.id
+    setExpandido(abierto ? null : socio.id)
+    if (!abierto && tab === 'pendientes') {
+      await verificarFirmados(socio)
+    }
+  }
+
+  // Descarga el PDF original (sin firma)
+  const bajarDoc = async (e: React.MouseEvent, rut: string, storageKey: string) => {
+    e.stopPropagation()
+    for (const ext of ['pdf','jpg','jpeg','png']) {
+      const { data } = await supabase.storage.from('documentos').createSignedUrl(`${rut}/${storageKey}.${ext}`, 60)
+      if (data?.signedUrl) {
+        const a = document.createElement('a')
+        a.href = data.signedUrl
+        a.download = `${storageKey}.${ext}`
+        a.click()
+        return
+      }
+    }
+    alert('Documento no encontrado.')
+  }
+
+  // Sube el documento ya firmado
+  const subirFirmado = async (socio: Socio, firmaKey: string, file: File) => {
+    const subiendoKey = `${socio.id}_${firmaKey}`
+    setSubiendo(prev => ({ ...prev, [subiendoKey]: true }))
+    try {
+      const { error } = await supabase.storage.from('documentos').upload(
+        `${socio.rut}/${firmaKey}.pdf`,
+        file,
+        { contentType: 'application/pdf', upsert: true }
+      )
+      if (error) throw error
+      setFirmados(prev => ({
+        ...prev,
+        [socio.id]: { ...prev[socio.id], [firmaKey]: true }
+      }))
+    } catch (err) {
+      alert(`Error al subir: ${err instanceof Error ? err.message : 'Intenta nuevamente'}`)
+    } finally {
+      setSubiendo(prev => ({ ...prev, [subiendoKey]: false }))
+    }
+  }
+
+  const ambosDocsFirmados = (socioId: string) => {
+    const f = firmados[socioId]
+    if (!f) return false
+    return DOCS_FIRMA.every(d => f[d.firmaKey] === true)
   }
 
   const aprobar = async (socio: Socio) => {
@@ -104,13 +177,14 @@ export default function AdminSocios() {
           const dias = diasDesde(socio.created_at)
           const urgente = dias >= 4 && tab === 'pendientes'
           const abierto = expandido === socio.id
+          const listoParaAprobar = ambosDocsFirmados(socio.id)
 
           return (
             <div key={socio.id} style={{ border: `1px solid ${urgente ? '#F5C5C5' : '#e5e7eb'}`, borderRadius: 12, marginBottom: 16, overflow: 'hidden' }}>
 
               {/* Header */}
               <div
-                onClick={() => setExpandido(abierto ? null : socio.id)}
+                onClick={() => toggleExpandido(socio)}
                 style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: urgente ? '#FFF8F8' : '#f9fafb', borderBottom: abierto ? '1px solid #e5e7eb' : 'none', cursor: 'pointer' }}
               >
                 <div style={{ width: 38, height: 38, borderRadius: '50%', background: '#E6F1FB', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: '#185FA5', flexShrink: 0 }}>
@@ -155,16 +229,16 @@ export default function AdminSocios() {
                     </div>
                     <div style={{ padding: '14px 16px' }}>
                       <div style={{ fontSize: 11, fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 10 }}>Documentos</div>
+
+                      {/* Documentos normales (solo Ver) */}
                       {[
-                        { label: 'Cédula — Anverso', key: 'cedula_anverso' },
-                        { label: 'Cédula — Reverso', key: 'cedula_reverso' },
-                        { label: 'Receta médica vigente', key: 'receta' },
-                        { label: 'Cert. antecedentes', key: 'antecedentes' },
-                        { label: 'Contrato de previsión y delegación', key: 'contrato' },
-                        { label: 'Declaración jurada de ingreso', key: 'declaracion_jurada' },
+                        { label: 'Cédula — Anverso',       key: 'cedula_anverso' },
+                        { label: 'Cédula — Reverso',        key: 'cedula_reverso' },
+                        { label: 'Receta médica vigente',   key: 'receta' },
+                        { label: 'Cert. antecedentes',      key: 'antecedentes' },
                       ].map((d,i) => (
                         <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', background: '#f9fafb', borderRadius: 6, marginBottom: 6, fontSize: 12 }}>
-                          <span>{['contrato','declaracion_jurada'].includes(d.key) ? '📋' : '📄'}</span>
+                          <span>📄</span>
                           <span style={{ flex: 1 }}>{d.label}</span>
                           <button onClick={async (e) => {
                             e.stopPropagation()
@@ -185,11 +259,70 @@ export default function AdminSocios() {
                           </button>
                         </div>
                       ))}
+
+                      {/* Documentos que requieren firma manual */}
+                      {DOCS_FIRMA.map((d,i) => {
+                        const firmado = firmados[socio.id]?.[d.firmaKey]
+                        const subiendoKey = `${socio.id}_${d.firmaKey}`
+                        const estaSubiendo = subiendo[subiendoKey]
+                        return (
+                          <div key={i} style={{ background: firmado ? '#EAF3DE' : '#f9fafb', border: `1px solid ${firmado ? '#97C459' : '#e5e7eb'}`, borderRadius: 6, marginBottom: 6, overflow: 'hidden' }}>
+                            {/* Fila principal */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', fontSize: 12 }}>
+                              <span>📋</span>
+                              <span style={{ flex: 1 }}>{d.label}</span>
+                              {firmado
+                                ? <span style={{ fontSize: 10, background: '#3B6D11', color: '#fff', padding: '2px 8px', borderRadius: 20 }}>✓ Firmado</span>
+                                : <span style={{ fontSize: 10, background: '#FAEEDA', color: '#633806', padding: '2px 8px', borderRadius: 20 }}>Pendiente firma</span>
+                              }
+                            </div>
+                            {/* Fila botones: solo en tab pendientes */}
+                            {tab === 'pendientes' && (
+                              <div style={{ display: 'flex', gap: 6, padding: '0 8px 8px', alignItems: 'center' }}>
+                                {/* Bajar original */}
+                                <button
+                                  onClick={(e) => bajarDoc(e, socio.rut, d.storageKey)}
+                                  style={{ flex: 1, fontSize: 11, padding: '4px 0', background: '#E6F1FB', color: '#185FA5', border: '1px solid #A8CBF0', borderRadius: 6, cursor: 'pointer', fontWeight: 500 }}>
+                                  ⬇ Bajar para firmar
+                                </button>
+                                {/* Subir firmado */}
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); fileInputRefs.current[subiendoKey]?.click() }}
+                                  disabled={estaSubiendo}
+                                  style={{ flex: 1, fontSize: 11, padding: '4px 0', background: estaSubiendo ? '#9ca3af' : firmado ? '#EAF3DE' : '#fff', color: estaSubiendo ? '#fff' : firmado ? '#3B6D11' : '#374151', border: `1px solid ${firmado ? '#97C459' : '#e5e7eb'}`, borderRadius: 6, cursor: estaSubiendo ? 'not-allowed' : 'pointer', fontWeight: 500 }}>
+                                  {estaSubiendo ? '⏳ Subiendo...' : firmado ? '↑ Reemplazar firmado' : '⬆ Subir firmado'}
+                                </button>
+                                <input
+                                  type="file"
+                                  accept="application/pdf"
+                                  style={{ display: 'none' }}
+                                  ref={el => { fileInputRefs.current[subiendoKey] = el }}
+                                  onClick={e => e.stopPropagation()}
+                                  onChange={async (e) => {
+                                    const file = e.target.files?.[0]
+                                    if (file) await subirFirmado(socio, d.firmaKey, file)
+                                    e.target.value = ''
+                                  }}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })}
+
+                      {/* Reglamento */}
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', background: '#EAF3DE', borderRadius: 6, marginBottom: 6, fontSize: 12 }}>
                         <span>✅</span>
                         <span style={{ flex: 1 }}>Reglamento aceptado en línea</span>
                         <span style={{ fontSize: 10, background: '#3B6D11', color: '#EAF3DE', padding: '2px 8px', borderRadius: 20 }}>Firmado</span>
                       </div>
+
+                      {/* Aviso si faltan documentos firmados (solo pendientes) */}
+                      {tab === 'pendientes' && !listoParaAprobar && (
+                        <div style={{ fontSize: 11, color: '#92400e', background: '#FFFBEB', border: '1px solid #FCD34D', borderRadius: 6, padding: '6px 8px', marginTop: 4 }}>
+                          ⚠️ Sube ambos documentos firmados para habilitar la aprobación.
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -204,8 +337,11 @@ export default function AdminSocios() {
                         style={{ padding: '7px 16px', border: '1px solid #A32D2D', borderRadius: 8, background: 'transparent', color: '#A32D2D', fontSize: 12, cursor: 'pointer', fontWeight: 500 }}>
                         ✕ Rechazar
                       </button>
-                      <button onClick={(e) => { e.stopPropagation(); aprobar(socio) }} disabled={procesando === socio.id}
-                        style={{ padding: '7px 16px', border: 'none', borderRadius: 8, background: procesando === socio.id ? '#9ca3af' : '#3B6D11', color: '#EAF3DE', fontSize: 12, cursor: procesando === socio.id ? 'not-allowed' : 'pointer', fontWeight: 600 }}>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); if (listoParaAprobar) aprobar(socio) }}
+                        disabled={procesando === socio.id || !listoParaAprobar}
+                        title={!listoParaAprobar ? 'Sube el contrato y la declaración firmados primero' : ''}
+                        style={{ padding: '7px 16px', border: 'none', borderRadius: 8, background: procesando === socio.id ? '#9ca3af' : !listoParaAprobar ? '#d1d5db' : '#3B6D11', color: !listoParaAprobar ? '#6b7280' : '#EAF3DE', fontSize: 12, cursor: procesando === socio.id || !listoParaAprobar ? 'not-allowed' : 'pointer', fontWeight: 600 }}>
                         {procesando === socio.id ? 'Procesando...' : '✓ Aprobar'}
                       </button>
                     </div>
