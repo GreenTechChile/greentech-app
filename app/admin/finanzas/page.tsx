@@ -37,7 +37,7 @@ const MESES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov'
 const MESES_FULL = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
 
 export default function Finanzas() {
-  const [tab, setTab] = useState<'resumen'|'aportes'|'costos'|'extraordinarios'>('resumen')
+  const [tab, setTab] = useState<'resumen'|'aportes'|'incorporaciones'|'costos'|'extraordinarios'>('resumen')
   const [aportesExt, setAportesExt] = useState<any[]>([])
   const [nuevoAporteConcepto, setNuevoAporteConcepto] = useState('')
   const [nuevoAporteMonto, setNuevoAporteMonto] = useState('')
@@ -46,6 +46,7 @@ export default function Finanzas() {
   const [nuevoAporteFile, setNuevoAporteFile] = useState<File|null>(null)
   const [guardandoAporte, setGuardandoAporte] = useState(false)
   const [dispensaciones, setDispensaciones] = useState<Dispensacion[]>([])
+  const [ingresosIncorporacion, setIngresosIncorporacion] = useState<Movimiento[]>([])
   const [costos, setCostos] = useState<Movimiento[]>([])
   const [pagosContratos, setPagosContratos] = useState<PagoContrato[]>([])
   const [loading, setLoading] = useState(true)
@@ -85,13 +86,15 @@ export default function Finanzas() {
 
   const cargarDatos = async () => {
     setLoading(true)
-    const [dispRes, movRes, pagContRes] = await Promise.all([
+    const [dispRes, movEgresoRes, movIngresoRes, pagContRes] = await Promise.all([
       supabase.from('dispensaciones').select('id,monto,mes,año').eq('año', filtroAño),
       supabase.from('movimientos_financieros').select('*').eq('año', filtroAño).eq('tipo','egreso').order('created_at', { ascending: false }),
+      supabase.from('movimientos_financieros').select('*').eq('año', filtroAño).eq('tipo','ingreso').order('created_at', { ascending: false }),
       supabase.from('pagos_contratos').select('*, contrato:contratos(nombre,tipo,rol_funcion)').eq('año', filtroAño).eq('estado','pagado').order('mes', { ascending: true }),
     ])
     if (dispRes.data) setDispensaciones(dispRes.data as unknown as Dispensacion[])
-    if (movRes.data) setCostos(movRes.data as unknown as Movimiento[])
+    if (movEgresoRes.data) setCostos(movEgresoRes.data as unknown as Movimiento[])
+    if (movIngresoRes.data) setIngresosIncorporacion(movIngresoRes.data as unknown as Movimiento[])
     const { data: ae } = await supabase.from('aportes_extraordinarios').select('*').eq('año', filtroAño).order('created_at', { ascending: false })
     if (ae) setAportesExt(ae)
     if (pagContRes.data) setPagosContratos(pagContRes.data as any[])
@@ -166,7 +169,9 @@ export default function Finanzas() {
 
   const costosPorMes = (mes: number) => costos.filter(c => c.mes === mes).reduce((a, c) => a + c.monto, 0) + pagosContratos.filter(p => p.mes === mes).reduce((a, p) => a + p.monto_liquido, 0)
 
-  const totalIngresos = dispensaciones.reduce((a, d) => a + d.monto, 0)
+  const totalIngresoDispensaciones = dispensaciones.reduce((a, d) => a + d.monto, 0)
+  const totalIngresoIncorporaciones = ingresosIncorporacion.reduce((a, m) => a + m.monto, 0)
+  const totalIngresos = totalIngresoDispensaciones + totalIngresoIncorporaciones
   const totalCostosDirectos = costos.reduce((a, c) => a + c.monto, 0)
   const totalPagosContratos = pagosContratos.reduce((a, p) => a + p.monto_liquido, 0)
   const totalCostos = totalCostosDirectos + totalPagosContratos
@@ -223,7 +228,7 @@ export default function Finanzas() {
         {/* Métricas */}
         <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:10, marginBottom:20 }}>
           {[
-            { label:`Ingresos ${filtroAño}`, value:`$${totalIngresos.toLocaleString('es-CL')}`, sub:`${dispensaciones.length} dispensaciones`, color:'#3B6D11' },
+            { label:`Ingresos ${filtroAño}`, value:`$${totalIngresos.toLocaleString('es-CL')}`, sub:`${dispensaciones.length} dispensaciones · ${ingresosIncorporacion.length} incorporaciones`, color:'#3B6D11' },
             { label:`Costos ${filtroAño}`, value:`$${totalCostos.toLocaleString('es-CL')}`, sub:`${costos.length} registros`, color:'#A32D2D' },
             { label:'Superávit acumulado', value:`$${Math.abs(superavit).toLocaleString('es-CL')}`, sub:superavit >= 0 ? 'balance positivo ✓' : 'balance negativo ⚠️', color: superavit >= 0 ? '#185FA5' : '#A32D2D' },
             { label:`Promedio mensual`, value:`$${mesesConActividad.length>0 ? Math.round(totalIngresos/mesesConActividad.length).toLocaleString('es-CL') : 0}`, sub:'en ingresos' },
@@ -238,7 +243,7 @@ export default function Finanzas() {
 
         {/* Tabs */}
         <div style={{ display:'flex', borderBottom:'1px solid #e5e7eb', marginBottom:20 }}>
-          {[{key:'resumen',label:'📊 Resumen'},{key:'aportes',label:'💰 Aportes socios'},{key:'costos',label:'📋 Costos'},{key:'extraordinarios',label:'⭐ Aportes extraordinarios'}].map(t => (
+          {[{key:'resumen',label:'📊 Resumen'},{key:'aportes',label:'💰 Aportes socios'},{key:'incorporaciones',label:'💳 Incorporaciones'},{key:'costos',label:'📋 Costos'},{key:'extraordinarios',label:'⭐ Aportes extraordinarios'}].map(t => (
             <button key={t.key} onClick={() => setTab(t.key as typeof tab)}
               style={{ padding:'8px 18px', fontSize:13, background:'none', border:'none', cursor:'pointer', borderBottom:tab===t.key?'2px solid #185FA5':'2px solid transparent', color:tab===t.key?'#185FA5':'#6b7280', fontWeight:tab===t.key?600:400, marginBottom:-1 }}>
               {t.label}
@@ -399,6 +404,52 @@ export default function Finanzas() {
                       <td colSpan={3} style={{ padding:'9px 14px', fontWeight:600 }}>Total {MESES_FULL[mesFiltro-1]}</td>
                       <td style={{ padding:'9px 14px', fontWeight:700, color:'#3B6D11', fontSize:14 }}>${ingresosMes.toLocaleString('es-CL')}</td>
                       <td/>
+                    </tr>
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </>
+        )}
+
+        {/* TAB INCORPORACIONES */}
+        {tab === 'incorporaciones' && (
+          <>
+            <div style={{ border:'1px solid #e5e7eb', borderRadius:12, overflow:'hidden' }}>
+              <div style={{ padding:'12px 16px', borderBottom:'1px solid #e5e7eb', display:'flex', justifyContent:'space-between', background:'#f9fafb', fontSize:13, fontWeight:600 }}>
+                <span>Pagos de incorporación — {filtroAño}</span>
+                <span style={{ color:'#3B6D11' }}>${totalIngresoIncorporaciones.toLocaleString('es-CL')}</span>
+              </div>
+              {loading ? (
+                <div style={{ padding:20, fontSize:13, color:'#9ca3af', textAlign:'center' }}>Cargando...</div>
+              ) : ingresosIncorporacion.length === 0 ? (
+                <div style={{ padding:40, fontSize:13, color:'#9ca3af', textAlign:'center', border:'1px dashed #e5e7eb', borderRadius:12, margin:16 }}>
+                  Sin pagos de incorporación registrados para {filtroAño}
+                </div>
+              ) : (
+                <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
+                  <thead>
+                    <tr style={{ borderBottom:'1px solid #e5e7eb' }}>
+                      {['#','Concepto','Categoría','Mes','Monto'].map(h => (
+                        <th key={h} style={{ textAlign:'left', padding:'8px 14px', fontSize:11, color:'#9ca3af', fontWeight:500 }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {ingresosIncorporacion.map((m, i) => (
+                      <tr key={m.id} style={{ borderBottom:'1px solid #f3f4f6' }}>
+                        <td style={{ padding:'9px 14px', color:'#9ca3af' }}>{i + 1}</td>
+                        <td style={{ padding:'9px 14px', fontWeight:500 }}>{m.concepto}</td>
+                        <td style={{ padding:'9px 14px' }}>
+                          <span style={{ fontSize:10, background:'#E6F1FB', color:'#185FA5', padding:'2px 8px', borderRadius:20 }}>{m.categoria}</span>
+                        </td>
+                        <td style={{ padding:'9px 14px', color:'#6b7280' }}>{MESES_FULL[m.mes - 1]}</td>
+                        <td style={{ padding:'9px 14px', fontWeight:600, color:'#3B6D11' }}>${m.monto.toLocaleString('es-CL')}</td>
+                      </tr>
+                    ))}
+                    <tr style={{ background:'#f9fafb', borderTop:'1px solid #e5e7eb' }}>
+                      <td colSpan={4} style={{ padding:'9px 14px', fontWeight:600 }}>Total incorporaciones {filtroAño}</td>
+                      <td style={{ padding:'9px 14px', fontWeight:700, color:'#3B6D11', fontSize:14 }}>${totalIngresoIncorporaciones.toLocaleString('es-CL')}</td>
                     </tr>
                   </tbody>
                 </table>
