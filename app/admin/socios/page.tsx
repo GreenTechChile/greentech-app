@@ -133,6 +133,23 @@ export default function AdminSocios() {
     setSocios(prev => prev.filter(s => s.id !== socio.id))
     setProcesando(null)
     setTimeout(() => setMensaje(''), 4000)
+    // Registrar igualmente el ingreso — el pago ya fue cobrado aunque se rechace
+    try {
+      const { data: configPago } = await supabase.from('configuracion').select('datos').eq('id', 'pago_incorporacion').single()
+      const monto: number = configPago?.datos?.monto ?? 25000
+      const ahora = new Date()
+      await supabase.from('movimientos_financieros').insert({
+        tipo: 'ingreso',
+        categoria: 'Incorporación',
+        concepto: `Pago de incorporación (rechazado) — ${socio.nombre} (${socio.rut})`,
+        monto,
+        socio_id: socio.id,
+        mes: ahora.getMonth() + 1,
+        año: ahora.getFullYear(),
+      })
+    } catch (finErr) {
+      console.error('[rechazar] error registrando movimiento financiero:', finErr)
+    }
     try {
       const motivo = notas[socio.id] || 'No se especificó motivo.'
       await sendEmail('rechazo_solicitud', socio.email, { nombre: socio.nombre, motivo })
