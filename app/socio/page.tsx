@@ -18,6 +18,14 @@ export default function SocioDashboard() {
   const [dispensaciones, setDispensaciones] = useState<Dispensacion[]>([])
   const [dispensadoMes, setDispensadoMes] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
 
   const estadoColor: Record<string, string> = {
     'despachado': '#185FA5', 'entregado': '#3B6D11', 'preparando': '#BA7517', 'pagado': '#3B6D11',
@@ -85,16 +93,16 @@ export default function SocioDashboard() {
   const mesNombre = new Date().toLocaleString('es-CL', { month: 'long', year: 'numeric' })
 
   return (
-    <div style={{ display:'flex', minHeight:'100vh' }}>
+    <div style={{ display:'flex', minHeight:'100vh', overflowX:'hidden' }}>
       <SidebarSocio nombre={socio.nombre} rut={socio.rut} />
-      <main style={{ flex:1, padding:24, overflowY:'auto' }}>
+      <main style={{ flex:1, padding: isMobile ? '76px 12px 20px' : 24, overflowY:'auto', minWidth:0 }}>
 
-        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:20 }}>
+        <div style={{ display:'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent:'space-between', alignItems: isMobile ? 'flex-start' : 'flex-start', gap: isMobile ? 12 : 0, marginBottom:20 }}>
           <div>
             <h1 style={{ fontSize:18, fontWeight:600, marginBottom:3 }}>Bienvenido, {socio.nombre.split(' ')[0]}</h1>
             <p style={{ fontSize:13, color:'#6b7280' }}>{new Date().toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</p>
           </div>
-          <Link href="/socio/dispensacion" style={{ padding:'9px 18px', background:'#3B6D11', borderRadius:8, fontSize:13, color:'#EAF3DE', fontWeight:600, textDecoration:'none', display:'flex', alignItems:'center', gap:6 }}>
+          <Link href="/socio/dispensacion" style={{ padding:'9px 18px', background:'#3B6D11', borderRadius:8, fontSize:13, color:'#EAF3DE', fontWeight:600, textDecoration:'none', display:'flex', alignItems:'center', gap:6, alignSelf: isMobile ? 'stretch' : 'auto', justifyContent: isMobile ? 'center' : 'flex-start' }}>
             🌿 Nueva dispensación
           </Link>
         </div>
@@ -108,7 +116,7 @@ export default function SocioDashboard() {
         </div>
 
         {/* Métricas */}
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:10, marginBottom:20 }}>
+        <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4,1fr)', gap:10, marginBottom:20 }}>
           {[
             { label:'Cuota mensual', value: cuota > 0 ? `${cuota} gr` : 'Sin asignar', sub:'delegados a GreenTech' },
             { label:`Dispensado en ${new Date().toLocaleString('es-CL',{month:'long'})}`, value:`${dispensadoMes} gr`, sub:`${dispensaciones.filter(d => { const m = new Date(d.created_at).getMonth()+1; return m === new Date().getMonth()+1 }).length} dispensaciones`, color: dispensadoMes > 0 ? '#3B6D11' : undefined },
@@ -135,7 +143,7 @@ export default function SocioDashboard() {
           </div>
         </div>
 
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
+        <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap:16 }}>
 
           {/* Últimas dispensaciones */}
           <div style={{ border:'1px solid #e5e7eb', borderRadius:12, padding:16 }}>

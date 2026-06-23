@@ -140,9 +140,9 @@ export default function MisDocumentos() {
   if (!rutSocio) return <div style={{ display:'flex', minHeight:'100vh', alignItems:'center', justifyContent:'center', fontSize:13, color:'#9ca3af' }}>Cargando...</div>
 
   return (
-    <div style={{ display:'flex', minHeight:'100vh' }}>
+    <div style={{ display:'flex', minHeight:'100vh', overflowX:'hidden' }}>
       <SidebarSocio nombre={nombreSocio} rut={rutSocio} />
-      <main style={{ flex:1, padding:24, overflowY:'auto', background:'#f9fafb' }}>
+      <main style={{ flex:1, padding:24, overflowY:'auto', minWidth:0, background:'#f9fafb' }}>
         <div style={{ marginBottom:20 }}>
           <h1 style={{ fontSize:18, fontWeight:600, marginBottom:3 }}>Mis documentos</h1>
           <p style={{ fontSize:13, color:'#6b7280' }}>Expediente completo de tu membresía como socio</p>

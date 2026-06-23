@@ -57,9 +57,9 @@ export default function AdminDashboard() {
   const fechaCap = fecha.charAt(0).toUpperCase() + fecha.slice(1)
 
   return (
-    <div style={{ display:'flex', minHeight:'100vh' }}>
+    <div style={{ display:'flex', minHeight:'100vh', overflowX:'hidden' }}>
       <SidebarAdmin />
-      <main style={{ flex:1, padding:24, overflowY:'auto', background:'#fff' }}>
+      <main style={{ flex:1, padding:24, overflowY:'auto', minWidth:0, background:'#fff' }}>
 
         <div style={{ marginBottom:20 }}>
           <h1 style={{ fontSize:18, fontWeight:600, marginBottom:3 }}>Panel general</h1>

@@ -161,9 +161,9 @@ export default function AdminSocios() {
   const diasDesde = (fecha: string) => Math.floor((Date.now() - new Date(fecha).getTime()) / (1000*60*60*24))
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', overflowX: 'hidden' }}>
       <SidebarAdmin />
-      <main style={{ flex: 1, padding: 24, overflowY: 'auto', background: '#fff' }}>
+      <main style={{ flex: 1, padding: 24, overflowY: 'auto', minWidth: 0, background: '#fff' }}>
         <div style={{ marginBottom: 20 }}>
           <h1 style={{ fontSize: 18, fontWeight: 600, marginBottom: 3 }}>Solicitudes de ingreso</h1>
           <p style={{ fontSize: 13, color: '#6b7280' }}>Revisa los antecedentes y aprueba o rechaza cada solicitud</p>

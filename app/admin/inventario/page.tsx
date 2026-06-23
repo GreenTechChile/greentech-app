@@ -76,9 +76,9 @@ export default function Inventario() {
   }
 
   return (
-    <div style={{ display:'flex', minHeight:'100vh' }}>
+    <div style={{ display:'flex', minHeight:'100vh', overflowX:'hidden' }}>
       <SidebarAdmin />
-      <main style={{ flex:1, padding:24, overflowY:'auto', background:'#fff' }}>
+      <main style={{ flex:1, padding:24, overflowY:'auto', minWidth:0, background:'#fff' }}>
 
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:20 }}>
           <div>
