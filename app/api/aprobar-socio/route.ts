@@ -58,7 +58,30 @@ export async function POST(req: NextRequest) {
       .update({ estado: 'activo', rol_socio: true, notas_admin: notas || null })
       .eq('id', socioId)
 
-    // 5. Enviar emails
+    // 5. Registrar ingreso en movimientos_financieros
+    try {
+      const { data: configPago } = await supabaseAdmin
+        .from('configuracion')
+        .select('datos')
+        .eq('id', 'pago_incorporacion')
+        .single()
+      const monto: number = configPago?.datos?.monto ?? 25000
+      const ahora = new Date()
+      await supabaseAdmin.from('movimientos_financieros').insert({
+        tipo: 'ingreso',
+        categoria: 'Incorporación',
+        concepto: `Pago de incorporación — ${socio.nombre} (${socio.rut})`,
+        monto,
+        socio_id: socio.id,
+        mes: ahora.getMonth() + 1,
+        año: ahora.getFullYear(),
+      })
+    } catch (finErr) {
+      console.error('[aprobar-socio] error registrando movimiento financiero:', finErr)
+      // No bloqueante — la aprobación continúa igualmente
+    }
+
+    // 6. Enviar emails
     try {
       await sendEmail('aprobacion_solicitud', socio.email, { nombre: socio.nombre, rut: socio.rut })
       await sendEmail('credenciales_enviadas', socio.email, { nombre: socio.nombre, rut: socio.rut, contrasena: tempPassword })

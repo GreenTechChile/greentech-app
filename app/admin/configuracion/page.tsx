@@ -80,6 +80,9 @@ export default function Configuracion() {
   const [envioGratis, setEnvioGratis] = useState({ activo: false, monto_minimo: 100000 })
   const [editandoEnvio, setEditandoEnvio] = useState(false)
   const [guardandoEnvio, setGuardandoEnvio] = useState(false)
+  const [pagoIncorporacion, setPagoIncorporacion] = useState({ monto: 25000 })
+  const [editandoPago, setEditandoPago] = useState(false)
+  const [guardandoPago, setGuardandoPago] = useState(false)
 
   const validarRut = (rut: string): boolean => {
     if (!rut || rut.trim() === '') return true
@@ -127,7 +130,7 @@ export default function Configuracion() {
     plazoAprobacion: true,
   })
 
-  useEffect(() => { cargarCobertura(); cargarCorporacion(); cargarDatosBancarios(); cargarEnvioGratis() }, [])
+  useEffect(() => { cargarCobertura(); cargarCorporacion(); cargarDatosBancarios(); cargarEnvioGratis(); cargarPagoIncorporacion() }, [])
   useEffect(() => { if (tabActiva === 'documentos') { cargarDocsInstitucionales(); cargarActas() } }, [tabActiva])
 
   const cargarCobertura = async () => {
@@ -165,6 +168,20 @@ export default function Configuracion() {
     if (!error) { setEditandoEnvio(false); setMensaje('✅ Configuración de envío guardada') }
     else setMensaje('❌ Error al guardar')
     setGuardandoEnvio(false)
+    setTimeout(() => setMensaje(''), 3000)
+  }
+
+  const cargarPagoIncorporacion = async () => {
+    const { data } = await supabase.from('configuracion').select('datos').eq('id', 'pago_incorporacion').single()
+    if (data?.datos) setPagoIncorporacion(prev => ({ ...prev, ...data.datos }))
+  }
+
+  const guardarPagoIncorporacion = async () => {
+    setGuardandoPago(true)
+    const { error } = await supabase.from('configuracion').upsert({ id:'pago_incorporacion', datos: pagoIncorporacion, updated_at: new Date().toISOString() })
+    if (!error) { setEditandoPago(false); setMensaje('✅ Monto de incorporación guardado') }
+    else setMensaje('❌ Error al guardar')
+    setGuardandoPago(false)
     setTimeout(() => setMensaje(''), 3000)
   }
 
@@ -576,6 +593,56 @@ export default function Configuracion() {
                       {!envioGratis.activo && <span style={{ fontSize:11, fontWeight:400, marginLeft:8 }}>(inactivo)</span>}
                     </div>
                   )}
+                </div>
+              </div>
+            </div>
+
+            {/* ── Pago de incorporación ── */}
+            <div style={{ border:'1px solid #e5e7eb', borderRadius:12, padding:16, marginTop:16 }}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:14 }}>
+                <div>
+                  <div style={{ fontSize:13, fontWeight:600 }}>💳 Pago de incorporación</div>
+                  <div style={{ fontSize:11, color:'#6b7280', marginTop:2 }}>Monto que deben pagar los nuevos socios al inscribirse</div>
+                </div>
+                {!editandoPago ? (
+                  <button onClick={() => setEditandoPago(true)}
+                    style={{ display:'flex', alignItems:'center', gap:6, padding:'6px 14px', border:'1px solid #185FA5', borderRadius:8, background:'#fff', color:'#185FA5', fontSize:12, fontWeight:600, cursor:'pointer' }}>
+                    ✏️ Editar
+                  </button>
+                ) : (
+                  <div style={{ display:'flex', gap:8 }}>
+                    <button onClick={() => { setEditandoPago(false); cargarPagoIncorporacion() }}
+                      style={{ padding:'6px 12px', border:'1px solid #d1d5db', borderRadius:8, background:'#fff', color:'#6b7280', fontSize:12, cursor:'pointer' }}>
+                      Cancelar
+                    </button>
+                    <button onClick={guardarPagoIncorporacion} disabled={guardandoPago}
+                      style={{ padding:'6px 14px', border:'none', borderRadius:8, background: guardandoPago ? '#9ca3af' : '#185FA5', color:'#fff', fontSize:12, fontWeight:600, cursor:'pointer' }}>
+                      {guardandoPago ? 'Guardando...' : '💾 Guardar'}
+                    </button>
+                  </div>
+                )}
+              </div>
+              <div style={{ display:'flex', alignItems:'center', gap:16 }}>
+                <div style={{ fontSize:24, flexShrink:0 }}>🌿</div>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:11, color:'#9ca3af', marginBottom:4 }}>Monto de incorporación</div>
+                  {editandoPago ? (
+                    <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                      <span style={{ fontSize:13, color:'#6b7280' }}>$</span>
+                      <input type="number" value={pagoIncorporacion.monto}
+                        onChange={e => setPagoIncorporacion(prev => ({ ...prev, monto: parseInt(e.target.value) || 0 }))}
+                        style={{ width:140, padding:'7px 10px', border:'1px solid #d1d5db', borderRadius:8, fontSize:13, outline:'none' }} />
+                      <span style={{ fontSize:11, color:'#9ca3af' }}>CLP</span>
+                    </div>
+                  ) : (
+                    <div style={{ fontSize:20, fontWeight:700, color:'#3B6D11' }}>
+                      ${pagoIncorporacion.monto.toLocaleString('es-CL')} CLP
+                    </div>
+                  )}
+                </div>
+                <div style={{ background:'#EAF3DE', border:'1px solid #97C459', borderRadius:8, padding:'8px 14px', fontSize:11, color:'#3B6D11', textAlign:'center', flexShrink:0 }}>
+                  <div style={{ fontWeight:600 }}>Pago único</div>
+                  <div>por incorporación</div>
                 </div>
               </div>
             </div>

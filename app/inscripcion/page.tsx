@@ -69,6 +69,13 @@ export default function Inscripcion() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [mpLoading, setMpLoading] = useState(false)
+  const [montoIncorporacion, setMontoIncorporacion] = useState(25000)
+
+  // Cargar monto de incorporación desde configuración
+  useEffect(() => {
+    supabase.from('configuracion').select('datos').eq('id', 'pago_incorporacion').single()
+      .then(({ data }) => { if (data?.datos?.monto) setMontoIncorporacion(data.datos.monto) })
+  }, [])
 
   // 🚧 BYPASS TEMPORAL — cambiar a false para activar MP en producción
   const BYPASS_PAGO = true
@@ -81,7 +88,7 @@ export default function Inscripcion() {
         await supabase.from('pagos_incorporacion').upsert({
           rut: form.rut,
           mp_payment_id: 'BYPASS-' + Date.now(),
-          monto: 25000,
+          monto: montoIncorporacion,
           estado: 'aprobado',
           fecha: new Date().toISOString(),
         })
@@ -107,7 +114,7 @@ export default function Inscripcion() {
             id: 'incorporacion-greentech',
             title: 'Incorporación como socio GreenTech',
             quantity: 1,
-            unit_price: 25000,
+            unit_price: montoIncorporacion,
             currency_id: 'CLP',
           }],
           pagador: { name: form.nombre, email: form.email },
@@ -412,7 +419,7 @@ export default function Inscripcion() {
                 <div style={{fontSize:12,color:'#374151',lineHeight:1.9}}>
                   <div style={{display:'flex',alignItems:'flex-start',gap:8,marginBottom:6}}><span>1.</span><span>Completas el formulario con tus datos personales, domicilio e información médica.</span></div>
                   <div style={{display:'flex',alignItems:'flex-start',gap:8,marginBottom:6}}><span>2.</span><span>Subes los documentos requeridos y aceptas el Reglamento Interno.</span></div>
-                  <div style={{display:'flex',alignItems:'flex-start',gap:8,marginBottom:6}}><span>3.</span><span>Realizas el pago de incorporación de <strong>$25.000</strong>.</span></div>
+                  <div style={{display:'flex',alignItems:'flex-start',gap:8,marginBottom:6}}><span>3.</span><span>Realizas el pago de incorporación de <strong>${montoIncorporacion.toLocaleString('es-CL')}</strong>.</span></div>
                   <div style={{display:'flex',alignItems:'flex-start',gap:8,marginBottom:6}}><span>4.</span><span>Lees y aceptas el Contrato de Previsión y la Declaración Jurada de Ingreso.</span></div>
                   <div style={{display:'flex',alignItems:'flex-start',gap:8}}><span>5.</span><span>La directiva revisa tu solicitud en un plazo máximo de <strong>5 días hábiles</strong> y te notifica por correo.</span></div>
                 </div>
@@ -423,7 +430,7 @@ export default function Inscripcion() {
                 <div style={{fontSize:32}}>💳</div>
                 <div>
                   <div style={{fontSize:13,fontWeight:600,color:'#0369a1',marginBottom:2}}>Costo del proceso de incorporación</div>
-                  <div style={{fontSize:22,fontWeight:700,color:'#0369a1'}}>$25.000 CLP</div>
+                  <div style={{fontSize:22,fontWeight:700,color:'#0369a1'}}>${montoIncorporacion.toLocaleString('es-CL')} CLP</div>
                   <div style={{fontSize:11,color:'#6b7280',marginTop:2}}>Pago único · Se realiza en el paso 6 del formulario · Mercado Pago</div>
                 </div>
               </div>
@@ -490,11 +497,11 @@ export default function Inscripcion() {
                 <div style={{padding:'14px 16px'}}>
                   <div style={{display:'flex',justifyContent:'space-between',fontSize:13,padding:'7px 0',borderBottom:'1px solid #f3f4f6'}}>
                     <span style={{color:'#374151'}}>Proceso de incorporación como socio GreenTech</span>
-                    <span style={{fontWeight:500}}>$25.000</span>
+                    <span style={{fontWeight:500}}>${montoIncorporacion.toLocaleString('es-CL')}</span>
                   </div>
                   <div style={{display:'flex',justifyContent:'space-between',fontSize:15,fontWeight:700,padding:'10px 0 4px',marginTop:4,borderTop:'2px solid #e5e7eb'}}>
                     <span>Total a pagar</span>
-                    <span style={{color:'#3B6D11'}}>$25.000</span>
+                    <span style={{color:'#3B6D11'}}>${montoIncorporacion.toLocaleString('es-CL')}</span>
                   </div>
                 </div>
               </div>
@@ -508,7 +515,7 @@ export default function Inscripcion() {
               {error && <div style={{background:'#FCEBEB',border:'1px solid #F5C5C5',borderRadius:8,padding:'10px 12px',fontSize:12,color:'#A32D2D',marginBottom:14}}>⚠️ {error}</div>}
               <button onClick={handlePagoMP} disabled={mpLoading}
                 style={{width:'100%',padding:'14px',border:'none',borderRadius:12,background:mpLoading?'#9ca3af':'#009ee3',color:'#fff',fontSize:15,fontWeight:700,cursor:mpLoading?'not-allowed':'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:10,marginBottom:10}}>
-                {mpLoading ? '⏳ Procesando pago...' : '💳 Pagar $25.000 con Mercado Pago →'}
+                {mpLoading ? '⏳ Procesando pago...' : `💳 Pagar $${montoIncorporacion.toLocaleString('es-CL')} con Mercado Pago →`}
               </button>
               <div style={{textAlign:'center',fontSize:11,color:'#9ca3af',marginBottom:16}}>
                 🔒 Pago seguro · Mercado Pago · SSL
@@ -942,7 +949,7 @@ export default function Inscripcion() {
                 ))}
               </div>
               <div style={{background:'#EAF3DE',border:'1px solid #97C459',borderRadius:10,padding:14,fontSize:12,color:'#3B6D11',marginBottom:14,display:'flex',flexDirection:'column',gap:6}}>
-                <div style={{display:'flex',alignItems:'center',gap:8}}>💳 <span><strong>Pago de incorporación $25.000</strong> — Confirmado ✓</span></div>
+                <div style={{display:'flex',alignItems:'center',gap:8}}>💳 <span><strong>Pago de incorporación ${montoIncorporacion.toLocaleString('es-CL')}</strong> — Confirmado ✓</span></div>
                 <div style={{display:'flex',alignItems:'center',gap:8}}>📄 <span><strong>Contrato de Previsión y Delegación de Cultivo</strong> — Aceptado ✓</span></div>
                 <div style={{display:'flex',alignItems:'center',gap:8}}>📄 <span><strong>Declaración Jurada Especial de Ingreso</strong> — Aceptada ✓</span></div>
               </div>
