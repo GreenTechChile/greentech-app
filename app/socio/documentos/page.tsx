@@ -25,6 +25,28 @@ interface FormReceta {
   cuota_mensual: string; observaciones: string
 }
 
+const validarRut = (rut: string): boolean => {
+  const rutLimpio = rut.replace(/\./g, '').replace(/-/g, '').trim().toUpperCase()
+  if (rutLimpio.length < 2) return false
+  const cuerpo = rutLimpio.slice(0, -1)
+  const dv = rutLimpio.slice(-1)
+  if (!/^\d+$/.test(cuerpo)) return false
+  let suma = 0; let multiplo = 2
+  for (let i = cuerpo.length - 1; i >= 0; i--) {
+    suma += parseInt(cuerpo[i]) * multiplo
+    multiplo = multiplo === 7 ? 2 : multiplo + 1
+  }
+  const resto = suma % 11
+  const dvEsperado = resto === 0 ? '0' : resto === 1 ? 'K' : String(11 - resto)
+  return dv === dvEsperado
+}
+
+const formatearRut = (valor: string): string => {
+  const limpio = valor.replace(/\./g, '').replace(/-/g, '').replace(/[^0-9kK]/g, '')
+  if (limpio.length < 2) return limpio
+  return `${limpio.slice(0, -1)}-${limpio.slice(-1).toUpperCase()}`
+}
+
 const calcularHash = async (file: File): Promise<string> => {
   const buffer = await file.arrayBuffer()
   const hashBuffer = await crypto.subtle.digest('SHA-256', buffer)
@@ -44,6 +66,8 @@ export default function MisDocumentos() {
   const [cargandoDocs, setCargandoDocs] = useState(true)
   const [enviando, setEnviando] = useState(false)
   const [recetaPendiente, setRecetaPendiente] = useState<{id:string, created_at:string} | null>(null)
+  const [gramosDelegados, setGramosDelegados] = useState<number>(0)
+  const [rutMedicoValido, setRutMedicoValido] = useState<boolean|null>(null)
   const [formReceta, setFormReceta] = useState<FormReceta>({
     diagnostico:'', diagnostico_secundario:'', medico_nombre:'', medico_rut:'',
     folio_receta:'', vencimiento_receta:'', cuota_mensual:'', observaciones:''
@@ -57,11 +81,12 @@ export default function MisDocumentos() {
       if (rut) {
         setRutSocio(rut)
           supabase.from('socios')
-            .select('id, nombre, vencimiento_receta, reglamento_aceptado_at')
+            .select('id, nombre, vencimiento_receta, reglamento_aceptado_at, gramos_delegados')
             .eq('rut', rut)
             .single()
             .then(({ data }) => {
               if (data?.nombre) setNombreSocio(data.nombre)
+              if (data?.gramos_delegados) setGramosDelegados(data.gramos_delegados)
               if (data?.id) {
                 setSocioId(data.id)
                 // Buscar receta pendiente
@@ -154,10 +179,15 @@ export default function MisDocumentos() {
   }
 
   const enviarSolicitudReceta = async () => {
-    if (!archivoNuevo || !rutSocio || !socioId) return
+    if (!archivoNuevo || !rutSocio || !socioId) {
+      setMensaje('❌ Faltan datos de sesión. Recarga la página e intenta nuevamente.'); return
+    }
     const { diagnostico, medico_nombre, medico_rut, folio_receta, vencimiento_receta, cuota_mensual } = formReceta
     if (!diagnostico || !medico_nombre || !medico_rut || !folio_receta || !vencimiento_receta || !cuota_mensual) {
       setMensaje('❌ Completa todos los campos obligatorios.'); return
+    }
+    if (!validarRut(medico_rut)) {
+      setMensaje('❌ El RUT del médico no es válido. Verifica el formato (ej: 12345678-9).'); return
     }
     setEnviando(true)
     try {
@@ -171,6 +201,11 @@ export default function MisDocumentos() {
       // 3. Obtener URL pública
       const { data: urlData } = supabase.storage.from('documentos').getPublicUrl(path)
       // 4. Insertar en recetas_pendientes
+      const nuevosCuota = parseInt(formReceta.cuota_mensual)
+      const requiereNuevoContrato = gramosDelegados > 0 && nuevosCuota < gramosDelegados
+      const notaContrato = requiereNuevoContrato
+        ? `⚠️ REQUIERE NUEVO CONTRATO: nueva cuota ${nuevosCuota}g es menor a gramos delegados actuales (${gramosDelegados}g). Hay que rehacer el contrato de delegación de cultivo.`
+        : null
       const { error: insertErr } = await supabase.from('recetas_pendientes').insert({
         socio_id: socioId,
         diagnostico: formReceta.diagnostico,
@@ -179,11 +214,12 @@ export default function MisDocumentos() {
         medico_rut: formReceta.medico_rut,
         folio_receta: formReceta.folio_receta,
         vencimiento_receta: formReceta.vencimiento_receta,
-        cuota_mensual: parseInt(formReceta.cuota_mensual),
+        cuota_mensual: nuevosCuota,
         observaciones: formReceta.observaciones || null,
         archivo_url: urlData.publicUrl,
         hash_sha256: hash,
         estado: 'pendiente',
+        notas_admin: notaContrato,
       })
       if (insertErr) throw new Error(insertErr.message)
       setMensaje('✅ Solicitud enviada. La directiva revisará tu receta en 5 días hábiles.')
@@ -194,10 +230,10 @@ export default function MisDocumentos() {
       const { data: rp } = await supabase.from('recetas_pendientes').select('id, created_at').eq('socio_id', socioId).eq('estado', 'pendiente').maybeSingle()
       setRecetaPendiente(rp ?? null)
     } catch (e: unknown) {
-      setMensaje('❌ Error: ' + (e instanceof Error ? e.message : 'Error desconocido'))
+      setMensaje('❌ Error al enviar: ' + (e instanceof Error ? e.message : 'Error desconocido') + '. Intenta nuevamente o contacta al administrador.')
+      // Errores no se auto-desaparecen
     } finally {
       setEnviando(false)
-      setTimeout(() => setMensaje(''), 6000)
     }
   }
 
@@ -324,8 +360,16 @@ export default function MisDocumentos() {
                 </div>
                 <div>
                   <label style={{ fontSize:11, color:'#6b7280', display:'block', marginBottom:4 }}>RUT del médico <span style={{ color:'#A32D2D' }}>*</span></label>
-                  <input value={formReceta.medico_rut} onChange={e => updateForm('medico_rut', e.target.value)}
-                    placeholder="12345678-9" style={{ width:'100%', padding:'8px 10px', border:'1px solid #d1d5db', borderRadius:7, fontSize:13, boxSizing:'border-box' as const }} />
+                  <input value={formReceta.medico_rut}
+                    onChange={e => {
+                      const v = formatearRut(e.target.value)
+                      updateForm('medico_rut', v)
+                      setRutMedicoValido(v.length > 3 ? validarRut(v) : null)
+                    }}
+                    placeholder="12345678-9"
+                    style={{ width:'100%', padding:'8px 10px', border:`1px solid ${rutMedicoValido === false ? '#f87171' : rutMedicoValido === true ? '#4ade80' : '#d1d5db'}`, borderRadius:7, fontSize:13, boxSizing:'border-box' as const }} />
+                  {rutMedicoValido === false && <div style={{ fontSize:11, color:'#ef4444', marginTop:3 }}>RUT no válido</div>}
+                  {rutMedicoValido === true && <div style={{ fontSize:11, color:'#16a34a', marginTop:3 }}>✓ RUT válido</div>}
                 </div>
                 <div>
                   <label style={{ fontSize:11, color:'#6b7280', display:'block', marginBottom:4 }}>Folio de receta <span style={{ color:'#A32D2D' }}>*</span></label>
@@ -341,7 +385,12 @@ export default function MisDocumentos() {
                 <div>
                   <label style={{ fontSize:11, color:'#6b7280', display:'block', marginBottom:4 }}>Cuota mensual propuesta (gr) <span style={{ color:'#A32D2D' }}>*</span></label>
                   <input type="number" min="1" value={formReceta.cuota_mensual} onChange={e => updateForm('cuota_mensual', e.target.value)}
-                    placeholder="Ej: 30" style={{ width:'100%', padding:'8px 10px', border:'1px solid #d1d5db', borderRadius:7, fontSize:13, boxSizing:'border-box' as const }} />
+                    placeholder="Ej: 30" style={{ width:'100%', padding:'8px 10px', border:`1px solid ${gramosDelegados > 0 && parseInt(formReceta.cuota_mensual) < gramosDelegados && formReceta.cuota_mensual ? '#f97316' : '#d1d5db'}`, borderRadius:7, fontSize:13, boxSizing:'border-box' as const }} />
+                  {gramosDelegados > 0 && formReceta.cuota_mensual && parseInt(formReceta.cuota_mensual) < gramosDelegados && (
+                    <div style={{ fontSize:11, color:'#ea580c', marginTop:4, lineHeight:1.5 }}>
+                      ⚠️ La nueva cuota ({formReceta.cuota_mensual}g) es menor a los gramos delegados en tu contrato actual ({gramosDelegados}g). Esto requerirá actualizar el contrato de delegación de cultivo.
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label style={{ fontSize:11, color:'#6b7280', display:'block', marginBottom:4 }}>Observaciones</label>

@@ -398,6 +398,11 @@ export default function AdminSocios() {
                     </div>
                   ))}
                 </div>
+                {r.notas_admin && r.notas_admin.startsWith('⚠️') && (
+                  <div style={{ padding: '10px 18px', background: '#FFF7ED', borderTop: '1px solid #FED7AA', fontSize: 12, color: '#92400E', fontWeight: 500 }}>
+                    {r.notas_admin}
+                  </div>
+                )}
                 <div style={{ padding: '12px 18px', borderTop: '1px solid #f3f4f6', background: '#fafafa' }}>
                   {!esRechazando ? (
                     <div style={{ display: 'flex', gap: 8 }}>
