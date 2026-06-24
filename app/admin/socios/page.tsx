@@ -24,6 +24,7 @@ const DOCS_FIRMA = [
 export default function AdminSocios() {
   const [tab, setTab] = useState<'pendientes'|'aprobados'|'rechazados'|'renovaciones'|'pagos_incompletos'>('pendientes')
   const [recetas, setRecetas] = useState<any[]>([])
+  const [filtroRecetas, setFiltroRecetas] = useState<'pendiente'|'todas'>('pendiente')
   const [socios, setSocios] = useState<Socio[]>([])
   const [loading, setLoading] = useState(true)
   const [notas, setNotas] = useState<Record<string,string>>({})
@@ -42,7 +43,7 @@ export default function AdminSocios() {
 
 
   useEffect(() => { cargarConteos() }, [])
-  useEffect(() => { cargarSocios() }, [tab])
+  useEffect(() => { cargarSocios() }, [tab, filtroRecetas])
 
   const cargarConteos = async () => {
     const [
@@ -68,11 +69,12 @@ export default function AdminSocios() {
   const cargarSocios = async () => {
     setLoading(true)
     if (tab === 'renovaciones') {
-      const { data } = await supabase
+      let query = supabase
         .from('recetas_pendientes')
         .select('*, socios(nombre, rut, email)')
-        .eq('estado', 'pendiente')
         .order('created_at', { ascending: false })
+      if (filtroRecetas === 'pendiente') query = query.eq('estado', 'pendiente')
+      const { data } = await query
       setRecetas(data || [])
     } else if (tab === 'pagos_incompletos') {
       // Buscar pagos aprobados cuyo RUT no tiene registro en socios
@@ -267,6 +269,7 @@ export default function AdminSocios() {
       } catch {}
       setMensaje(`✅ Receta de ${socio.nombre} aprobada por ${nombreAdmin}. Datos médicos actualizados.`)
       cargarSocios()
+      cargarConteos()
     } catch (e: any) {
       setMensaje('❌ Error: ' + e.message)
     } finally {
@@ -297,6 +300,7 @@ export default function AdminSocios() {
       setMensaje(`✅ Receta de ${socio.nombre} rechazada por ${nombreAdmin}.`)
       setRechazandoRecetaId(null)
       cargarSocios()
+      cargarConteos()
     } catch (e: any) {
       setMensaje('❌ Error: ' + e.message)
     } finally {
@@ -392,18 +396,39 @@ export default function AdminSocios() {
 
         {/* ── Panel de renovaciones de receta ── */}
         {tab === 'renovaciones' && (
-          loading ? (
+          <>
+          {/* Selector pendientes / historial */}
+          <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
+            {([['pendiente', 'Pendientes'], ['todas', 'Historial completo']] as const).map(([val, label]) => (
+              <button key={val} onClick={() => setFiltroRecetas(val)}
+                style={{ padding: '5px 14px', fontSize: 12, borderRadius: 20, border: '1px solid', cursor: 'pointer',
+                  background: filtroRecetas === val ? '#185FA5' : '#fff',
+                  color: filtroRecetas === val ? '#fff' : '#6b7280',
+                  borderColor: filtroRecetas === val ? '#185FA5' : '#d1d5db' }}>
+                {label}
+              </button>
+            ))}
+          </div>
+          {loading ? (
             <div style={{ fontSize: 13, color: '#9ca3af', padding: 40, textAlign: 'center' }}>Cargando...</div>
           ) : recetas.length === 0 ? (
             <div style={{ fontSize: 13, color: '#9ca3af', padding: 40, textAlign: 'center' }}>✅ No hay renovaciones pendientes</div>
           ) : recetas.map(r => {
             const socio = r.socios
             const esRechazando = rechazandoRecetaId === r.id
+            const estadoBadge = r.estado === 'aprobada'
+              ? { label: '✅ Aprobada', bg: '#EAF3DE', color: '#3B6D11' }
+              : r.estado === 'rechazada'
+              ? { label: '❌ Rechazada', bg: '#FEE2E2', color: '#991B1B' }
+              : null
             return (
-              <div key={r.id} style={{ border: '1px solid #e5e7eb', borderRadius: 12, marginBottom: 14, overflow: 'hidden' }}>
+              <div key={r.id} style={{ border: `1px solid ${r.estado === 'pendiente' ? '#e5e7eb' : r.estado === 'aprobada' ? '#97C459' : '#F5C5C5'}`, borderRadius: 12, marginBottom: 14, overflow: 'hidden' }}>
                 <div style={{ padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f9fafb' }}>
                   <div>
-                    <div style={{ fontSize: 14, fontWeight: 600 }}>{socio?.nombre}</div>
+                    <div style={{ fontSize: 14, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
+                      {socio?.nombre}
+                      {estadoBadge && <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 12, background: estadoBadge.bg, color: estadoBadge.color }}>{estadoBadge.label}</span>}
+                    </div>
                     <div style={{ fontSize: 12, color: '#6b7280' }}>{socio?.rut} · {socio?.email}</div>
                     <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>Enviada hace {diasDesde(r.created_at)} días</div>
                   </div>
@@ -437,7 +462,7 @@ export default function AdminSocios() {
                     {r.notas_admin}
                   </div>
                 )}
-                <div style={{ padding: '12px 18px', borderTop: '1px solid #f3f4f6', background: '#fafafa' }}>
+                {r.estado === 'pendiente' && <div style={{ padding: '12px 18px', borderTop: '1px solid #f3f4f6', background: '#fafafa' }}>
                   {!esRechazando ? (
                     <div style={{ display: 'flex', gap: 8 }}>
                       <button onClick={() => aprobarReceta(r)} disabled={procesando === r.id}
@@ -466,10 +491,19 @@ export default function AdminSocios() {
                       </button>
                     </div>
                   )}
-                </div>
+                </div>}
+                {/* Pie: quién procesó / motivo de rechazo */}
+                {r.estado !== 'pendiente' && (r.aprobado_por || r.motivo_rechazo) && (
+                  <div style={{ padding: '8px 18px', borderTop: '1px solid #f3f4f6', background: '#fafafa', fontSize: 11, color: '#6b7280' }}>
+                    {r.aprobado_por && <span>Procesado por <strong>{r.aprobado_por}</strong>{r.aprobado_at ? ` · ${new Date(r.aprobado_at).toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: 'numeric' })}` : ''}</span>}
+                    {r.motivo_rechazo && <span style={{ color: '#A32D2D', marginLeft: r.aprobado_por ? 12 : 0 }}>Motivo: {r.motivo_rechazo}</span>}
+                  </div>
+                )}
               </div>
             )
           })
+          }
+          </>
         )}
 
         {/* ── Panel de socios (pendientes / aprobados / rechazados) ── */}
