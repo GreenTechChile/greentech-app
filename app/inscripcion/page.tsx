@@ -70,6 +70,7 @@ export default function Inscripcion() {
   const [error, setError] = useState('')
   const [mpLoading, setMpLoading] = useState(false)
   const [montoIncorporacion, setMontoIncorporacion] = useState(25000)
+  const [retomandoInscripcion, setRetomandoInscripcion] = useState(false)
 
   // Cargar monto de incorporación desde configuración
   useEffect(() => {
@@ -92,6 +93,8 @@ export default function Inscripcion() {
           rut: data.rut || prev.rut,
           email: data.email || prev.email,
         }))
+        // Bloquear campos de identidad — ya fueron verificados en el pago
+        setRetomandoInscripcion(true)
         // Saltar al paso 2 (datos personales) — el pago ya fue realizado
         setPaso(2)
         // Limpiar el token de la URL sin recargar la página
@@ -606,14 +609,23 @@ export default function Inscripcion() {
           {/* PASO 2 — Datos personales */}
           {paso===2 && (
             <div>
-              <h2 style={{fontSize:15,fontWeight:600,marginBottom:20}}>👤 Datos personales</h2>
+              <h2 style={{fontSize:15,fontWeight:600,marginBottom:12}}>👤 Datos personales</h2>
+              {retomandoInscripcion && (
+                <div style={{background:'#E6F1FB',border:'1px solid #A8CBF0',borderRadius:8,padding:'10px 14px',fontSize:12,color:'#185FA5',marginBottom:16}}>
+                  🔒 <strong>Nombre, RUT y correo</strong> fueron registrados al momento del pago y no pueden modificarse. Si hay un error, contacta a la directiva.
+                </div>
+              )}
               <div className="gt-grid2" style={{...s.grid2,marginBottom:12}}>
-                <div style={s.field}><label style={s.label}>Nombre completo <span style={s.req}>*</span></label><input style={s.input} value={form.nombre} onChange={e=>update('nombre',e.target.value)} placeholder="Nombre completo"/></div>
+                <div style={s.field}>
+                  <label style={s.label}>Nombre completo <span style={s.req}>*</span></label>
+                  <input style={{...s.input, ...(retomandoInscripcion ? {background:'#f3f4f6',color:'#6b7280',cursor:'not-allowed'} : {})}} value={form.nombre} onChange={e=>!retomandoInscripcion&&update('nombre',e.target.value)} readOnly={retomandoInscripcion} placeholder="Nombre completo"/>
+                </div>
                 <div style={s.field}>
                   <label style={s.label}>RUT (sin puntos, con guión) <span style={s.req}>*</span></label>
-                  <input style={{...s.input, borderColor: rutValido === false ? '#A32D2D' : rutValido === true ? '#3B6D11' : '#d1d5db'}}
+                  <input style={{...s.input, borderColor: retomandoInscripcion ? '#d1d5db' : rutValido === false ? '#A32D2D' : rutValido === true ? '#3B6D11' : '#d1d5db', ...(retomandoInscripcion ? {background:'#f3f4f6',color:'#6b7280',cursor:'not-allowed'} : {})}}
                     value={form.rut}
                     onChange={e => {
+                      if (retomandoInscripcion) return
                       const formateado = formatearRut(e.target.value)
                       update('rut', formateado)
                       if (formateado.includes('-') && formateado.length >= 3) {
@@ -622,9 +634,10 @@ export default function Inscripcion() {
                         setRutValido(null)
                       }
                     }}
+                    readOnly={retomandoInscripcion}
                     placeholder="12345678-9"/>
-                  {rutValido === false && <span style={{fontSize:11, color:'#A32D2D'}}>⚠️ RUT inválido — verifica el dígito verificador</span>}
-                  {rutValido === true && <span style={{fontSize:11, color:'#3B6D11'}}>✓ RUT válido</span>}
+                  {!retomandoInscripcion && rutValido === false && <span style={{fontSize:11, color:'#A32D2D'}}>⚠️ RUT inválido — verifica el dígito verificador</span>}
+                  {!retomandoInscripcion && rutValido === true && <span style={{fontSize:11, color:'#3B6D11'}}>✓ RUT válido</span>}
                 </div>
                 <div style={s.field}><label style={s.label}>Fecha de nacimiento <span style={s.req}>*</span></label><input style={s.input} type="date" value={form.fecha_nacimiento} max={(() => { const d = new Date(); d.setFullYear(d.getFullYear() - 18); return d.toISOString().split('T')[0] })()} onChange={e=>update('fecha_nacimiento',e.target.value)}/></div>
                 <div style={s.field}><label style={s.label}>Estado civil <span style={s.req}>*</span></label>
@@ -635,10 +648,14 @@ export default function Inscripcion() {
                 </div>
                 <div style={s.field}><label style={s.label}>Profesión u oficio <span style={s.req}>*</span></label><input style={s.input} value={form.profesion} onChange={e=>update('profesion',e.target.value)} placeholder="Profesión u oficio"/></div>
                 <div style={s.field}><label style={s.label}>Teléfono móvil <span style={s.req}>*</span></label><input style={s.input} value={form.telefono} onChange={e=>update('telefono',e.target.value)} placeholder="+569XXXXXXXX"/></div>
-                <div style={{...s.field,gridColumn:'1/-1'}}><label style={s.label}>Correo electrónico <span style={s.req}>*</span></label><input style={s.input} type="email" value={form.email} onChange={e=>update('email',e.target.value)} placeholder="correo@ejemplo.com"/></div>
+                <div style={{...s.field,gridColumn:'1/-1'}}>
+                  <label style={s.label}>Correo electrónico <span style={s.req}>*</span></label>
+                  <input style={{...s.input, ...(retomandoInscripcion ? {background:'#f3f4f6',color:'#6b7280',cursor:'not-allowed'} : {})}} type="email" value={form.email} onChange={e=>!retomandoInscripcion&&update('email',e.target.value)} readOnly={retomandoInscripcion} placeholder="correo@ejemplo.com"/>
+                </div>
               </div>
               <div style={{display:'flex',justifyContent:'space-between'}}>
-                <button style={s.btnOutline} onClick={()=>setPaso(1)}>← Anterior</button>
+                {!retomandoInscripcion && <button style={s.btnOutline} onClick={()=>setPaso(1)}>← Anterior</button>}
+                {retomandoInscripcion && <span />}
                 <button style={s.btnPrimary} onClick={()=>{
                   if(!form.nombre||!form.rut||!form.fecha_nacimiento||!form.estado_civil||!form.profesion||!form.telefono||!form.email){setError('Completa todos los campos obligatorios.');return}
                   if(!validarRut(form.rut)){setError('El RUT ingresado no es válido. Verifica el dígito verificador.');return}
