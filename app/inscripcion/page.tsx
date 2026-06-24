@@ -653,9 +653,8 @@ export default function Inscripcion() {
                   <input style={{...s.input, ...(retomandoInscripcion ? {background:'#f3f4f6',color:'#6b7280',cursor:'not-allowed'} : {})}} type="email" value={form.email} onChange={e=>!retomandoInscripcion&&update('email',e.target.value)} readOnly={retomandoInscripcion} placeholder="correo@ejemplo.com"/>
                 </div>
               </div>
-              <div style={{display:'flex',justifyContent:'space-between'}}>
-                {!retomandoInscripcion && <button style={s.btnOutline} onClick={()=>setPaso(1)}>← Anterior</button>}
-                {retomandoInscripcion && <span />}
+              <div style={{display:'flex',justifyContent:'flex-end'}}>
+                <span />
                 <button style={s.btnPrimary} onClick={()=>{
                   if(!form.nombre||!form.rut||!form.fecha_nacimiento||!form.estado_civil||!form.profesion||!form.telefono||!form.email){setError('Completa todos los campos obligatorios.');return}
                   if(!validarRut(form.rut)){setError('El RUT ingresado no es válido. Verifica el dígito verificador.');return}
