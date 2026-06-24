@@ -246,18 +246,28 @@ export default function AdminSocios() {
       }
 
       // 1. Actualizar datos médicos + fechas (punto 5)
+      // Si la nueva cuota baja de los gramos_delegados actuales (sin delegación pendiente),
+      // auto-ajustar gramos_delegados para no violar el constraint gramos_delegados ≤ cuota_mensual
+      const nuevaCuota = receta.cuota_mensual
+      const gramosActualesDelSocio = socioActual?.gramos_delegados || 0
+      const necesitaAjusteGramos = gramosActualesDelSocio > nuevaCuota
+
       const hoy = new Date().toISOString().split('T')[0]
-      await supabase.from('socios').update({
+      const updatePayload: Record<string, any> = {
         diagnostico: receta.diagnostico,
         diagnostico_secundario: receta.diagnostico_secundario,
         medico_nombre: receta.medico_nombre,
         medico_rut: receta.medico_rut,
         folio_receta: receta.folio_receta,
         vencimiento_receta: receta.vencimiento_receta,
-        cuota_mensual: receta.cuota_mensual,
+        cuota_mensual: nuevaCuota,
         fecha_renovacion_receta: hoy,
         max_fecha_dispensacion: receta.vencimiento_receta,
-      }).eq('id', receta.socio_id)
+      }
+      if (necesitaAjusteGramos) {
+        updatePayload.gramos_delegados = nuevaCuota
+      }
+      await supabase.from('socios').update(updatePayload).eq('id', receta.socio_id)
 
       // 2. Marcar receta como aprobada + audit trail
       await supabase.from('recetas_pendientes').update({
@@ -270,7 +280,8 @@ export default function AdminSocios() {
       try {
         await sendEmail('receta_aprobada', socio.email, { nombre: socio.nombre, rut: socio.rut, vencimiento: receta.vencimiento_receta })
       } catch {}
-      setMensaje(`✅ Receta de ${socio.nombre} aprobada por ${nombreAdmin}. Datos médicos y fechas actualizados.`)
+      const avisoGramos = necesitaAjusteGramos ? ` ⚠️ Delegación de cultivo ajustada de ${gramosActualesDelSocio}gr a ${nuevaCuota}gr por la nueva cuota.` : ''
+      setMensaje(`✅ Receta de ${socio.nombre} aprobada por ${nombreAdmin}. Datos médicos y fechas actualizados.${avisoGramos}`)
       cargarSocios()
       cargarConteos()
     } catch (e: any) {

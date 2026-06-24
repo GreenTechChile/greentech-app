@@ -29,16 +29,48 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Token inválido' }, { status: 401 })
     }
 
-    // Obtener RUT del socio por email
+    // Obtener datos del socio incluyendo límites y vencimiento
     const { data: socio, error: socioError } = await supabaseAdmin
       .from('socios')
-      .select('rut, nombre')
+      .select('rut, nombre, gramos_delegados, cuota_mensual, vencimiento_receta')
       .eq('email', user.email)
       .eq('estado', 'activo')
       .single()
 
     if (socioError || !socio) {
       return NextResponse.json({ error: 'Socio no encontrado o inactivo' }, { status: 403 })
+    }
+
+    // ── VALIDACIÓN 1: Receta no vencida ──────────────────────────────────────
+    if (socio.vencimiento_receta) {
+      const hoy = new Date().toISOString().split('T')[0]
+      if (socio.vencimiento_receta < hoy) {
+        return NextResponse.json({ error: 'Receta médica vencida. No puedes dispensar hasta renovarla.' }, { status: 403 })
+      }
+    }
+
+    // ── VALIDACIÓN 2: gramos_delegados definido ───────────────────────────────
+    const limiteMensual = socio.gramos_delegados ?? socio.cuota_mensual
+    if (!limiteMensual || limiteMensual <= 0) {
+      return NextResponse.json({ error: 'Sin cuota de dispensación asignada.' }, { status: 403 })
+    }
+
+    // ── VALIDACIÓN 3: No superar cuota mensual ───────────────────────────────
+    const gramosNuevos = items.reduce((acc, item) => acc + item.gramos, 0)
+    const { data: dispensacionesMes } = await supabaseAdmin
+      .from('dispensaciones')
+      .select('gramos')
+      .eq('rut_socio', socio.rut)
+      .eq('mes', mes)
+      .eq('año', ano)
+      .neq('estado', 'pendiente_pago')
+
+    const gramosYaDispensados = (dispensacionesMes || []).reduce((acc, d) => acc + d.gramos, 0)
+    if (gramosYaDispensados + gramosNuevos > limiteMensual) {
+      const disponible = limiteMensual - gramosYaDispensados
+      return NextResponse.json({
+        error: `Supera tu cuota mensual. Tienes ${disponible}gr disponibles (límite: ${limiteMensual}gr, ya dispensados: ${gramosYaDispensados}gr).`
+      }, { status: 403 })
     }
 
     // Insertar cada item del carrito con sufijo único en orden_numero

@@ -48,6 +48,8 @@ export default function Dispensacion() {
   const [tbkUser, setTbkUser] = useState<string|null>(null)
   const [tarjetaInfo, setTarjetaInfo] = useState<{tipo:string, ultimos4:string}|null>(null)
   const [medioPago, setMedioPago] = useState<'oneclick'|'webpay'|'khipu'>('webpay')
+  const [recetaVencida, setRecetaVencida] = useState<boolean>(false)
+  const [vencimientoReceta, setVencimientoReceta] = useState<string | null>(null)
 
   useEffect(() => {
     // Manejar retorno desde MercadoPago
@@ -110,13 +112,23 @@ export default function Dispensacion() {
           // Query 1: columnas base (siempre existen) — setear rut+nombre juntos para un solo render
           const { data: socio } = await supabase
             .from('socios')
-            .select('nombre,email,cuota_mensual')
+            .select('nombre,email,cuota_mensual,gramos_delegados,vencimiento_receta')
             .eq('rut', rutCargado)
             .single()
           setRutSocio(rutCargado)
           if (socio?.nombre) setNombreSocio(socio.nombre)
           if (socio?.email) setEmailSocio(socio.email)
-          if (socio?.cuota_mensual) setCuota(socio.cuota_mensual)
+          // Usar gramos_delegados como límite real de dispensación (nunca puede superar cuota_mensual)
+          const limite = socio?.gramos_delegados ?? socio?.cuota_mensual ?? 30
+          setCuota(limite)
+          // Verificar vencimiento de receta
+          if (socio?.vencimiento_receta) {
+            setVencimientoReceta(socio.vencimiento_receta)
+            const hoy = new Date().toISOString().split('T')[0]
+            if (socio.vencimiento_receta < hoy) {
+              setRecetaVencida(true)
+            }
+          }
 
           // Query 2: columnas Transbank (opcionales — pueden no existir aún)
           try {
@@ -325,7 +337,7 @@ export default function Dispensacion() {
                 <h1 style={{ fontSize: 18, fontWeight: 600, marginBottom: 3 }}>Dispensar flores medicinales</h1>
                 <p style={{ fontSize: 13, color: '#6b7280' }}>Indica los gramos que necesitas. No puedes superar tu cuota mensual.</p>
               </div>
-              <button onClick={() => totalItems > 0 && setPaso('checkout')} disabled={totalItems === 0}
+              <button onClick={() => totalItems > 0 && setPaso('checkout')} disabled={totalItems === 0 || recetaVencida}
                 style={{ background: totalItems > 0 ? '#3B6D11' : '#e5e7eb', color: totalItems > 0 ? '#EAF3DE' : '#9ca3af', border: 'none', borderRadius: 10, padding: '10px 20px', fontSize: 13, fontWeight: 600, cursor: totalItems > 0 ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', gap: 8, minWidth: 160 }}>
                 Checkout
                 {totalItems > 0 && (
@@ -335,6 +347,23 @@ export default function Dispensacion() {
                 )}
               </button>
             </div>
+
+            {recetaVencida && (
+              <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 12, padding: 16, marginBottom: 20 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{ fontSize: 22 }}>🚫</span>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: 14, color: '#dc2626' }}>Receta médica vencida</div>
+                    <div style={{ fontSize: 13, color: '#7f1d1d', marginTop: 2 }}>
+                      Tu receta venció el {vencimientoReceta}. No puedes realizar dispensaciones hasta que el administrador apruebe tu renovación.
+                    </div>
+                    <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 6 }}>
+                      Ve a <strong>Mis documentos</strong> para enviar tu renovación de receta.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: 16, marginBottom: 20 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 8 }}>
@@ -367,7 +396,7 @@ export default function Dispensacion() {
                   const precioPreview = gramosVal > 0 ? gramosVal * precioGramo : 0
                   const superariaLimite = gramosVal > disponibleRestante
                   const sinStock = gramosVal > cepa.stock_gramos
-                  const puedeAgregar = gramosVal > 0 && !superariaLimite && !sinStock
+                  const puedeAgregar = gramosVal > 0 && !superariaLimite && !sinStock && !recetaVencida
 
                   return (
                     <div key={cepa.id} style={{ background: '#fff', border: '1px solid ' + (expandida ? tipo.color + '44' : '#e5e7eb'), borderRadius: 14, overflow: 'hidden', transition: '0.2s' }}>
