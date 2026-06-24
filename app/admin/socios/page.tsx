@@ -452,7 +452,7 @@ export default function AdminSocios() {
                           <span style={{ background: '#D1FAE5', color: '#065F46', fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 20, display: 'block', marginBottom: 4 }}>✅ Firmado</span>
                           {socio.delegacion_aprobado_por && (
                             <div style={{ fontSize: 10, color: '#6b7280' }}>
-                              {socio.delegacion_aprobado_por}<br/>
+                              {nombresPorEmail[socio.delegacion_aprobado_por] || socio.delegacion_aprobado_por}<br/>
                               {socio.delegacion_aprobado_at ? new Date(socio.delegacion_aprobado_at).toLocaleString('es-CL', { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' }) : ''}
                             </div>
                           )}
@@ -1086,7 +1086,7 @@ export default function AdminSocios() {
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                           <span>{filtroSocios === 'activo' ? '✅' : '✕'}</span>
                           <span style={{ fontWeight: 500, color: filtroSocios === 'activo' ? '#3B6D11' : '#A32D2D' }}>
-                            {filtroSocios === 'activo' ? 'Aprobado' : 'Rechazado'} por {socio.aprobado_por}
+                            {filtroSocios === 'activo' ? 'Aprobado' : 'Rechazado'} por {nombresPorEmail[socio.aprobado_por] || socio.aprobado_por}
                             {socio.aprobado_at && (
                               <span style={{ fontWeight: 400, color: '#9ca3af' }}>
                                 {' '}· {new Date(socio.aprobado_at).toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
