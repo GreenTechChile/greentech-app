@@ -225,11 +225,11 @@ export default function AdminSocios() {
     try {
       // Extraer el path relativo del bucket desde la URL completa
       const match = archivoUrl.match(/\/documentos\/(.+)$/)
-      if (!match) { window.open(archivoUrl, '_blank'); return }
+      if (!match) { window.open(archivoUrl, '_blank', 'noopener,noreferrer,width=1000,height=800'); return }
       const path = match[1]
       const { data, error } = await supabase.storage.from('documentos').createSignedUrl(path, 120)
       if (error || !data?.signedUrl) throw new Error('No se pudo generar el enlace')
-      window.open(data.signedUrl, '_blank')
+      window.open(data.signedUrl, '_blank', 'noopener,noreferrer,width=1000,height=800')
     } catch {
       setMensaje('❌ No se pudo abrir el archivo. Intenta nuevamente.')
       setTimeout(() => setMensaje(''), 4000)
