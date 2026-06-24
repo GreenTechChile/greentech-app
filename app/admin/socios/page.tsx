@@ -52,18 +52,22 @@ export default function AdminSocios() {
 
   const cargarConteos = async () => {
     const [
-      { count: pendientes },
-      { count: renovaciones },
-      { count: delegaciones },
-      { count: pagosInc },
+      { data: dPendientes },
+      { data: dRenovaciones },
+      { data: dDelegaciones },
+      { data: dPagosInc },
     ] = await Promise.all([
-      supabase.from('socios').select('*', { count: 'exact', head: true }).eq('estado', 'pendiente'),
-      supabase.from('recetas_pendientes').select('*', { count: 'exact', head: true }).eq('estado', 'pendiente'),
-      supabase.from('socios').select('*', { count: 'exact', head: true }).eq('delegacion_estado', 'pendiente_firma'),
-      supabase.from('pagos_incorporacion').select('*', { count: 'exact', head: true }).eq('estado', 'aprobado'),
+      supabase.from('socios').select('id').eq('estado', 'pendiente'),
+      supabase.from('recetas_pendientes').select('id').eq('estado', 'pendiente'),
+      supabase.from('socios').select('id').eq('delegacion_estado', 'pendiente_firma'),
+      supabase.from('pagos_incorporacion').select('id').eq('estado', 'aprobado'),
     ])
-    const totalPendiente = (pendientes || 0) + (renovaciones || 0) + (delegaciones || 0) + (pagosInc || 0)
-    setTabCounts({ pendientes: pendientes || 0, renovaciones: renovaciones || 0, delegaciones: delegaciones || 0, pagos_incompletos: pagosInc || 0, total_pendiente: totalPendiente })
+    const pendientes = dPendientes?.length || 0
+    const renovaciones = dRenovaciones?.length || 0
+    const delegaciones = dDelegaciones?.length || 0
+    const pagosInc = dPagosInc?.length || 0
+    const totalPendiente = pendientes + renovaciones + delegaciones + pagosInc
+    setTabCounts({ pendientes, renovaciones, delegaciones, pagos_incompletos: pagosInc, total_pendiente: totalPendiente })
   }
 
   const cargarSocios = async () => {
@@ -80,7 +84,7 @@ export default function AdminSocios() {
       setLoading(false)
       return
     } else if (tab === 'renovaciones') {
-      let query = supabase.from('recetas_pendientes').select('*, socios(nombre, rut, email)').order('created_at', { ascending: false })
+      let query = supabase.from('recetas_pendientes').select('*, socios(nombre, rut, email, delegacion_estado, gramos_delegados)').order('created_at', { ascending: false })
       if (filtroRecetas === 'pendiente') query = query.eq('estado', 'pendiente')
       const { data } = await query
       setRecetas(data || [])
@@ -525,11 +529,25 @@ export default function AdminSocios() {
                 )}
                 {r.estado === 'pendiente' && <div style={{ padding: '12px 18px', borderTop: '1px solid #f3f4f6', background: '#fafafa' }}>
                   {!esRechazando ? (
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <button onClick={() => aprobarReceta(r)} disabled={procesando === r.id}
-                        style={{ padding: '7px 18px', border: 'none', borderRadius: 8, background: procesando === r.id ? '#9ca3af' : '#3B6D11', color: '#EAF3DE', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
-                        {procesando === r.id ? 'Procesando...' : '✅ Aprobar receta'}
-                      </button>
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' as const, alignItems: 'center' }}>
+                      {(() => {
+                        const delegacionBloquea = r.socios?.delegacion_estado === 'pendiente_firma' && r.cuota_mensual < (r.socios?.gramos_delegados || 0)
+                        const bloqueado = procesando === r.id || delegacionBloquea
+                        return (
+                          <>
+                            <button onClick={() => aprobarReceta(r)} disabled={bloqueado}
+                              title={delegacionBloquea ? 'Primero debe firmarse el contrato de delegación pendiente' : ''}
+                              style={{ padding: '7px 18px', border: 'none', borderRadius: 8, background: bloqueado ? '#9ca3af' : '#3B6D11', color: '#EAF3DE', fontSize: 13, fontWeight: 600, cursor: bloqueado ? 'not-allowed' : 'pointer' }}>
+                              {procesando === r.id ? 'Procesando...' : '✅ Aprobar receta'}
+                            </button>
+                            {delegacionBloquea && (
+                              <span style={{ fontSize: 11, color: '#92400E', background: '#FEF3C7', padding: '3px 8px', borderRadius: 6, fontWeight: 500 }}>
+                                🔒 Firma el contrato de delegación primero
+                              </span>
+                            )}
+                          </>
+                        )
+                      })()}
                       <button onClick={() => setRechazandoRecetaId(r.id)} disabled={procesando === r.id}
                         style={{ padding: '7px 18px', border: '1px solid #e5e7eb', borderRadius: 8, background: '#fff', color: '#A32D2D', fontSize: 13, cursor: 'pointer' }}>
                         ❌ Rechazar
