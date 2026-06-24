@@ -327,6 +327,19 @@ function template(evento: string, datos: Datos): { subject: string; html: string
       return { subject: 'Resolución de tu solicitud de renovación de receta — GreenTech', html }
     }
 
+    case 'retorno_inscripcion': {
+      const nombre = String(datos.nombre || 'Estimado/a')
+      const link = String(datos.link || `${APP_URL}/inscripcion`)
+      const html = layout('Completa tu inscripción — GreenTech', `
+        ${h1('Completa tu proceso de inscripción 🌿')}
+        ${p(`Hola <strong>${nombre}</strong>, te enviamos este correo para que puedas retomar y completar tu solicitud de ingreso a la Asociación GreenTech.`)}
+        ${warningBox('Tu solicitud quedó pendiente. El link a continuación te llevará directamente al formulario con tus datos guardados para que solo debas completar los pasos que faltan.')}
+        ${btn('Completar mi inscripción →', link)}
+        ${p('Si no solicitaste este correo o no reconoces esta solicitud, puedes ignorarlo. El link es personal e intransferible.')}
+      `)
+      return { subject: 'Completa tu inscripción en GreenTech', html }
+    }
+
     default:
       return null
   }

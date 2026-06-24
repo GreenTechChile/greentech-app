@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 
 interface FormData {
@@ -52,6 +52,7 @@ const formatearRut = (valor: string): string => {
 
 export default function Inscripcion() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [paso, setPaso] = useState(0)
   const [form, setForm] = useState<FormData>(initialForm)
   const [ciudadesDisponibles, setCiudadesDisponibles] = useState<string[]>([])
@@ -76,6 +77,27 @@ export default function Inscripcion() {
     supabase.from('configuracion').select('datos').eq('id', 'pago_incorporacion').single()
       .then(({ data }) => { if (data?.datos?.monto) setMontoIncorporacion(data.datos.monto) })
   }, [])
+
+  // Detectar link de retorno enviado por administrador (?retomar=UUID)
+  useEffect(() => {
+    const tokenRetorno = searchParams?.get('retomar')
+    if (!tokenRetorno) return
+    supabase.from('pagos_incorporacion').select('*').eq('id', tokenRetorno).single()
+      .then(({ data }) => {
+        if (!data) return // token inválido, no hacer nada
+        // Pre-llenar nombre, RUT y email con los datos guardados
+        setForm(prev => ({
+          ...prev,
+          nombre: data.nombre || prev.nombre,
+          rut: data.rut || prev.rut,
+          email: data.email || prev.email,
+        }))
+        // Saltar directamente al paso 1 (datos personales) con los datos pre-llenados
+        setPaso(1)
+        // Limpiar el token de la URL sin recargar la página
+        window.history.replaceState({}, '', '/inscripcion')
+      })
+  }, [searchParams])
 
   // 🚧 BYPASS TEMPORAL — cambiar a false para activar MP en producción
   const BYPASS_PAGO = true

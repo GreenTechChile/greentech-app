@@ -43,6 +43,7 @@ export default function AdminSocios() {
   const [motivosRechazo, setMotivosRechazo] = useState<Record<string,string>>({})
   const [rechazandoRecetaId, setRechazandoRecetaId] = useState<string|null>(null)
   const [tabCounts, setTabCounts] = useState<Record<string,number>>({})
+  const [enviandoLink, setEnviandoLink] = useState<Record<string,boolean>>({})
 
 
   useEffect(() => { cargarConteos() }, [])
@@ -619,7 +620,7 @@ export default function AdminSocios() {
         {tab === 'pagos_incompletos' && (
           <>
             <div style={{ fontSize: 13, color: '#6b7280', marginBottom: 16 }}>
-              Personas que iniciaron el proceso de incorporación pero no completaron el pago.
+              Personas que iniciaron el proceso de incorporación pero no completaron el pago. Envía un link personalizado para que retomen desde donde quedaron.
             </div>
             {loading ? (
               <div style={{ fontSize: 13, color: '#9ca3af', padding: 40, textAlign: 'center' }}>Cargando...</div>
@@ -629,14 +630,14 @@ export default function AdminSocios() {
               </div>
             ) : (
               <div style={{ border: '1px solid #e5e7eb', borderRadius: 12, overflow: 'hidden' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr', padding: '10px 16px', background: '#f9fafb', borderBottom: '1px solid #e5e7eb', fontSize: 11, color: '#9ca3af', fontWeight: 500 }}>
-                  {['Nombre / Email', 'RUT', 'Monto', 'Estado', 'Fecha'].map(h => <span key={h}>{h}</span>)}
+                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr auto', padding: '10px 16px', background: '#f9fafb', borderBottom: '1px solid #e5e7eb', fontSize: 11, color: '#9ca3af', fontWeight: 500 }}>
+                  {['Nombre / Email', 'RUT', 'Monto', 'Estado', 'Fecha', ''].map(h => <span key={h}>{h}</span>)}
                 </div>
                 {pagosIncompletos.map((p: any) => (
-                  <div key={p.id} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr', padding: '12px 16px', borderBottom: '1px solid #f3f4f6', fontSize: 13, alignItems: 'center' }}>
+                  <div key={p.id} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr auto', padding: '12px 16px', borderBottom: '1px solid #f3f4f6', fontSize: 13, alignItems: 'center', gap: 8 }}>
                     <div>
                       <div style={{ fontWeight: 500 }}>{p.nombre || '—'}</div>
-                      <div style={{ fontSize: 11, color: '#9ca3af' }}>{p.email || '—'}</div>
+                      <div style={{ fontSize: 11, color: '#9ca3af' }}>{p.email || 'Sin email'}</div>
                     </div>
                     <span style={{ fontSize: 12, color: '#374151' }}>{p.rut || '—'}</span>
                     <span style={{ fontWeight: 600, color: '#374151' }}>{p.monto ? `$${p.monto.toLocaleString('es-CL')}` : '—'}</span>
@@ -648,6 +649,26 @@ export default function AdminSocios() {
                     <span style={{ fontSize: 11, color: '#9ca3af' }}>
                       {p.created_at ? new Date(p.created_at).toLocaleDateString('es-CL') : '—'}
                     </span>
+                    <button
+                      onClick={async () => {
+                        if (!p.email) { setMensaje('❌ Este registro no tiene email guardado.'); return }
+                        setEnviandoLink(prev => ({ ...prev, [p.id]: true }))
+                        try {
+                          const link = `${window.location.origin}/inscripcion?retomar=${p.id}`
+                          await sendEmail('retorno_inscripcion', p.email, { nombre: p.nombre || 'Estimado/a', link })
+                          setMensaje(`✅ Link de retorno enviado a ${p.email}`)
+                        } catch {
+                          setMensaje('❌ Error al enviar el correo. Intenta nuevamente.')
+                        } finally {
+                          setEnviandoLink(prev => ({ ...prev, [p.id]: false }))
+                          setTimeout(() => setMensaje(''), 5000)
+                        }
+                      }}
+                      disabled={enviandoLink[p.id] || !p.email}
+                      title={!p.email ? 'Sin email registrado' : `Enviar link de retorno a ${p.email}`}
+                      style={{ padding: '6px 12px', border: 'none', borderRadius: 8, background: enviandoLink[p.id] ? '#9ca3af' : !p.email ? '#f3f4f6' : '#185FA5', color: !p.email ? '#9ca3af' : '#fff', fontSize: 12, fontWeight: 600, cursor: !p.email ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' as const }}>
+                      {enviandoLink[p.id] ? '⏳ Enviando...' : '📧 Enviar link'}
+                    </button>
                   </div>
                 ))}
                 <div style={{ padding: '10px 16px', background: '#f9fafb', fontSize: 12, color: '#6b7280', borderTop: '1px solid #e5e7eb' }}>
