@@ -462,7 +462,7 @@ export default function AdminSocios() {
                       )}
                     </div>
                   </div>
-                  <div style={{ padding: '10px 18px 14px', borderTop: '1px solid #FDE68A', display: 'flex', gap: 8, flexWrap: 'wrap' as const }}>
+                  {socio.delegacion_estado !== 'firmado' && <div style={{ padding: '10px 18px 14px', borderTop: '1px solid #FDE68A', display: 'flex', gap: 8, flexWrap: 'wrap' as const }}>
                     <button onClick={async () => {
                       const { data } = await supabase.storage.from('documentos').createSignedUrl(`${socio.rut}/contrato_renovacion.pdf`, 120)
                       if (data?.signedUrl) window.open(data.signedUrl, '_blank')
@@ -498,7 +498,7 @@ export default function AdminSocios() {
                         e.target.value = ''
                       }} />
                     </label>
-                  </div>
+                  </div>}
                 </div>
               ))}
             </div>
