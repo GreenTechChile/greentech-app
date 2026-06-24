@@ -110,6 +110,8 @@ export default function AdminSocios() {
       if (data) setSocios(data as any)
     }
     setLoading(false)
+    // Refrescar conteos al finalizar carga (garantiza que auth está establecida)
+    cargarConteos()
   }
 
   // Verifica en storage si los documentos firmados ya fueron subidos
