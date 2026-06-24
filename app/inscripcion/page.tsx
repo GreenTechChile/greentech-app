@@ -744,7 +744,7 @@ export default function Inscripcion() {
                   {rutMedicoValido === true && <span style={{fontSize:11, color:'#3B6D11'}}>✓ RUT válido</span>}
                 </div>
                 <div style={s.field}><label style={s.label}>Folio receta médica <span style={s.req}>*</span></label><input style={s.input} value={form.folio_receta} onChange={e=>update('folio_receta',e.target.value)} placeholder="Número de folio"/></div>
-                <div style={s.field}><label style={s.label}>Vencimiento de la receta <span style={s.req}>*</span></label><input style={s.input} type="date" value={form.vencimiento_receta} onChange={e=>update('vencimiento_receta',e.target.value)}/></div>
+                <div style={s.field}><label style={s.label}>Vencimiento de la receta <span style={s.req}>*</span></label><input style={s.input} type="date" value={form.vencimiento_receta} min={new Date().toISOString().split('T')[0]} onChange={e=>update('vencimiento_receta',e.target.value)}/></div>
               </div>
               <div style={{border:'1px solid #97C459',borderRadius:12,padding:16,background:'#EAF3DE',marginBottom:12}}>
                 <div style={{fontSize:13,fontWeight:600,color:'#3B6D11',marginBottom:12}}>🌱 Delegación al cultivo colectivo — límite mensual de dispensación</div>
@@ -768,6 +768,7 @@ export default function Inscripcion() {
                 <button style={s.btnOutline} onClick={()=>setPaso(3)}>← Anterior</button>
                 <button style={s.btnPrimary} onClick={()=>{
                   if(!form.diagnostico||!form.medico_nombre||!form.medico_rut||!form.folio_receta||!form.cuota_mensual||!form.gramos_delegados||!form.vencimiento_receta){setError('Completa todos los campos obligatorios.');return}
+                  if(form.vencimiento_receta < new Date().toISOString().split('T')[0]){setError('La fecha de vencimiento de la receta debe ser una fecha futura.');return}
                   if(parseInt(form.gramos_delegados)>parseInt(form.cuota_mensual)){setError('Los gramos delegados no pueden superar los autorizados en receta.');return}
                   setError('');setPaso(5)
                 }}>Siguiente →</button>
