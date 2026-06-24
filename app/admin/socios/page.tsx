@@ -51,10 +51,12 @@ export default function AdminSocios() {
       { count: pendientes },
       { count: renovaciones },
       { data: pagos },
+      { count: delegaciones },
     ] = await Promise.all([
       supabase.from('socios').select('*', { count: 'exact', head: true }).eq('estado', 'pendiente'),
       supabase.from('recetas_pendientes').select('*', { count: 'exact', head: true }).eq('estado', 'pendiente'),
       supabase.from('pagos_incorporacion').select('rut').eq('estado', 'aprobado'),
+      supabase.from('socios').select('*', { count: 'exact', head: true }).eq('delegacion_estado', 'pendiente_firma'),
     ])
     let incompletos = 0
     if (pagos && pagos.length > 0) {
@@ -63,8 +65,8 @@ export default function AdminSocios() {
       const rutsCompletos = new Set((sociosExist || []).map((s: any) => s.rut))
       incompletos = pagos.filter((p: any) => !rutsCompletos.has(p.rut)).length
     }
-    const totalPendiente = (pendientes || 0) + (renovaciones || 0) + incompletos
-    setTabCounts({ pendientes: pendientes || 0, renovaciones: renovaciones || 0, pagos_incompletos: incompletos, total_pendiente: totalPendiente })
+    const totalPendiente = (pendientes || 0) + (renovaciones || 0) + incompletos + (delegaciones || 0)
+    setTabCounts({ pendientes: pendientes || 0, renovaciones: renovaciones || 0, pagos_incompletos: incompletos, delegaciones: delegaciones || 0, total_pendiente: totalPendiente })
   }
 
   const cargarSocios = async () => {
@@ -95,6 +97,9 @@ export default function AdminSocios() {
       } else {
         setPagosIncompletos([])
       }
+    } else if (tab === 'delegaciones') {
+      const { data } = await supabase.from('socios').select('*, delegacion_nueva_cuota, delegacion_pdf_url, delegacion_estado').eq('delegacion_estado', 'pendiente_firma').order('created_at', { ascending: false })
+      if (data) setSocios(data)
     } else {
       const estadoMap = { pendientes: 'pendiente', aprobados: 'activo', rechazados: 'rechazado' }
       const { data } = await supabase.from('socios').select('*, delegacion_nueva_cuota, delegacion_pdf_url, delegacion_estado').eq('estado', estadoMap[tab as 'pendientes'|'aprobados'|'rechazados']).order('created_at', { ascending: false })
@@ -334,6 +339,7 @@ export default function AdminSocios() {
             { key: 'rechazados', label: 'Rechazados', countKey: '', badgeColor: '', badgeBg: '' },
             { key: 'renovaciones', label: '🩺 Renovaciones', countKey: 'renovaciones', badgeColor: '#92400E', badgeBg: '#FEF3C7' },
             { key: 'pagos_incompletos', label: '💳 Pagos incompletos', countKey: 'pagos_incompletos', badgeColor: '#92400E', badgeBg: '#FEF3C7' },
+            { key: 'delegaciones', label: '📋 Delegaciones', countKey: 'delegaciones', badgeColor: '#92400E', badgeBg: '#FEF3C7' },
           ].map(t => {
             const count = t.countKey ? tabCounts[t.countKey] : 0
             return (
@@ -394,6 +400,65 @@ export default function AdminSocios() {
             </div>
           )
         )}
+
+        {/* ── Panel de delegaciones pendientes ── */}
+        {tab === 'delegaciones' && (() => {
+          const pendDelegaciones = socios
+          return loading ? (
+            <div style={{ fontSize: 13, color: '#9ca3af', padding: 40, textAlign: 'center' }}>Cargando...</div>
+          ) : pendDelegaciones.length === 0 ? (
+            <div style={{ fontSize: 13, color: '#9ca3af', padding: 40, textAlign: 'center' }}>✅ No hay contratos de delegación pendientes de firma</div>
+          ) : (
+            <div>
+              <div style={{ background: '#FFF7ED', border: '1px solid #FED7AA', borderRadius: 10, padding: '10px 14px', fontSize: 12, color: '#92400E', marginBottom: 18 }}>
+                📋 Estos socios solicitaron actualizar su contrato de delegación de cultivo. Descarga el PDF, gestiona la firma y sube la versión firmada.
+              </div>
+              {pendDelegaciones.map((socio: any) => (
+                <div key={socio.id} style={{ border: '1px solid #FED7AA', borderRadius: 12, marginBottom: 12, overflow: 'hidden', background: '#FFFDF0' }}>
+                  <div style={{ padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 600 }}>{socio.nombre}</div>
+                      <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>{socio.rut} · {socio.email}</div>
+                      <div style={{ fontSize: 12, color: '#92400E', marginTop: 4 }}>
+                        Delegación actual: <strong>{socio.gramos_delegados}g</strong> → Nueva solicitud: <strong>{socio.delegacion_nueva_cuota}g</strong>
+                      </div>
+                    </div>
+                    <span style={{ background: '#FEF3C7', color: '#92400E', fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 20 }}>
+                      ⏳ Pendiente de firma
+                    </span>
+                  </div>
+                  <div style={{ padding: '10px 18px 14px', borderTop: '1px solid #FDE68A', display: 'flex', gap: 8, flexWrap: 'wrap' as const }}>
+                    <button onClick={async () => {
+                      const { data } = await supabase.storage.from('documentos').createSignedUrl(`${socio.rut}/contrato_renovacion.pdf`, 120)
+                      if (data?.signedUrl) window.open(data.signedUrl, '_blank')
+                      else alert('No se pudo obtener el enlace del contrato.')
+                    }} style={{ padding: '7px 14px', border: '1px solid #D97706', borderRadius: 8, background: '#fff', color: '#D97706', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                      ⬇ Descargar contrato
+                    </button>
+                    <label style={{ padding: '7px 14px', border: 'none', borderRadius: 8, background: '#3B6D11', color: '#EAF3DE', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                      ⬆ Subir firmado
+                      <input type="file" accept=".pdf" style={{ display: 'none' }} onChange={async (e) => {
+                        const file = e.target.files?.[0]
+                        if (!file) return
+                        const { error } = await supabase.storage.from('documentos').upload(`${socio.rut}/contrato_firmado.pdf`, file, { contentType: 'application/pdf', upsert: true })
+                        if (error) { alert('Error al subir: ' + error.message); return }
+                        await supabase.from('socios').update({
+                          delegacion_estado: 'firmado',
+                          gramos_delegados: socio.delegacion_nueva_cuota,
+                        }).eq('id', socio.id)
+                        setMensaje(`✅ Contrato de ${socio.nombre} subido. Gramos delegados actualizados a ${socio.delegacion_nueva_cuota}g.`)
+                        setTimeout(() => setMensaje(''), 6000)
+                        cargarSocios()
+                        cargarConteos()
+                        e.target.value = ''
+                      }} />
+                    </label>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )
+        })()}
 
         {/* ── Panel de renovaciones de receta ── */}
         {tab === 'renovaciones' && (
