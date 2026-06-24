@@ -286,6 +286,34 @@ function template(evento: string, datos: Datos): { subject: string; html: string
       return { subject: 'Tu receta médica fue aprobada — GreenTech', html }
     }
 
+    case 'renovacion_receta_enviada': {
+      const nombre     = String(datos.nombre     || 'Socio')
+      const folio      = String(datos.folio      || '')
+      const medico     = String(datos.medico     || '')
+      const vencimiento= String(datos.vencimiento|| '')
+      const cuota      = String(datos.cuota      || '')
+      const conDelegacion = !!datos.delegacion_gramos
+      const delegGramos= conDelegacion ? String(datos.delegacion_gramos) : ''
+      const html = layout('Renovación de receta médica recibida — GreenTech', `
+        ${h1('Renovación de receta médica recibida 📋')}
+        ${p(`Hola <strong>${nombre}</strong>, hemos recibido correctamente tu solicitud de renovación de receta médica. La directiva la revisará en un plazo máximo de <strong>5 días hábiles</strong>.`)}
+        ${infoBox(`
+          <strong>Datos enviados:</strong><br>
+          ${folio       ? `<strong>Folio receta:</strong> ${folio}<br>` : ''}
+          ${medico      ? `<strong>Médico:</strong> ${medico}<br>`      : ''}
+          ${vencimiento ? `<strong>Vencimiento:</strong> ${vencimiento}<br>` : ''}
+          ${cuota       ? `<strong>Cuota mensual indicada:</strong> ${cuota} gr<br>` : ''}
+          <strong>Estado:</strong> ⏳ En revisión
+        `)}
+        ${conDelegacion ? warningBox(`<strong>📋 Actualización de contrato de delegación de cultivo</strong><br>
+          Has solicitado actualizar tu delegación a <strong>${delegGramos} gr</strong> mensuales.<br>
+          La directiva descargará el nuevo contrato, lo gestionará para su firma y te informará cuando esté listo.`) : ''}
+        ${p('Recibirás un correo cuando la directiva resuelva tu solicitud. Si tienes consultas, contáctanos a <a href="mailto:contacto@asociaciongreentech.cl" style="color:' + C.verde + ';">contacto@asociaciongreentech.cl</a>.')}
+        ${btn('Ver mis documentos', `${APP_URL}/socio/documentos`)}
+      `)
+      return { subject: 'Renovación de receta médica recibida — GreenTech', html }
+    }
+
     case 'receta_rechazada': {
       const nombre = String(datos.nombre || 'Socio')
       const motivo = String(datos.motivo || 'No se especificó motivo.')

@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import SidebarSocio from '@/components/socio/SidebarSocio'
 import { supabase } from '@/lib/supabase'
+import { sendEmail } from '@/lib/email'
 
 const documentosEsperados = [
   { id:'contrato',       nombre:'Contrato de previsión y delegación de cultivo', tipo:'contrato',    detalle:'Firma electrónica · Ley 19.799',    icon:'📋', storageKey:'contrato' },
@@ -313,6 +314,20 @@ export default function MisDocumentos() {
       })
       if (insertErr) throw new Error(insertErr.message)
       setMensaje('✅ Solicitud enviada. La directiva revisará tu receta en 5 días hábiles.')
+      // Email de confirmación al socio
+      try {
+        const emailSocio = socioData?.email
+        if (emailSocio) {
+          await sendEmail('renovacion_receta_enviada', emailSocio, {
+            nombre:      nombreSocio,
+            folio:       formReceta.folio_receta,
+            medico:      formReceta.medico_nombre,
+            vencimiento: formReceta.vencimiento_receta,
+            cuota:       formReceta.cuota_mensual,
+            ...(delegacionSolicitada ? { delegacion_gramos: cuotaDelegacion } : {}),
+          })
+        }
+      } catch {}
       setSubiendoReceta(false)
       setArchivoNuevo(null)
       setFormReceta({ diagnostico:'', diagnostico_secundario:'', medico_nombre:'', medico_rut:'', folio_receta:'', vencimiento_receta:'', cuota_mensual:'', observaciones:'' })
