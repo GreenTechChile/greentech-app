@@ -61,7 +61,8 @@ export default function AdminSocios() {
       const rutsCompletos = new Set((sociosExist || []).map((s: any) => s.rut))
       incompletos = pagos.filter((p: any) => !rutsCompletos.has(p.rut)).length
     }
-    setTabCounts({ pendientes: pendientes || 0, renovaciones: renovaciones || 0, pagos_incompletos: incompletos })
+    const totalPendiente = (pendientes || 0) + (renovaciones || 0) + incompletos
+    setTabCounts({ pendientes: pendientes || 0, renovaciones: renovaciones || 0, pagos_incompletos: incompletos, total_pendiente: totalPendiente })
   }
 
   const cargarSocios = async () => {
@@ -289,7 +290,7 @@ export default function AdminSocios() {
 
         <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', marginBottom: 20, flexWrap: 'wrap' }}>
           {[
-            { key: 'pendientes', label: 'Pendientes', countKey: 'pendientes', badgeColor: '#A32D2D', badgeBg: '#FCEBEB' },
+            { key: 'pendientes', label: 'Pendientes', countKey: 'total_pendiente', badgeColor: '#A32D2D', badgeBg: '#FCEBEB' },
             { key: 'aprobados', label: 'Aprobados', countKey: '', badgeColor: '', badgeBg: '' },
             { key: 'rechazados', label: 'Rechazados', countKey: '', badgeColor: '', badgeBg: '' },
             { key: 'renovaciones', label: '🩺 Renovaciones', countKey: 'renovaciones', badgeColor: '#92400E', badgeBg: '#FEF3C7' },
