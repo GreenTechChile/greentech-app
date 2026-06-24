@@ -23,7 +23,7 @@ const DOCS_FIRMA = [
 ]
 
 export default function AdminSocios() {
-  const [tab, setTab] = useState<'pendientes'|'aprobados'|'rechazados'|'renovaciones'|'pagos_incompletos'>('pendientes')
+  const [tab, setTab] = useState<'pendientes'|'aprobados'|'rechazados'|'renovaciones'|'pagos_incompletos'|'delegaciones'>('pendientes')
   const [recetas, setRecetas] = useState<any[]>([])
   const [filtroRecetas, setFiltroRecetas] = useState<'pendiente'|'todas'>('pendiente')
   const [socios, setSocios] = useState<Socio[]>([])
