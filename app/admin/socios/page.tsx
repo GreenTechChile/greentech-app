@@ -223,10 +223,28 @@ export default function AdminSocios() {
     }
   }
 
+  // Genera URL firmada desde la URL pública almacenada (bucket es privado)
+  const verReceta = async (archivoUrl: string) => {
+    try {
+      // Extraer el path relativo del bucket desde la URL completa
+      const match = archivoUrl.match(/\/documentos\/(.+)$/)
+      if (!match) { window.open(archivoUrl, '_blank'); return }
+      const path = match[1]
+      const { data, error } = await supabase.storage.from('documentos').createSignedUrl(path, 120)
+      if (error || !data?.signedUrl) throw new Error('No se pudo generar el enlace')
+      window.open(data.signedUrl, '_blank')
+    } catch {
+      setMensaje('❌ No se pudo abrir el archivo. Intenta nuevamente.')
+      setTimeout(() => setMensaje(''), 4000)
+    }
+  }
+
   const aprobarReceta = async (receta: any) => {
     setProcesando(receta.id)
     try {
       const socio = receta.socios
+      const { data: { user } } = await supabase.auth.getUser()
+      const nombreAdmin = user?.user_metadata?.nombre || user?.email || user?.user_metadata?.rut || 'Admin'
       // 1. Actualizar datos médicos del socio
       await supabase.from('socios').update({
         diagnostico: receta.diagnostico,
@@ -237,13 +255,17 @@ export default function AdminSocios() {
         vencimiento_receta: receta.vencimiento_receta,
         cuota_mensual: receta.cuota_mensual,
       }).eq('id', receta.socio_id)
-      // 2. Marcar receta como aprobada
-      await supabase.from('recetas_pendientes').update({ estado: 'aprobada' }).eq('id', receta.id)
+      // 2. Marcar receta como aprobada + audit trail
+      await supabase.from('recetas_pendientes').update({
+        estado: 'aprobada',
+        aprobado_por: nombreAdmin,
+        aprobado_at: new Date().toISOString(),
+      }).eq('id', receta.id)
       // 3. Email al socio
       try {
         await sendEmail('receta_aprobada', socio.email, { nombre: socio.nombre, rut: socio.rut, vencimiento: receta.vencimiento_receta })
       } catch {}
-      setMensaje(`✅ Receta de ${socio.nombre} aprobada. Datos médicos actualizados.`)
+      setMensaje(`✅ Receta de ${socio.nombre} aprobada por ${nombreAdmin}. Datos médicos actualizados.`)
       cargarSocios()
     } catch (e: any) {
       setMensaje('❌ Error: ' + e.message)
@@ -254,14 +276,26 @@ export default function AdminSocios() {
   }
 
   const rechazarReceta = async (receta: any, motivo: string) => {
+    if (!motivo.trim()) { setMensaje('❌ Debes ingresar un motivo de rechazo.'); return }
     setProcesando(receta.id)
     try {
       const socio = receta.socios
-      await supabase.from('recetas_pendientes').update({ estado: 'rechazada', notas_admin: motivo }).eq('id', receta.id)
+      const { data: { user } } = await supabase.auth.getUser()
+      const nombreAdmin = user?.user_metadata?.nombre || user?.email || user?.user_metadata?.rut || 'Admin'
+      // Conservar nota de contrato si existe, agregar motivo de rechazo aparte
+      const notaExistente = receta.notas_admin?.startsWith('⚠️') ? receta.notas_admin + '\n' : ''
+      await supabase.from('recetas_pendientes').update({
+        estado: 'rechazada',
+        motivo_rechazo: motivo,
+        notas_admin: notaExistente + `Rechazado: ${motivo}`,
+        aprobado_por: nombreAdmin,
+        aprobado_at: new Date().toISOString(),
+      }).eq('id', receta.id)
       try {
         await sendEmail('receta_rechazada', socio.email, { nombre: socio.nombre, rut: socio.rut, motivo })
       } catch {}
-      setMensaje(`✅ Receta de ${socio.nombre} rechazada.`)
+      setMensaje(`✅ Receta de ${socio.nombre} rechazada por ${nombreAdmin}.`)
+      setRechazandoRecetaId(null)
       cargarSocios()
     } catch (e: any) {
       setMensaje('❌ Error: ' + e.message)
@@ -374,10 +408,10 @@ export default function AdminSocios() {
                     <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>Enviada hace {diasDesde(r.created_at)} días</div>
                   </div>
                   {r.archivo_url && (
-                    <a href={r.archivo_url} target="_blank" rel="noreferrer"
-                      style={{ padding: '6px 12px', border: '1px solid #185FA5', borderRadius: 7, fontSize: 12, color: '#185FA5', textDecoration: 'none', background: '#fff' }}>
+                    <button onClick={() => verReceta(r.archivo_url)}
+                      style={{ padding: '6px 12px', border: '1px solid #185FA5', borderRadius: 7, fontSize: 12, color: '#185FA5', background: '#fff', cursor: 'pointer' }}>
                       📄 Ver receta
-                    </a>
+                    </button>
                   )}
                 </div>
                 <div style={{ padding: '14px 18px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
