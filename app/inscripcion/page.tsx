@@ -92,8 +92,8 @@ export default function Inscripcion() {
           rut: data.rut || prev.rut,
           email: data.email || prev.email,
         }))
-        // Saltar directamente al paso 1 (datos personales) con los datos pre-llenados
-        setPaso(1)
+        // Saltar al paso 2 (datos personales) — el pago ya fue realizado
+        setPaso(2)
         // Limpiar el token de la URL sin recargar la página
         window.history.replaceState({}, '', '/inscripcion')
       })
