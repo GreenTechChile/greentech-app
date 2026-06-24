@@ -23,7 +23,8 @@ const DOCS_FIRMA = [
 ]
 
 export default function AdminSocios() {
-  const [tab, setTab] = useState<'pendientes'|'socios'|'delegaciones'|'renovaciones'>('pendientes')
+  const [tab, setTab] = useState<'pendientes'|'socios'|'delegaciones'|'renovaciones'|'pagos_incompletos'>('pendientes')
+  const [pagosIncompletos, setPagosIncompletos] = useState<any[]>([])
   const [filtroSocios, setFiltroSocios] = useState<'pendiente'|'activo'|'rechazado'>('pendiente')
   const [filtroDelegaciones, setFiltroDelegaciones] = useState<'pendiente_firma'|'todas'>('pendiente_firma')
   const [recetas, setRecetas] = useState<any[]>([])
@@ -52,18 +53,25 @@ export default function AdminSocios() {
       { count: pendientes },
       { count: renovaciones },
       { count: delegaciones },
+      { count: pagosInc },
     ] = await Promise.all([
       supabase.from('socios').select('*', { count: 'exact', head: true }).eq('estado', 'pendiente'),
       supabase.from('recetas_pendientes').select('*', { count: 'exact', head: true }).eq('estado', 'pendiente'),
       supabase.from('socios').select('*', { count: 'exact', head: true }).eq('delegacion_estado', 'pendiente_firma'),
+      supabase.from('pagos_incorporacion').select('*', { count: 'exact', head: true }).neq('estado', 'pagado'),
     ])
-    const totalPendiente = (pendientes || 0) + (renovaciones || 0) + (delegaciones || 0)
-    setTabCounts({ pendientes: pendientes || 0, renovaciones: renovaciones || 0, delegaciones: delegaciones || 0, total_pendiente: totalPendiente })
+    const totalPendiente = (pendientes || 0) + (renovaciones || 0) + (delegaciones || 0) + (pagosInc || 0)
+    setTabCounts({ pendientes: pendientes || 0, renovaciones: renovaciones || 0, delegaciones: delegaciones || 0, pagos_incompletos: pagosInc || 0, total_pendiente: totalPendiente })
   }
 
   const cargarSocios = async () => {
     setLoading(true)
-    if (tab === 'renovaciones') {
+    if (tab === 'pagos_incompletos') {
+      const { data } = await supabase.from('pagos_incorporacion').select('*').neq('estado', 'pagado').order('created_at', { ascending: false })
+      setPagosIncompletos(data || [])
+      setLoading(false)
+      return
+    } else if (tab === 'renovaciones') {
       let query = supabase.from('recetas_pendientes').select('*, socios(nombre, rut, email)').order('created_at', { ascending: false })
       if (filtroRecetas === 'pendiente') query = query.eq('estado', 'pendiente')
       const { data } = await query
@@ -346,6 +354,7 @@ export default function AdminSocios() {
             { key: 'socios', label: '👤 Socios', countKey: '', badgeColor: '', badgeBg: '' },
             { key: 'delegaciones', label: '📋 Delegaciones', countKey: 'delegaciones', badgeColor: '#92400E', badgeBg: '#FEF3C7' },
             { key: 'renovaciones', label: '🩺 Renovaciones', countKey: 'renovaciones', badgeColor: '#92400E', badgeBg: '#FEF3C7' },
+            { key: 'pagos_incompletos', label: '💳 Pagos incompletos', countKey: 'pagos_incompletos', badgeColor: '#A32D2D', badgeBg: '#FCEBEB' },
           ].map(t => {
             const count = t.countKey ? tabCounts[t.countKey] : 0
             return (
@@ -591,9 +600,62 @@ export default function AdminSocios() {
                     <span style={{ background: '#FEF3C7', color: '#92400E', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 10 }}>{tabCounts.renovaciones}</span>
                   </button>
                 )}
+                {tabCounts.pagos_incompletos > 0 && (
+                  <button onClick={() => setTab('pagos_incompletos')} style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '12px 16px', background: '#FFF8F8', border: '1px solid #F5C5C5', borderRadius: 10, cursor: 'pointer', textAlign: 'left' as const }}>
+                    <span style={{ fontSize: 22 }}>💳</span>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: '#111' }}>{tabCounts.pagos_incompletos} pago{tabCounts.pagos_incompletos > 1 ? 's' : ''} de incorporación incompleto{tabCounts.pagos_incompletos > 1 ? 's' : ''}</div>
+                      <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>Clic para revisar en el tab Pagos incompletos →</div>
+                    </div>
+                    <span style={{ background: '#FCEBEB', color: '#A32D2D', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 10 }}>{tabCounts.pagos_incompletos}</span>
+                  </button>
+                )}
               </div>
             )}
           </div>
+        )}
+
+        {/* ── Panel de pagos incompletos ── */}
+        {tab === 'pagos_incompletos' && (
+          <>
+            <div style={{ fontSize: 13, color: '#6b7280', marginBottom: 16 }}>
+              Personas que iniciaron el proceso de incorporación pero no completaron el pago.
+            </div>
+            {loading ? (
+              <div style={{ fontSize: 13, color: '#9ca3af', padding: 40, textAlign: 'center' }}>Cargando...</div>
+            ) : pagosIncompletos.length === 0 ? (
+              <div style={{ fontSize: 13, color: '#9ca3af', padding: 40, textAlign: 'center', border: '1px dashed #e5e7eb', borderRadius: 12 }}>
+                ✅ No hay pagos incompletos
+              </div>
+            ) : (
+              <div style={{ border: '1px solid #e5e7eb', borderRadius: 12, overflow: 'hidden' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr', padding: '10px 16px', background: '#f9fafb', borderBottom: '1px solid #e5e7eb', fontSize: 11, color: '#9ca3af', fontWeight: 500 }}>
+                  {['Nombre / Email', 'RUT', 'Monto', 'Estado', 'Fecha'].map(h => <span key={h}>{h}</span>)}
+                </div>
+                {pagosIncompletos.map((p: any) => (
+                  <div key={p.id} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr', padding: '12px 16px', borderBottom: '1px solid #f3f4f6', fontSize: 13, alignItems: 'center' }}>
+                    <div>
+                      <div style={{ fontWeight: 500 }}>{p.nombre || '—'}</div>
+                      <div style={{ fontSize: 11, color: '#9ca3af' }}>{p.email || '—'}</div>
+                    </div>
+                    <span style={{ fontSize: 12, color: '#374151' }}>{p.rut || '—'}</span>
+                    <span style={{ fontWeight: 600, color: '#374151' }}>{p.monto ? `$${p.monto.toLocaleString('es-CL')}` : '—'}</span>
+                    <span>
+                      <span style={{ fontSize: 10, background: p.estado === 'pendiente' ? '#FAEEDA' : '#f3f4f6', color: p.estado === 'pendiente' ? '#633806' : '#374151', padding: '2px 8px', borderRadius: 20, fontWeight: 600 }}>
+                        {p.estado || '—'}
+                      </span>
+                    </span>
+                    <span style={{ fontSize: 11, color: '#9ca3af' }}>
+                      {p.created_at ? new Date(p.created_at).toLocaleDateString('es-CL') : '—'}
+                    </span>
+                  </div>
+                ))}
+                <div style={{ padding: '10px 16px', background: '#f9fafb', fontSize: 12, color: '#6b7280', borderTop: '1px solid #e5e7eb' }}>
+                  {pagosIncompletos.length} registro{pagosIncompletos.length !== 1 ? 's' : ''} con pago incompleto
+                </div>
+              </div>
+            )}
+          </>
         )}
 
         {/* ── Panel de socios (pendientes / aprobados / rechazados) ── */}
