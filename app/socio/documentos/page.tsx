@@ -68,6 +68,8 @@ export default function MisDocumentos() {
   const [recetaPendiente, setRecetaPendiente] = useState<{id:string, created_at:string} | null>(null)
   const [gramosDelegados, setGramosDelegados] = useState<number>(0)
   const [rutMedicoValido, setRutMedicoValido] = useState<boolean|null>(null)
+  const [delegacionSolicitada, setDelegacionSolicitada] = useState(false)
+  const [solicitandoDelegacion, setSolicitandoDelegacion] = useState(false)
   const [formReceta, setFormReceta] = useState<FormReceta>({
     diagnostico:'', diagnostico_secundario:'', medico_nombre:'', medico_rut:'',
     folio_receta:'', vencimiento_receta:'', cuota_mensual:'', observaciones:''
@@ -176,6 +178,36 @@ export default function MisDocumentos() {
     }
     setMensaje('❌ Documento no encontrado.')
     setTimeout(() => setMensaje(''), 4000)
+  }
+
+  // Computa si la cuota nueva requiere actualizar delegación
+  const nuevaCuota = parseInt(formReceta.cuota_mensual) || 0
+  const delegacionOpcional = gramosDelegados > 0 && nuevaCuota > gramosDelegados && !!formReceta.cuota_mensual
+  const delegacionObligatoria = gramosDelegados > 0 && nuevaCuota < gramosDelegados && !!formReceta.cuota_mensual
+
+  const solicitarActualizacionDelegacion = async () => {
+    if (!rutSocio || !socioId) return
+    setSolicitandoDelegacion(true)
+    try {
+      // Registrar solicitud de actualización de delegación en BD
+      await supabase.from('socios').update({
+        notas_admin: `[DELEGACION] Socio solicitó actualización de contrato de delegación. Nueva cuota propuesta: ${nuevaCuota}g (actual delegado: ${gramosDelegados}g). Fecha solicitud: ${new Date().toLocaleDateString('es-CL')}`
+      }).eq('id', socioId)
+      // Intentar enviar email al admin
+      try {
+        await sendEmail('notificacion_admin', 'admin@asociaciongreentech.cl', {
+          asunto: 'Actualización de contrato de delegación',
+          mensaje: `El socio ${nombreSocio} (${rutSocio}) solicita actualizar su contrato de delegación de cultivo. Nueva cuota propuesta: ${nuevaCuota}g | Gramos delegados actuales: ${gramosDelegados}g.`
+        })
+      } catch { /* no bloquear si el email falla */ }
+      setDelegacionSolicitada(true)
+      setMensaje('✅ Solicitud de actualización de contrato enviada. La directiva la procesará y te contactará.')
+      setTimeout(() => setMensaje(''), 6000)
+    } catch {
+      setMensaje('❌ No se pudo registrar la solicitud. Intenta nuevamente.')
+    } finally {
+      setSolicitandoDelegacion(false)
+    }
   }
 
   const enviarSolicitudReceta = async () => {
@@ -384,12 +416,13 @@ export default function MisDocumentos() {
                 </div>
                 <div>
                   <label style={{ fontSize:11, color:'#6b7280', display:'block', marginBottom:4 }}>Cuota mensual propuesta (gr) <span style={{ color:'#A32D2D' }}>*</span></label>
-                  <input type="number" min="1" value={formReceta.cuota_mensual} onChange={e => updateForm('cuota_mensual', e.target.value)}
-                    placeholder="Ej: 30" style={{ width:'100%', padding:'8px 10px', border:`1px solid ${gramosDelegados > 0 && parseInt(formReceta.cuota_mensual) < gramosDelegados && formReceta.cuota_mensual ? '#f97316' : '#d1d5db'}`, borderRadius:7, fontSize:13, boxSizing:'border-box' as const }} />
-                  {gramosDelegados > 0 && formReceta.cuota_mensual && parseInt(formReceta.cuota_mensual) < gramosDelegados && (
-                    <div style={{ fontSize:11, color:'#ea580c', marginTop:4, lineHeight:1.5 }}>
-                      ⚠️ La nueva cuota ({formReceta.cuota_mensual}g) es menor a los gramos delegados en tu contrato actual ({gramosDelegados}g). Esto requerirá actualizar el contrato de delegación de cultivo.
-                    </div>
+                  <input type="number" min="1" value={formReceta.cuota_mensual} onChange={e => { updateForm('cuota_mensual', e.target.value); setDelegacionSolicitada(false) }}
+                    placeholder="Ej: 30" style={{ width:'100%', padding:'8px 10px', border:`1px solid ${delegacionObligatoria ? '#f97316' : delegacionOpcional ? '#3b82f6' : '#d1d5db'}`, borderRadius:7, fontSize:13, boxSizing:'border-box' as const }} />
+                  {delegacionObligatoria && (
+                    <div style={{ fontSize:11, color:'#ea580c', marginTop:4 }}>⚠️ Menor a los gramos delegados ({gramosDelegados}g) — requiere actualizar contrato</div>
+                  )}
+                  {delegacionOpcional && (
+                    <div style={{ fontSize:11, color:'#2563eb', marginTop:4 }}>ℹ️ Mayor a los gramos delegados ({gramosDelegados}g) — se recomienda actualizar contrato</div>
                   )}
                 </div>
                 <div>
@@ -398,6 +431,51 @@ export default function MisDocumentos() {
                     placeholder="Opcional" style={{ width:'100%', padding:'8px 10px', border:'1px solid #d1d5db', borderRadius:7, fontSize:13, boxSizing:'border-box' as const }} />
                 </div>
               </div>
+
+              {/* ── Sección delegación de cultivo ── */}
+              {delegacionObligatoria && (
+                <div style={{ background:'#FFF7ED', border:'1px solid #FED7AA', borderRadius:10, padding:16, marginBottom:14 }}>
+                  <div style={{ fontWeight:600, color:'#92400E', fontSize:13, marginBottom:6 }}>
+                    ⚠️ Paso obligatorio: Actualizar contrato de delegación de cultivo
+                  </div>
+                  <p style={{ fontSize:12, color:'#78350F', margin:'0 0 12px', lineHeight:1.6 }}>
+                    La nueva cuota propuesta (<strong>{nuevaCuota}g</strong>) es menor a los gramos actualmente delegados en tu contrato (<strong>{gramosDelegados}g</strong>).
+                    Antes de enviar la receta, debes actualizar el contrato de previsión y delegación de cultivo con los nuevos valores.
+                  </p>
+                  {!delegacionSolicitada ? (
+                    <button onClick={solicitarActualizacionDelegacion} disabled={solicitandoDelegacion}
+                      style={{ padding:'8px 18px', border:'none', borderRadius:8, background: solicitandoDelegacion ? '#9ca3af' : '#D97706', color:'#fff', fontSize:13, fontWeight:600, cursor:'pointer' }}>
+                      {solicitandoDelegacion ? '⏳ Enviando solicitud...' : '📋 Solicitar actualización de contrato →'}
+                    </button>
+                  ) : (
+                    <div style={{ display:'flex', alignItems:'center', gap:8, fontSize:13, color:'#3B6D11', fontWeight:500 }}>
+                      <span style={{ fontSize:18 }}>✅</span>
+                      Solicitud enviada. La directiva preparará el nuevo contrato y te contactará. Puedes enviar tu receta ahora.
+                    </div>
+                  )}
+                </div>
+              )}
+              {delegacionOpcional && (
+                <div style={{ background:'#EFF6FF', border:'1px solid #BFDBFE', borderRadius:10, padding:14, marginBottom:14, display:'flex', alignItems:'flex-start', gap:12 }}>
+                  <span style={{ fontSize:20, flexShrink:0 }}>ℹ️</span>
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontWeight:600, color:'#1D4ED8', fontSize:12, marginBottom:4 }}>
+                      Se recomienda actualizar el contrato de delegación de cultivo
+                    </div>
+                    <p style={{ fontSize:12, color:'#1E40AF', margin:'0 0 10px', lineHeight:1.5 }}>
+                      La nueva cuota ({nuevaCuota}g) supera los gramos delegados actuales ({gramosDelegados}g). Puedes solicitar la actualización ahora o después.
+                    </p>
+                    {!delegacionSolicitada ? (
+                      <button onClick={solicitarActualizacionDelegacion} disabled={solicitandoDelegacion}
+                        style={{ padding:'6px 14px', border:'1px solid #2563EB', borderRadius:7, background:'#fff', color:'#2563EB', fontSize:12, cursor:'pointer' }}>
+                        {solicitandoDelegacion ? '⏳ Enviando...' : '📋 Solicitar actualización (opcional)'}
+                      </button>
+                    ) : (
+                      <div style={{ fontSize:12, color:'#3B6D11', fontWeight:500 }}>✅ Solicitud enviada — la directiva te contactará.</div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Upload archivo */}
               <div style={{ marginBottom:16 }}>
@@ -418,8 +496,10 @@ export default function MisDocumentos() {
                   style={{ padding:'7px 16px', border:'1px solid #e5e7eb', borderRadius:8, background:'#fff', fontSize:13, cursor:'pointer', color:'#6b7280' }}>
                   Cancelar
                 </button>
-                <button onClick={enviarSolicitudReceta} disabled={enviando || !archivoNuevo}
-                  style={{ padding:'7px 16px', border:'none', borderRadius:8, background:(enviando||!archivoNuevo)?'#9ca3af':'#3B6D11', color:'#EAF3DE', fontSize:13, fontWeight:600, cursor:'pointer' }}>
+                <button onClick={enviarSolicitudReceta}
+                  disabled={enviando || !archivoNuevo || (delegacionObligatoria && !delegacionSolicitada)}
+                  title={delegacionObligatoria && !delegacionSolicitada ? 'Debes solicitar la actualización del contrato de delegación primero' : undefined}
+                  style={{ padding:'7px 16px', border:'none', borderRadius:8, background:(enviando||!archivoNuevo||(delegacionObligatoria&&!delegacionSolicitada))?'#9ca3af':'#3B6D11', color:'#EAF3DE', fontSize:13, fontWeight:600, cursor:(delegacionObligatoria&&!delegacionSolicitada)?'not-allowed':'pointer' }}>
                   {enviando ? '⏳ Enviando...' : 'Enviar para revisión →'}
                 </button>
               </div>
