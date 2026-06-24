@@ -397,7 +397,7 @@ export default function AdminSocios() {
         )}
 
         {/* ── Panel de socios (pendientes / aprobados / rechazados) ── */}
-        {tab !== 'renovaciones' && (loading ? (
+        {tab !== 'renovaciones' && tab !== 'pagos_incompletos' && (loading ? (
           <div style={{ fontSize: 13, color: '#9ca3af', padding: 40, textAlign: 'center' }}>Cargando solicitudes...</div>
         ) : socios.length === 0 ? (
           <div style={{ fontSize: 13, color: '#9ca3af', padding: 40, textAlign: 'center' }}>
