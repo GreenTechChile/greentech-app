@@ -45,6 +45,7 @@ export default function AdminSocios() {
   const [tabCounts, setTabCounts] = useState<Record<string,number>>({})
   const [enviandoLink, setEnviandoLink] = useState<Record<string,boolean>>({})
   const [filtroPI, setFiltroPI] = useState<'pendientes'|'historial'>('pendientes')
+  const [rutsConSocio, setRutsConSocio] = useState<Set<string>>(new Set())
 
   useEffect(() => { cargarConteos() }, [])
   useEffect(() => { cargarSocios() }, [tab, filtroRecetas, filtroSocios, filtroDelegaciones, filtroPI])
@@ -59,7 +60,7 @@ export default function AdminSocios() {
       supabase.from('socios').select('*', { count: 'exact', head: true }).eq('estado', 'pendiente'),
       supabase.from('recetas_pendientes').select('*', { count: 'exact', head: true }).eq('estado', 'pendiente'),
       supabase.from('socios').select('*', { count: 'exact', head: true }).eq('delegacion_estado', 'pendiente_firma'),
-      supabase.from('pagos_incorporacion').select('*', { count: 'exact', head: true }).neq('estado', 'pagado').neq('estado', 'link_enviado'),
+      supabase.from('pagos_incorporacion').select('*', { count: 'exact', head: true }).eq('estado', 'pendiente'),
     ])
     const totalPendiente = (pendientes || 0) + (renovaciones || 0) + (delegaciones || 0) + (pagosInc || 0)
     setTabCounts({ pendientes: pendientes || 0, renovaciones: renovaciones || 0, delegaciones: delegaciones || 0, pagos_incompletos: pagosInc || 0, total_pendiente: totalPendiente })
@@ -69,9 +70,13 @@ export default function AdminSocios() {
     setLoading(true)
     if (tab === 'pagos_incompletos') {
       let query = supabase.from('pagos_incorporacion').select('*').order('created_at', { ascending: false })
-      if (filtroPI === 'pendientes') query = query.neq('estado', 'pagado').neq('estado', 'link_enviado')
-      const { data } = await query
+      if (filtroPI === 'pendientes') query = query.eq('estado', 'pendiente')
+      const [{ data }, { data: sociosData }] = await Promise.all([
+        query,
+        supabase.from('socios').select('rut'),
+      ])
       setPagosIncompletos(data || [])
+      setRutsConSocio(new Set((sociosData || []).map((s: any) => s.rut)))
       setLoading(false)
       return
     } else if (tab === 'renovaciones') {
@@ -687,36 +692,54 @@ export default function AdminSocios() {
                       </div>
                     )}
 
-                    <button
-                      onClick={async () => {
-                        if (!p.email) { setMensaje('❌ Este registro no tiene email guardado.'); return }
-                        setEnviandoLink(prev => ({ ...prev, [p.id]: true }))
-                        try {
-                          const { data: { user } } = await supabase.auth.getUser()
-                          const nombreAdmin = user?.user_metadata?.nombre || user?.email || user?.user_metadata?.rut || 'Admin'
-                          const link = `${window.location.origin}/inscripcion?retomar=${p.id}`
-                          await sendEmail('retorno_inscripcion', p.email, { nombre: p.nombre || 'Estimado/a', link })
-                          // Registrar quién envió el link, cuándo, y mover a historial
-                          await supabase.from('pagos_incorporacion').update({
-                            estado: 'link_enviado',
-                            link_enviado_por: nombreAdmin,
-                            link_enviado_at: new Date().toISOString(),
-                          }).eq('id', p.id)
-                          cargarConteos() // actualizar badge del tab
-                          setMensaje(`✅ Link de retorno enviado a ${p.email}`)
-                          cargarSocios() // refrescar para mostrar en historial
-                        } catch {
-                          setMensaje('❌ Error al enviar el correo. Intenta nuevamente.')
-                        } finally {
-                          setEnviandoLink(prev => ({ ...prev, [p.id]: false }))
-                          setTimeout(() => setMensaje(''), 5000)
-                        }
-                      }}
-                      disabled={enviandoLink[p.id] || !p.email}
-                      title={!p.email ? 'Sin email registrado' : `Enviar link de retorno a ${p.email}`}
-                      style={{ padding: '6px 12px', border: 'none', borderRadius: 8, background: enviandoLink[p.id] ? '#9ca3af' : !p.email ? '#f3f4f6' : '#185FA5', color: !p.email ? '#9ca3af' : '#fff', fontSize: 12, fontWeight: 600, cursor: !p.email ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' as const }}>
-                      {enviandoLink[p.id] ? '⏳ Enviando...' : p.link_enviado_por ? '📧 Reenviar' : '📧 Enviar link'}
-                    </button>
+                    {(() => {
+                      const yaEsSocio = p.rut ? rutsConSocio.has(p.rut) : false
+                      const sinEmail = !p.email
+                      const ocupado = enviandoLink[p.id]
+                      const deshabilitado = ocupado || sinEmail || yaEsSocio
+                      const titulo = yaEsSocio
+                        ? 'Ya tiene una solicitud de ingreso registrada — no es necesario reenviar el link'
+                        : sinEmail ? 'Sin email registrado'
+                        : `Enviar link de retorno a ${p.email}`
+                      const bgColor = ocupado ? '#9ca3af' : deshabilitado ? '#f3f4f6' : '#185FA5'
+                      const txtColor = deshabilitado && !ocupado ? '#9ca3af' : '#fff'
+                      return (
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2 }}>
+                          <button
+                            onClick={async () => {
+                              if (sinEmail) { setMensaje('❌ Este registro no tiene email guardado.'); return }
+                              setEnviandoLink(prev => ({ ...prev, [p.id]: true }))
+                              try {
+                                const { data: { user } } = await supabase.auth.getUser()
+                                const nombreAdmin = user?.user_metadata?.nombre || user?.email || user?.user_metadata?.rut || 'Admin'
+                                const link = `${window.location.origin}/inscripcion?retomar=${p.id}`
+                                await sendEmail('retorno_inscripcion', p.email, { nombre: p.nombre || 'Estimado/a', link })
+                                await supabase.from('pagos_incorporacion').update({
+                                  estado: 'link_enviado',
+                                  link_enviado_por: nombreAdmin,
+                                  link_enviado_at: new Date().toISOString(),
+                                }).eq('id', p.id)
+                                setMensaje(`✅ Link de retorno enviado a ${p.email}`)
+                                cargarConteos()
+                                cargarSocios()
+                              } catch {
+                                setMensaje('❌ Error al enviar el correo. Intenta nuevamente.')
+                              } finally {
+                                setEnviandoLink(prev => ({ ...prev, [p.id]: false }))
+                                setTimeout(() => setMensaje(''), 5000)
+                              }
+                            }}
+                            disabled={deshabilitado}
+                            title={titulo}
+                            style={{ padding: '6px 12px', border: 'none', borderRadius: 8, background: bgColor, color: txtColor, fontSize: 12, fontWeight: 600, cursor: deshabilitado ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' as const }}>
+                            {ocupado ? '⏳ Enviando...' : p.link_enviado_por ? '📧 Reenviar' : '📧 Enviar link'}
+                          </button>
+                          {yaEsSocio && (
+                            <span style={{ fontSize: 10, color: '#3B6D11', fontWeight: 500 }}>✓ Inscripción registrada</span>
+                          )}
+                        </div>
+                      )
+                    })()}
                   </div>
                 ))}
 
