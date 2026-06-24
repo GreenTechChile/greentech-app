@@ -378,7 +378,14 @@ export default function Inscripcion() {
 
   return (
     <div style={{fontFamily:'system-ui, sans-serif',minHeight:'100vh',background:'#f9fafb'}}>
-      <nav style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 32px',borderBottom:'1px solid #e5e7eb',background:'#fff'}}>
+      <style>{`
+        @media (max-width: 767px) {
+          .gt-grid2 { grid-template-columns: 1fr !important; }
+          .gt-nav { padding: 12px 16px !important; }
+          .gt-container { padding: 0 16px !important; margin: 20px auto !important; }
+        }
+      `}</style>
+      <nav className="gt-nav" style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 32px',borderBottom:'1px solid #e5e7eb',background:'#fff'}}>
         <Link href="/" style={{display:'flex',alignItems:'center',gap:10,textDecoration:'none',color:'#111'}}>
           <div style={{width:32,height:32,background:'#EAF3DE',borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center'}}>🌿</div>
           <span style={{fontSize:15,fontWeight:600}}>GreenTech</span>
@@ -386,7 +393,7 @@ export default function Inscripcion() {
         <Link href="/" style={{fontSize:13,color:'#6b7280',textDecoration:'none'}}>← Volver al inicio</Link>
       </nav>
 
-      <div style={{maxWidth:700,margin:'32px auto',padding:'0 24px'}}>
+      <div className="gt-container" style={{maxWidth:700,margin:'32px auto',padding:'0 24px'}}>
         <h1 style={{fontSize:22,fontWeight:600,marginBottom:6}}>Solicitud de incorporación como socio</h1>
         <p style={{fontSize:13,color:'#6b7280',marginBottom:28}}>Completa el formulario. La directiva revisará tu solicitud en un plazo máximo de 5 días hábiles.</p>
 
@@ -530,7 +537,7 @@ export default function Inscripcion() {
           {paso===2 && (
             <div>
               <h2 style={{fontSize:15,fontWeight:600,marginBottom:20}}>👤 Datos personales</h2>
-              <div style={{...s.grid2,marginBottom:12}}>
+              <div className="gt-grid2" style={{...s.grid2,marginBottom:12}}>
                 <div style={s.field}><label style={s.label}>Nombre completo <span style={s.req}>*</span></label><input style={s.input} value={form.nombre} onChange={e=>update('nombre',e.target.value)} placeholder="Nombre completo"/></div>
                 <div style={s.field}>
                   <label style={s.label}>RUT (sin puntos, con guión) <span style={s.req}>*</span></label>
@@ -592,7 +599,7 @@ export default function Inscripcion() {
                   <input style={s.input} value={form.casa_depto} onChange={e=>update('casa_depto',e.target.value)} placeholder="Casa 55 o Dpto 302"/>
                   <span style={s.hint}>Opcional si aplica</span>
                 </div>
-                <div style={s.grid2}>
+                <div className="gt-grid2" style={s.grid2}>
                   <div style={s.field}>
                     <label style={s.label}>Ciudad <span style={s.req}>*</span></label>
                     <select style={s.input} value={form.ciudad} onChange={e=>{
@@ -629,7 +636,7 @@ export default function Inscripcion() {
           {paso===4 && (
             <div>
               <h2 style={{fontSize:15,fontWeight:600,marginBottom:20}}>🩺 Información médica y delegación al cultivo</h2>
-              <div style={{...s.grid2,marginBottom:12}}>
+              <div className="gt-grid2" style={{...s.grid2,marginBottom:12}}>
                 <div style={s.field}><label style={s.label}>Diagnóstico principal (CIE-11) <span style={s.req}>*</span></label><input style={s.input} value={form.diagnostico} onChange={e=>update('diagnostico',e.target.value)} placeholder="Diagnóstico principal"/></div>
                 <div style={s.field}><label style={s.label}>Diagnóstico secundario</label><input style={s.input} value={form.diagnostico_secundario} onChange={e=>update('diagnostico_secundario',e.target.value)} placeholder="Diagnóstico secundario (opcional)"/></div>
                 <div style={s.field}><label style={s.label}>Nombre del médico tratante <span style={s.req}>*</span></label><input style={s.input} value={form.medico_nombre} onChange={e=>update('medico_nombre',e.target.value)} placeholder="Nombre del médico tratante"/></div>
@@ -655,7 +662,7 @@ export default function Inscripcion() {
               </div>
               <div style={{border:'1px solid #97C459',borderRadius:12,padding:16,background:'#EAF3DE',marginBottom:12}}>
                 <div style={{fontSize:13,fontWeight:600,color:'#3B6D11',marginBottom:12}}>🌱 Delegación al cultivo colectivo — límite mensual de dispensación</div>
-                <div style={s.grid2}>
+                <div className="gt-grid2" style={s.grid2}>
                   <div style={s.field}>
                     <label style={{...s.label,color:'#3B6D11'}}>Gramos autorizados en receta (máximo) <span style={s.req}>*</span></label>
                     <input style={{...s.input,borderColor:'#97C459'}} type="number" min="1" value={form.cuota_mensual} onChange={e=>update('cuota_mensual',e.target.value)} placeholder="Ej: 30"/>
