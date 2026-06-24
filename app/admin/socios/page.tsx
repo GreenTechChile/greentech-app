@@ -124,10 +124,7 @@ export default function AdminSocios() {
     for (const ext of ['pdf','jpg','jpeg','png']) {
       const { data } = await supabase.storage.from('documentos').createSignedUrl(`${rut}/${storageKey}.${ext}`, 60)
       if (data?.signedUrl) {
-        const a = document.createElement('a')
-        a.href = data.signedUrl
-        a.download = `${storageKey}.${ext}`
-        a.click()
+        window.open(data.signedUrl, '_blank')
         return
       }
     }
