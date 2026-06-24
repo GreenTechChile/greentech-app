@@ -103,25 +103,8 @@ export default function Dispensacion() {
   useEffect(() => {
     const cargarSocio = async () => {
       try {
-        // Intentar obtener RUT desde metadata del token (camino más rápido)
-        let rutCargado = ''
-        try {
-          const keys = Object.keys(localStorage).filter(k => k.startsWith('sb-') && k.endsWith('-auth-token'))
-          if (keys.length > 0) {
-            const token = JSON.parse(localStorage.getItem(keys[0]) || '{}')
-            rutCargado = token?.user?.user_metadata?.rut || ''
-          }
-        } catch {}
-
-        // Fallback: usar getSession para obtener email y buscar RUT en BD
-        if (!rutCargado) {
-          const { data: { session } } = await supabase.auth.getSession()
-          const email = session?.user?.email
-          if (email) {
-            const { data: s } = await supabase.from('socios').select('rut').eq('email', email).single()
-            rutCargado = s?.rut || ''
-          }
-        }
+        const { data: { user } } = await supabase.auth.getUser()
+        const rutCargado = user?.user_metadata?.rut || ''
 
         if (rutCargado) {
           // Query 1: columnas base (siempre existen) — setear rut+nombre juntos para un solo render

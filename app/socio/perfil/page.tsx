@@ -40,15 +40,9 @@ export default function MiPerfil() {
   useEffect(() => {
     const cargar = async () => {
       setLoading(true)
-      let rut = ''
-      try {
-        const keys = Object.keys(localStorage).filter(k => k.startsWith('sb-') && k.endsWith('-auth-token'))
-        if (keys.length > 0) {
-          const token = JSON.parse(localStorage.getItem(keys[0]) || '{}')
-          rut = token?.user?.user_metadata?.rut || ''
-        }
-      } catch {}
-
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { setLoading(false); return }
+      const rut = user.user_metadata?.rut || ''
       if (!rut) { setLoading(false); return }
       setRutActual(rut)
 

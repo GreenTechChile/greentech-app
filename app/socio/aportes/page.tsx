@@ -24,19 +24,15 @@ export default function MisAportes() {
   const [rutDisplay, setRutDisplay] = useState('')
 
   useEffect(() => {
-    try {
-      const keys = Object.keys(localStorage).filter(k => k.startsWith('sb-') && k.endsWith('-auth-token'))
-      if (keys.length > 0) {
-        const token = JSON.parse(localStorage.getItem(keys[0]) || '{}')
-        const rut = token?.user?.user_metadata?.rut
-        if (rut) {
-          setRutSocio(rut)
-          setRutDisplay(rut)
-          supabase.from('socios').select('nombre').eq('rut', rut).single()
-            .then(({ data }) => { if (data?.nombre) setNombreSocio(data.nombre) })
-        }
-      }
-    } catch {}
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return
+      const rut = user.user_metadata?.rut
+      if (!rut) return
+      setRutSocio(rut)
+      setRutDisplay(rut)
+      supabase.from('socios').select('nombre').eq('rut', rut).single()
+        .then(({ data }) => { if (data?.nombre) setNombreSocio(data.nombre) })
+    })
   }, [])
 
   useEffect(() => { if (rutSocio) cargarAportes() }, [filtroAño, rutSocio])

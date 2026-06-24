@@ -19,6 +19,8 @@ interface Cepa {
   precio_gramo: number
   visible: boolean
   imagen_url?: string
+  precio_modificado_por?: string
+  precio_modificado_at?: string
 }
 
 const tipoOpciones = ['sativa', 'indica', 'hibrida', 'cbd']
@@ -73,6 +75,8 @@ export default function Cepas() {
   const crearCepa = async () => {
     if (!ncNombre) { setMensaje('❌ El nombre es obligatorio'); return }
     setGuardando(true)
+    const { data: { user: userActual } } = await supabase.auth.getUser()
+    const nombreAdmin = userActual?.user_metadata?.nombre || userActual?.email || userActual?.user_metadata?.rut || 'Desconocido'
     let imagenUrl = null
     if (ncImagen) {
       const ext = ncImagen.name.split('.').pop()
@@ -102,6 +106,8 @@ export default function Cepas() {
       precio_gramo: parseInt(ncPrecioGramo) || 0,
       visible: true,
       imagen_url: imagenUrl,
+      precio_modificado_por: nombreAdmin,
+      precio_modificado_at: new Date().toISOString(),
     })
     if (error) setMensaje('❌ Error: ' + error.message)
     else {
@@ -136,6 +142,8 @@ export default function Cepas() {
   const guardarCepa = async () => {
     if (!form.nombre) { setMensaje('❌ El nombre es obligatorio'); return }
     setGuardando(true)
+    const { data: { user: userActual } } = await supabase.auth.getUser()
+    const nombreAdmin = userActual?.user_metadata?.nombre || userActual?.email || userActual?.user_metadata?.rut || 'Desconocido'
     let imagen_url = form.imagen_url
     if (imagenNueva) {
       const ext = imagenNueva.name.split('.').pop()

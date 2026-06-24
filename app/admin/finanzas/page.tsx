@@ -12,6 +12,7 @@ interface Movimiento {
   mes: number
   año: number
   created_at: string
+  registrado_por?: string
 }
 
 interface Dispensacion {
@@ -104,9 +105,12 @@ export default function Finanzas() {
   const agregarCosto = async () => {
     if (!ncConcepto || !ncMonto) { setMensaje('❌ Completa concepto y monto'); return }
     setGuardando(true)
+    const { data: { user: userActual } } = await supabase.auth.getUser()
+    const nombreAdmin = userActual?.user_metadata?.nombre || userActual?.email || userActual?.user_metadata?.rut || 'Desconocido'
     const { data: inserted, error } = await supabase.from('movimientos_financieros').insert({
       tipo: 'egreso', categoria: ncCategoria, concepto: ncConcepto,
       monto: parseInt(ncMonto), mes: ncMes, año: filtroAño,
+      registrado_por: nombreAdmin,
     }).select().single()
     if (error) { setMensaje('❌ Error: ' + error.message); setGuardando(false); return }
     // Subir comprobante si se adjuntó
@@ -131,6 +135,8 @@ export default function Finanzas() {
   const agregarAporteExtraordinario = async () => {
     if (!nuevoAporteConcepto || !nuevoAporteMonto) return
     setGuardandoAporte(true)
+    const { data: { user: userActual } } = await supabase.auth.getUser()
+    const nombreAdmin = userActual?.user_metadata?.nombre || userActual?.email || userActual?.user_metadata?.rut || 'Desconocido'
     let comprobante_url = null
     if (nuevoAporteFile) {
       const ext = nuevoAporteFile.name.split('.').pop()
@@ -148,6 +154,7 @@ export default function Finanzas() {
       mes: nuevoAporteMes,
       año: filtroAño,
       comprobante_url,
+      registrado_por: nombreAdmin,
     })
     if (!error) {
       setNuevoAporteConcepto(''); setNuevoAporteMonto(''); setNuevoAporteSocio(''); setNuevoAporteFile(null)
@@ -512,7 +519,10 @@ export default function Finanzas() {
                 </div>
                 {aportesExt.map((a: any) => (
                   <div key={a.id} style={{ display:'grid', gridTemplateColumns:'3fr 1fr 1fr 1fr 1fr', padding:'12px 16px', borderBottom:'1px solid #f3f4f6', fontSize:13, alignItems:'center' }}>
-                    <span style={{ fontWeight:500 }}>{a.concepto}</span>
+                    <div>
+                      <div style={{ fontWeight:500 }}>{a.concepto}</div>
+                      {a.registrado_por && <div style={{ fontSize:10, color:'#9ca3af', marginTop:2 }}>Ingresado por {a.registrado_por}</div>}
+                    </div>
                     <span style={{ fontSize:12, color:'#6b7280' }}>{a.socio_rut || '—'}</span>
                     <span style={{ fontSize:12, color:'#6b7280' }}>
                       {['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][a.mes-1]}
@@ -616,7 +626,10 @@ export default function Finanzas() {
                   <tbody>
                     {costosMes.map(c => (
                       <tr key={c.id} style={{ borderBottom:'1px solid #f3f4f6' }}>
-                        <td style={{ padding:'9px 14px', fontWeight:500 }}>{c.concepto}</td>
+                        <td style={{ padding:'9px 14px' }}>
+                          <div style={{ fontWeight:500 }}>{c.concepto}</div>
+                          {c.registrado_por && <div style={{ fontSize:10, color:'#9ca3af', marginTop:2 }}>Ingresado por {c.registrado_por}</div>}
+                        </td>
                         <td style={{ padding:'9px 14px' }}><span style={{ fontSize:10, background:'#FCEBEB', color:'#A32D2D', padding:'2px 8px', borderRadius:20 }}>{c.categoria}</span></td>
                         <td style={{ padding:'9px 14px', fontWeight:600, color:'#A32D2D' }}>${c.monto.toLocaleString('es-CL')}</td>
                         <td style={{ padding:'9px 14px', display:'flex', gap:6, alignItems:'center', flexWrap:'wrap' as const }}>

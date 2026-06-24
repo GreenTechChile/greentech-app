@@ -52,13 +52,10 @@ export default function MisDocumentos() {
   const updateForm = (k: keyof FormReceta, v: string) => setFormReceta(p => ({...p, [k]: v}))
 
   useEffect(() => {
-    try {
-      const keys = Object.keys(localStorage).filter(k => k.startsWith('sb-') && k.endsWith('-auth-token'))
-      if (keys.length > 0) {
-        const token = JSON.parse(localStorage.getItem(keys[0]) || '{}')
-        const rut = token?.user?.user_metadata?.rut
-        if (rut) {
-          setRutSocio(rut)
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      const rut = user?.user_metadata?.rut
+      if (rut) {
+        setRutSocio(rut)
           supabase.from('socios')
             .select('id, nombre, vencimiento_receta, reglamento_aceptado_at')
             .eq('rut', rut)
@@ -79,9 +76,8 @@ export default function MisDocumentos() {
               if (data?.reglamento_aceptado_at) setReglamentoAceptadoAt(data.reglamento_aceptado_at)
               verificarDocumentos(rut, data?.reglamento_aceptado_at || null)
             })
-        }
       }
-    } catch {}
+    })
   }, [])
 
   const verificarDocumentos = async (rut: string, reglamentoAt: string | null) => {

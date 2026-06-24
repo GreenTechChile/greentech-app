@@ -29,25 +29,8 @@ export default function SidebarSocio({ nombre, rut }: Props) {
       let rutBuscado = rut
 
       if (!rutBuscado) {
-        try {
-          const keys = Object.keys(localStorage).filter(k => k.startsWith('sb-') && k.endsWith('-auth-token'))
-          if (keys.length > 0) {
-            const token = JSON.parse(localStorage.getItem(keys[0]) || '{}')
-            rutBuscado = token?.user?.user_metadata?.rut || ''
-          }
-        } catch {}
-      }
-
-      if (!rutBuscado) {
-        const { data: { session } } = await supabase.auth.getSession()
-        if (session?.user?.email) {
-          const { data: d } = await supabase
-            .from('socios')
-            .select('rut')
-            .eq('email', session.user.email)
-            .single()
-          rutBuscado = d?.rut || ''
-        }
+        const { data: { user } } = await supabase.auth.getUser()
+        rutBuscado = user?.user_metadata?.rut || ''
       }
 
       if (!rutBuscado) return

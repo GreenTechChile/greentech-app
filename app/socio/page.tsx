@@ -37,15 +37,9 @@ export default function SocioDashboard() {
   useEffect(() => {
     const cargar = async () => {
       setLoading(true)
-      // Leer RUT desde localStorage
-      let rut = '10836787-3'
-      try {
-        const keys = Object.keys(localStorage).filter(k => k.startsWith('sb-') && k.endsWith('-auth-token'))
-        if (keys.length > 0) {
-          const token = JSON.parse(localStorage.getItem(keys[0]) || '{}')
-          if (token?.user?.user_metadata?.rut) rut = token.user.user_metadata.rut
-        }
-      } catch {}
+      const { data: { user } } = await supabase.auth.getUser()
+      const rut = user?.user_metadata?.rut || ''
+      if (!rut) { setLoading(false); return }
 
       // Cargar datos del socio
       const { data: socioData } = await supabase

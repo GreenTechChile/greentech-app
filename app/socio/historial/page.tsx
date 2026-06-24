@@ -35,19 +35,15 @@ export default function Historial() {
   const [rutSocio, setRutSocio] = useState<string | null>(null)
 
   useEffect(() => {
-    try {
-      const keys = Object.keys(localStorage).filter(k => k.startsWith('sb-') && k.endsWith('-auth-token'))
-      if (keys.length > 0) {
-        const token = JSON.parse(localStorage.getItem(keys[0]) || '{}')
-        const rut = token?.user?.user_metadata?.rut
-        if (rut) {
-          setRutSocio(rut)
-          setRutDisplay(rut)
-          supabase.from('socios').select('nombre').eq('rut', rut).single()
-            .then(({ data }) => { if (data?.nombre) setNombreSocio(data.nombre) })
-        }
-      }
-    } catch {}
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return
+      const rut = user.user_metadata?.rut
+      if (!rut) return
+      setRutSocio(rut)
+      setRutDisplay(rut)
+      supabase.from('socios').select('nombre').eq('rut', rut).single()
+        .then(({ data }) => { if (data?.nombre) setNombreSocio(data.nombre) })
+    })
   }, [])
 
   useEffect(() => {
@@ -94,9 +90,6 @@ export default function Historial() {
               <option value={2026}>2026</option>
               <option value={2025}>2025</option>
             </select>
-            <button style={{ padding: '7px 14px', border: '1px solid #e5e7eb', borderRadius: 8, fontSize: 12, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
-              📥 Exportar
-            </button>
           </div>
         </div>
 
@@ -155,9 +148,6 @@ export default function Historial() {
                           {est.label}
                         </span>
                       </div>
-                      <button style={{ marginLeft: 8, padding: '5px 10px', border: '1px solid #e5e7eb', borderRadius: 6, background: '#fff', fontSize: 11, cursor: 'pointer', color: '#6b7280', whiteSpace: 'nowrap' as const }}>
-                        📄 Comprobante
-                      </button>
                     </div>
                   )
                 })}
