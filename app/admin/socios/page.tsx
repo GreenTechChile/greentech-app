@@ -433,9 +433,7 @@ export default function AdminSocios() {
             <div style={{ fontSize: 13, color: '#9ca3af', padding: 40, textAlign: 'center' }}>✅ No hay contratos de delegación pendientes de firma</div>
           ) : (
             <div>
-              <div style={{ background: '#FFF7ED', border: '1px solid #FED7AA', borderRadius: 10, padding: '10px 14px', fontSize: 12, color: '#92400E', marginBottom: 18 }}>
-                📋 Estos socios solicitaron actualizar su contrato de delegación de cultivo. Descarga el PDF, gestiona la firma y sube la versión firmada.
-              </div>
+
               {pendDelegaciones.map((socio: any) => (
                 <div key={socio.id} style={{ border: '1px solid #FED7AA', borderRadius: 12, marginBottom: 12, overflow: 'hidden', background: '#FFFDF0' }}>
                   <div style={{ padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
