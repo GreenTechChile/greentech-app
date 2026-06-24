@@ -23,7 +23,10 @@ const DOCS_FIRMA = [
 ]
 
 export default function AdminSocios() {
-  const [tab, setTab] = useState<'pendientes'|'aprobados'|'rechazados'|'renovaciones'|'pagos_incompletos'|'delegaciones'>('pendientes')
+  const [tab, setTab] = useState<'pendientes'|'socios'|'delegaciones'|'renovaciones'|'pagos_incompletos'>('pendientes')
+  const [filtroSocios, setFiltroSocios] = useState<'pendiente'|'activo'|'rechazado'>('pendiente')
+  const [filtroDelegaciones, setFiltroDelegaciones] = useState<'pendiente_firma'|'todas'>('pendiente_firma')
+  const [filtroPagos, setFiltroPagos] = useState<'incompletos'|'todos'>('incompletos')
   const [recetas, setRecetas] = useState<any[]>([])
   const [filtroRecetas, setFiltroRecetas] = useState<'pendiente'|'todas'>('pendiente')
   const [socios, setSocios] = useState<Socio[]>([])
@@ -44,7 +47,7 @@ export default function AdminSocios() {
 
 
   useEffect(() => { cargarConteos() }, [])
-  useEffect(() => { cargarSocios() }, [tab, filtroRecetas])
+  useEffect(() => { cargarSocios() }, [tab, filtroRecetas, filtroSocios, filtroDelegaciones, filtroPagos])
 
   const cargarConteos = async () => {
     const [
@@ -72,38 +75,36 @@ export default function AdminSocios() {
   const cargarSocios = async () => {
     setLoading(true)
     if (tab === 'renovaciones') {
-      let query = supabase
-        .from('recetas_pendientes')
-        .select('*, socios(nombre, rut, email)')
-        .order('created_at', { ascending: false })
+      let query = supabase.from('recetas_pendientes').select('*, socios(nombre, rut, email)').order('created_at', { ascending: false })
       if (filtroRecetas === 'pendiente') query = query.eq('estado', 'pendiente')
       const { data } = await query
       setRecetas(data || [])
     } else if (tab === 'pagos_incompletos') {
-      // Buscar pagos aprobados cuyo RUT no tiene registro en socios
-      const { data: pagos } = await supabase
-        .from('pagos_incorporacion')
-        .select('*')
-        .eq('estado', 'aprobado')
-        .order('fecha', { ascending: false })
+      const { data: pagos } = await supabase.from('pagos_incorporacion').select('*').eq('estado', 'aprobado').order('fecha', { ascending: false })
       if (pagos && pagos.length > 0) {
         const ruts = pagos.map((p: any) => p.rut).filter(Boolean)
-        const { data: sociosExistentes } = await supabase
-          .from('socios')
-          .select('rut')
-          .in('rut', ruts.length > 0 ? ruts : ['__ninguno__'])
+        const { data: sociosExistentes } = await supabase.from('socios').select('rut').in('rut', ruts.length > 0 ? ruts : ['__ninguno__'])
         const rutsCompletos = new Set((sociosExistentes || []).map((s: any) => s.rut))
-        setPagosIncompletos(pagos.filter((p: any) => !rutsCompletos.has(p.rut)))
+        if (filtroPagos === 'incompletos') {
+          setPagosIncompletos(pagos.filter((p: any) => !rutsCompletos.has(p.rut)))
+        } else {
+          setPagosIncompletos(pagos.map((p: any) => ({ ...p, _completo: rutsCompletos.has(p.rut) })))
+        }
       } else {
         setPagosIncompletos([])
       }
     } else if (tab === 'delegaciones') {
-      const { data } = await supabase.from('socios').select('*, delegacion_nueva_cuota, delegacion_pdf_url, delegacion_estado').eq('delegacion_estado', 'pendiente_firma').order('created_at', { ascending: false })
+      let query = supabase.from('socios').select('*, delegacion_nueva_cuota, delegacion_pdf_url, delegacion_estado').not('delegacion_estado', 'is', null).order('created_at', { ascending: false })
+      if (filtroDelegaciones === 'pendiente_firma') query = (query as any).eq('delegacion_estado', 'pendiente_firma')
+      const { data } = await query
+      if (data) setSocios(data)
+    } else if (tab === 'socios') {
+      const { data } = await supabase.from('socios').select('*, delegacion_nueva_cuota, delegacion_pdf_url, delegacion_estado').eq('estado', filtroSocios).order('created_at', { ascending: false })
       if (data) setSocios(data)
     } else {
-      const estadoMap = { pendientes: 'pendiente', aprobados: 'activo', rechazados: 'rechazado' }
-      const { data } = await supabase.from('socios').select('*, delegacion_nueva_cuota, delegacion_pdf_url, delegacion_estado').eq('estado', estadoMap[tab as 'pendientes'|'aprobados'|'rechazados']).order('created_at', { ascending: false })
-      if (data) setSocios(data)
+      // tab === 'pendientes': cargar socios pendientes para el resumen
+      const { data } = await supabase.from('socios').select('id, nombre, rut, created_at').eq('estado', 'pendiente').order('created_at', { ascending: false })
+      if (data) setSocios(data as any)
     }
     setLoading(false)
   }
@@ -121,7 +122,7 @@ export default function AdminSocios() {
   const toggleExpandido = async (socio: Socio) => {
     const abierto = expandido === socio.id
     setExpandido(abierto ? null : socio.id)
-    if (!abierto && tab === 'pendientes') {
+    if (!abierto && filtroSocios === 'pendiente') {
       await verificarFirmados(socio)
     }
   }
@@ -335,11 +336,10 @@ export default function AdminSocios() {
         <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', marginBottom: 20, flexWrap: 'wrap' }}>
           {[
             { key: 'pendientes', label: 'Pendientes', countKey: 'total_pendiente', badgeColor: '#A32D2D', badgeBg: '#FCEBEB' },
-            { key: 'aprobados', label: 'Aprobados', countKey: '', badgeColor: '', badgeBg: '' },
-            { key: 'rechazados', label: 'Rechazados', countKey: '', badgeColor: '', badgeBg: '' },
+            { key: 'socios', label: '👤 Socios', countKey: '', badgeColor: '', badgeBg: '' },
+            { key: 'delegaciones', label: '📋 Delegaciones', countKey: 'delegaciones', badgeColor: '#92400E', badgeBg: '#FEF3C7' },
             { key: 'renovaciones', label: '🩺 Renovaciones', countKey: 'renovaciones', badgeColor: '#92400E', badgeBg: '#FEF3C7' },
             { key: 'pagos_incompletos', label: '💳 Pagos incompletos', countKey: 'pagos_incompletos', badgeColor: '#92400E', badgeBg: '#FEF3C7' },
-            { key: 'delegaciones', label: '📋 Delegaciones', countKey: 'delegaciones', badgeColor: '#92400E', badgeBg: '#FEF3C7' },
           ].map(t => {
             const count = t.countKey ? tabCounts[t.countKey] : 0
             return (
@@ -358,7 +358,19 @@ export default function AdminSocios() {
 
         {/* ── Panel de pagos incompletos ── */}
         {tab === 'pagos_incompletos' && (
-          loading ? (
+          <>
+          <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
+            {([['incompletos', 'Pendientes'], ['todos', 'Historial completo']] as const).map(([val, label]) => (
+              <button key={val} onClick={() => setFiltroPagos(val)}
+                style={{ padding: '5px 14px', fontSize: 12, borderRadius: 20, border: '1px solid', cursor: 'pointer',
+                  background: filtroPagos === val ? '#185FA5' : '#fff',
+                  color: filtroPagos === val ? '#fff' : '#6b7280',
+                  borderColor: filtroPagos === val ? '#185FA5' : '#d1d5db' }}>
+                {label}
+              </button>
+            ))}
+          </div>
+          {loading ? (
             <div style={{ fontSize: 13, color: '#9ca3af', padding: 40, textAlign: 'center' }}>Cargando...</div>
           ) : pagosIncompletos.length === 0 ? (
             <div style={{ fontSize: 13, color: '#9ca3af', padding: 40, textAlign: 'center' }}>✅ No hay pagos sin inscripción completada</div>
@@ -399,12 +411,27 @@ export default function AdminSocios() {
               })}
             </div>
           )
+          }
+          </>
         )}
 
         {/* ── Panel de delegaciones pendientes ── */}
         {tab === 'delegaciones' && (() => {
           const pendDelegaciones = socios
-          return loading ? (
+          return (
+          <>
+          <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
+            {([['pendiente_firma', 'Pendientes'], ['todas', 'Historial completo']] as const).map(([val, label]) => (
+              <button key={val} onClick={() => setFiltroDelegaciones(val)}
+                style={{ padding: '5px 14px', fontSize: 12, borderRadius: 20, border: '1px solid', cursor: 'pointer',
+                  background: filtroDelegaciones === val ? '#185FA5' : '#fff',
+                  color: filtroDelegaciones === val ? '#fff' : '#6b7280',
+                  borderColor: filtroDelegaciones === val ? '#185FA5' : '#d1d5db' }}>
+                {label}
+              </button>
+            ))}
+          </div>
+          {loading ? (
             <div style={{ fontSize: 13, color: '#9ca3af', padding: 40, textAlign: 'center' }}>Cargando...</div>
           ) : pendDelegaciones.length === 0 ? (
             <div style={{ fontSize: 13, color: '#9ca3af', padding: 40, textAlign: 'center' }}>✅ No hay contratos de delegación pendientes de firma</div>
@@ -457,6 +484,9 @@ export default function AdminSocios() {
                 </div>
               ))}
             </div>
+          )
+          }
+          </>
           )
         })()}
 
@@ -572,16 +602,36 @@ export default function AdminSocios() {
           </>
         )}
 
-        {/* ── Panel de socios (pendientes / aprobados / rechazados) ── */}
-        {tab !== 'renovaciones' && tab !== 'pagos_incompletos' && (loading ? (
-          <div style={{ fontSize: 13, color: '#9ca3af', padding: 40, textAlign: 'center' }}>Cargando solicitudes...</div>
-        ) : socios.length === 0 ? (
+        {/* ── Panel resumen de pendientes ── */}
+        {tab === 'pendientes' && (
           <div>
-            {tab === 'pendientes' && (tabCounts.renovaciones > 0 || tabCounts.pagos_incompletos > 0) ? (
-              <div>
-                <div style={{ fontSize: 13, color: '#9ca3af', padding: '24px 0 16px', textAlign: 'center' }}>✅ No hay solicitudes de ingreso nuevas</div>
+            {tabCounts.total_pendiente === 0 ? (
+              <div style={{ fontSize: 13, color: '#9ca3af', padding: 40, textAlign: 'center' }}>✅ No hay tareas pendientes</div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div style={{ fontSize: 13, color: '#6b7280', marginBottom: 8 }}>Resumen de tareas pendientes en todas las secciones.</div>
+                {tabCounts.pendientes > 0 && (
+                  <button onClick={() => { setTab('socios'); setFiltroSocios('pendiente') }} style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '12px 16px', background: '#F0F7FF', border: '1px solid #A8CBF0', borderRadius: 10, cursor: 'pointer', textAlign: 'left' as const }}>
+                    <span style={{ fontSize: 22 }}>👤</span>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: '#111' }}>{tabCounts.pendientes} solicitud{tabCounts.pendientes > 1 ? 'es' : ''} de ingreso pendiente{tabCounts.pendientes > 1 ? 's' : ''}</div>
+                      <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>Clic para revisar en el tab Socios →</div>
+                    </div>
+                    <span style={{ background: '#FCEBEB', color: '#A32D2D', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 10 }}>{tabCounts.pendientes}</span>
+                  </button>
+                )}
+                {tabCounts.delegaciones > 0 && (
+                  <button onClick={() => setTab('delegaciones')} style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '12px 16px', background: '#FFF7ED', border: '1px solid #FED7AA', borderRadius: 10, cursor: 'pointer', textAlign: 'left' as const }}>
+                    <span style={{ fontSize: 22 }}>📋</span>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: '#111' }}>{tabCounts.delegaciones} contrato{tabCounts.delegaciones > 1 ? 's' : ''} de delegación pendiente{tabCounts.delegaciones > 1 ? 's' : ''} de firma</div>
+                      <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>Clic para revisar en el tab Delegaciones →</div>
+                    </div>
+                    <span style={{ background: '#FEF3C7', color: '#92400E', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 10 }}>{tabCounts.delegaciones}</span>
+                  </button>
+                )}
                 {tabCounts.renovaciones > 0 && (
-                  <button onClick={() => setTab('renovaciones')} style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '12px 16px', background: '#FFFBF5', border: '1px solid #EF9F27', borderRadius: 10, marginBottom: 10, cursor: 'pointer', textAlign: 'left' }}>
+                  <button onClick={() => setTab('renovaciones')} style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '12px 16px', background: '#FFFBF5', border: '1px solid #EF9F27', borderRadius: 10, cursor: 'pointer', textAlign: 'left' as const }}>
                     <span style={{ fontSize: 22 }}>🩺</span>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: 13, fontWeight: 600, color: '#111' }}>{tabCounts.renovaciones} renovación{tabCounts.renovaciones > 1 ? 'es' : ''} de receta pendiente{tabCounts.renovaciones > 1 ? 's' : ''}</div>
@@ -591,7 +641,7 @@ export default function AdminSocios() {
                   </button>
                 )}
                 {tabCounts.pagos_incompletos > 0 && (
-                  <button onClick={() => setTab('pagos_incompletos')} style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '12px 16px', background: '#FFFDF0', border: '1px solid #FBBF24', borderRadius: 10, marginBottom: 10, cursor: 'pointer', textAlign: 'left' }}>
+                  <button onClick={() => setTab('pagos_incompletos')} style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '12px 16px', background: '#FFFDF0', border: '1px solid #FBBF24', borderRadius: 10, cursor: 'pointer', textAlign: 'left' as const }}>
                     <span style={{ fontSize: 22 }}>💳</span>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: 13, fontWeight: 600, color: '#111' }}>{tabCounts.pagos_incompletos} pago{tabCounts.pagos_incompletos > 1 ? 's' : ''} de inscripción sin completar</div>
@@ -601,15 +651,31 @@ export default function AdminSocios() {
                   </button>
                 )}
               </div>
-            ) : (
-              <div style={{ fontSize: 13, color: '#9ca3af', padding: 40, textAlign: 'center' }}>
-                {tab === 'pendientes' ? '✅ No hay solicitudes pendientes' : 'No hay registros'}
-              </div>
             )}
           </div>
-        ) : socios.map(socio => {
+        )}
+
+        {/* ── Panel de socios (pendientes / aprobados / rechazados) ── */}
+        {tab === 'socios' && (
+          <>
+          <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
+            {([['pendiente', 'Pendientes'], ['activo', 'Aprobados'], ['rechazado', 'Rechazados']] as const).map(([val, label]) => (
+              <button key={val} onClick={() => setFiltroSocios(val)}
+                style={{ padding: '5px 14px', fontSize: 12, borderRadius: 20, border: '1px solid', cursor: 'pointer',
+                  background: filtroSocios === val ? '#185FA5' : '#fff',
+                  color: filtroSocios === val ? '#fff' : '#6b7280',
+                  borderColor: filtroSocios === val ? '#185FA5' : '#d1d5db' }}>
+                {label}
+              </button>
+            ))}
+          </div>
+          {loading ? (
+            <div style={{ fontSize: 13, color: '#9ca3af', padding: 40, textAlign: 'center' }}>Cargando solicitudes...</div>
+          ) : socios.length === 0 ? (
+            <div style={{ fontSize: 13, color: '#9ca3af', padding: 40, textAlign: 'center' }}>No hay registros</div>
+          ) : socios.map(socio => {
           const dias = diasDesde(socio.created_at)
-          const urgente = dias >= 4 && tab === 'pendientes'
+          const urgente = dias >= 4 && filtroSocios === 'pendiente'
           const abierto = expandido === socio.id
           const listoParaAprobar = ambosDocsFirmados(socio.id)
 
@@ -629,8 +695,8 @@ export default function AdminSocios() {
                   <div style={{ fontSize: 11, color: '#6b7280' }}>RUT {socio.rut} · {socio.email} · {socio.telefono}</div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, background: tab === 'pendientes' ? '#FAEEDA' : tab === 'aprobados' ? '#EAF3DE' : '#FCEBEB', color: tab === 'pendientes' ? '#633806' : tab === 'aprobados' ? '#3B6D11' : '#A32D2D' }}>
-                    {tab === 'pendientes' ? 'Pendiente' : tab === 'aprobados' ? 'Aprobado' : 'Rechazado'}
+                  <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, background: filtroSocios === 'pendiente' ? '#FAEEDA' : filtroSocios === 'activo' ? '#EAF3DE' : '#FCEBEB', color: filtroSocios === 'pendiente' ? '#633806' : filtroSocios === 'activo' ? '#3B6D11' : '#A32D2D' }}>
+                    {filtroSocios === 'pendiente' ? 'Pendiente' : filtroSocios === 'activo' ? 'Aprobado' : 'Rechazado'}
                   </span>
                   <div style={{ fontSize: 11, color: urgente ? '#A32D2D' : '#9ca3af', marginTop: 3 }}>
                     {urgente ? `⚠️ Hace ${dias} días` : `Hace ${dias} día${dias !== 1 ? 's' : ''}`}
@@ -642,7 +708,7 @@ export default function AdminSocios() {
               {/* Body */}
               {abierto && (
                 <div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderBottom: tab === 'pendientes' ? '1px solid #e5e7eb' : 'none' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderBottom: filtroSocios === 'pendiente' ? '1px solid #e5e7eb' : 'none' }}>
                     <div style={{ padding: '14px 16px', borderRight: '1px solid #e5e7eb' }}>
                       <div style={{ fontSize: 11, fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 10 }}>Datos personales</div>
                       {[{k:'Estado civil',v:socio.estado_civil},{k:'Profesión',v:socio.profesion},{k:'Dirección',v:`${socio.direccion}${socio.casa_depto?', '+socio.casa_depto:''}`},{k:'Comuna / Ciudad',v:`${socio.comuna}, ${socio.ciudad}`}].map((r,i) => (
@@ -710,8 +776,8 @@ export default function AdminSocios() {
                                 : <span style={{ fontSize: 10, background: '#FAEEDA', color: '#633806', padding: '2px 8px', borderRadius: 20 }}>Pendiente firma</span>
                               }
                             </div>
-                            {/* Fila botones: solo en tab pendientes */}
-                            {tab === 'pendientes' && (
+                            {/* Fila botones: solo cuando pendiente */}
+                            {filtroSocios === 'pendiente' && (
                               <div style={{ display: 'flex', gap: 6, padding: '0 8px 8px', alignItems: 'center' }}>
                                 {/* Bajar original */}
                                 <button
@@ -752,7 +818,7 @@ export default function AdminSocios() {
                       </div>
 
                       {/* Aviso si faltan documentos firmados (solo pendientes) */}
-                      {tab === 'pendientes' && !listoParaAprobar && (
+                      {filtroSocios === 'pendiente' && !listoParaAprobar && (
                         <div style={{ fontSize: 11, color: '#92400e', background: '#FFFBEB', border: '1px solid #FCD34D', borderRadius: 6, padding: '6px 8px', marginTop: 4 }}>
                           ⚠️ Sube ambos documentos firmados para habilitar la aprobación.
                         </div>
@@ -761,7 +827,7 @@ export default function AdminSocios() {
                   </div>
 
                   {/* Footer acciones */}
-                  {tab === 'pendientes' && (
+                  {filtroSocios === 'pendiente' && (
                     <div style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10, background: '#fff' }}>
                       <input type="text" placeholder="Notas internas (opcional, solo visibles para la directiva)..."
                         value={notas[socio.id] || ''} onChange={e => setNotas(prev => ({...prev,[socio.id]:e.target.value}))}
@@ -781,7 +847,7 @@ export default function AdminSocios() {
                     </div>
                   )}
                   {/* ── Delegación de cultivo pendiente (solo Aprobados) ── */}
-                  {tab === 'aprobados' && socio.delegacion_estado === 'pendiente_firma' && (
+                  {filtroSocios === 'activo' && socio.delegacion_estado === 'pendiente_firma' && (
                     <div style={{ padding: '12px 16px', background: '#FFF7ED', borderTop: '1px solid #FED7AA' }}>
                       <div style={{ fontWeight: 600, color: '#92400E', fontSize: 12, marginBottom: 8 }}>
                         📋 Actualización de contrato de delegación pendiente de firma
@@ -825,13 +891,13 @@ export default function AdminSocios() {
                     </div>
                   )}
 
-                  {tab !== 'pendientes' && (socio.notas_admin || socio.aprobado_por) && (
+                  {filtroSocios !== 'pendiente' && (socio.notas_admin || socio.aprobado_por) && (
                     <div style={{ padding: '10px 16px', fontSize: 12, color: '#6b7280', background: '#f9fafb', borderTop: '1px solid #e5e7eb', display: 'flex', flexDirection: 'column', gap: 4 }}>
                       {socio.aprobado_por && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <span>{tab === 'aprobados' ? '✅' : '✕'}</span>
-                          <span style={{ fontWeight: 500, color: tab === 'aprobados' ? '#3B6D11' : '#A32D2D' }}>
-                            {tab === 'aprobados' ? 'Aprobado' : 'Rechazado'} por {socio.aprobado_por}
+                          <span>{filtroSocios === 'activo' ? '✅' : '✕'}</span>
+                          <span style={{ fontWeight: 500, color: filtroSocios === 'activo' ? '#3B6D11' : '#A32D2D' }}>
+                            {filtroSocios === 'activo' ? 'Aprobado' : 'Rechazado'} por {socio.aprobado_por}
                             {socio.aprobado_at && (
                               <span style={{ fontWeight: 400, color: '#9ca3af' }}>
                                 {' '}· {new Date(socio.aprobado_at).toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
@@ -847,7 +913,9 @@ export default function AdminSocios() {
               )}
             </div>
           )
-        }))}
+        })}
+          </>
+        )}
       </main>
     </div>
   )

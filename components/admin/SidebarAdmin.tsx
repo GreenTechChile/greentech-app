@@ -74,7 +74,7 @@ export default function SidebarAdmin() {
       label: 'Socios',
       visible: verSocios,
       items: [
-        { href: '/admin/socios', label: 'Nuevos socios',    icon: '👤', visible: verSocios },
+        { href: '/admin/socios', label: 'Solicitudes',       icon: '👤', visible: verSocios },
         { href: '/admin/roles',  label: 'Usuarios y roles', icon: '🛡️', visible: verSocios },
       ]
     },
