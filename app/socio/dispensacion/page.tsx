@@ -222,10 +222,7 @@ export default function Dispensacion() {
           setProcesando(false)
           return
         }
-        // Actualizar stock de cepas
-        for (const item of carrito) {
-          await supabase.from('cepas').update({ stock_gramos: item.cepa.stock_gramos - item.gramos }).eq('id', item.cepa.id)
-        }
+        // El descuento de stock lo hace el API route en el servidor — no se hace aquí
         setOrdenNumero(orden)
         setPaso('confirmacion')
         // Enviar correo de confirmación de dispensación

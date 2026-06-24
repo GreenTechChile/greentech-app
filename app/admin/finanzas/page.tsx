@@ -165,7 +165,10 @@ export default function Finanzas() {
   }
 
 
-  const ingresosPorMes = (mes: number) => dispensaciones.filter(d => d.mes === mes).reduce((a, d) => a + d.monto, 0)
+  const ingresosPorMes = (mes: number) =>
+    dispensaciones.filter(d => d.mes === mes).reduce((a, d) => a + d.monto, 0) +
+    ingresosIncorporacion.filter(m => m.mes === mes).reduce((a, m) => a + m.monto, 0) +
+    aportesExt.filter((e: any) => e.mes === mes).reduce((a: number, e: any) => a + e.monto, 0)
   const verComprobante = async (costoId: string) => {
     for (const ext of ['pdf','jpg','jpeg','png']) {
       const { data } = await supabase.storage.from('finanzas').createSignedUrl(`comprobantes/${costoId}.${ext}`, 3600)
@@ -178,7 +181,8 @@ export default function Finanzas() {
 
   const totalIngresoDispensaciones = dispensaciones.reduce((a, d) => a + d.monto, 0)
   const totalIngresoIncorporaciones = ingresosIncorporacion.reduce((a, m) => a + m.monto, 0)
-  const totalIngresos = totalIngresoDispensaciones + totalIngresoIncorporaciones
+  const totalAportesExtraordinarios = aportesExt.reduce((a: number, e: any) => a + e.monto, 0)
+  const totalIngresos = totalIngresoDispensaciones + totalIngresoIncorporaciones + totalAportesExtraordinarios
   const totalCostosDirectos = costos.reduce((a, c) => a + c.monto, 0)
   const totalPagosContratos = pagosContratos.reduce((a, p) => a + p.monto_liquido, 0)
   const totalCostos = totalCostosDirectos + totalPagosContratos
@@ -235,7 +239,7 @@ export default function Finanzas() {
         {/* Métricas */}
         <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:10, marginBottom:20 }}>
           {[
-            { label:`Ingresos ${filtroAño}`, value:`$${totalIngresos.toLocaleString('es-CL')}`, sub:`${dispensaciones.length} dispensaciones · ${ingresosIncorporacion.length} incorporaciones`, color:'#3B6D11' },
+            { label:`Ingresos ${filtroAño}`, value:`$${totalIngresos.toLocaleString('es-CL')}`, sub:`${dispensaciones.length} disp. · ${ingresosIncorporacion.length} incorp. · ${aportesExt.length} aportes ext.`, color:'#3B6D11' },
             { label:`Costos ${filtroAño}`, value:`$${totalCostos.toLocaleString('es-CL')}`, sub:`${costos.length} registros`, color:'#A32D2D' },
             { label:'Superávit acumulado', value:`$${Math.abs(superavit).toLocaleString('es-CL')}`, sub:superavit >= 0 ? 'balance positivo ✓' : 'balance negativo ⚠️', color: superavit >= 0 ? '#185FA5' : '#A32D2D' },
             { label:`Promedio mensual`, value:`$${mesesConActividad.length>0 ? Math.round(totalIngresos/mesesConActividad.length).toLocaleString('es-CL') : 0}`, sub:'en ingresos' },

@@ -207,8 +207,23 @@ export default function Cultivo() {
     if (!error && nuevoEstado === 'procesado' && gramSeco) {
       const lote = lotes.find(l => l.id === loteSeleccionado)
       if (lote) {
-        const { data: cepa } = await supabase.from('cepas').select('stock_gramos').eq('nombre', lote.cepa).single()
-        if (cepa) await supabase.from('cepas').update({ stock_gramos: cepa.stock_gramos + parseInt(gramSeco) }).eq('nombre', lote.cepa)
+        const gramosSecoNum = parseInt(gramSeco)
+        const { data: cepa } = await supabase.from('cepas').select('id, stock_gramos').eq('nombre', lote.cepa).single()
+        if (cepa) {
+          const nuevoStock = cepa.stock_gramos + gramosSecoNum
+          await supabase.from('cepas').update({ stock_gramos: nuevoStock }).eq('nombre', lote.cepa)
+          // Registrar entrada de stock en audit trail
+          await supabase.from('movimientos_stock').insert({
+            cepa_nombre: lote.cepa,
+            tipo: 'entrada_cultivo',
+            gramos: gramosSecoNum,
+            stock_antes: cepa.stock_gramos,
+            stock_despues: nuevoStock,
+            motivo: `Cosecha seca — lote ${lote.codigo}`,
+            registrado_por: responsableRegistro || lote.responsable || 'Cultivador',
+            lote_codigo: lote.codigo,
+          })
+        }
       }
     }
     if (error) setMensaje('❌ Error: ' + error.message)

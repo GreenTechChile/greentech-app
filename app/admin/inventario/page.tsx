@@ -44,13 +44,28 @@ export default function Inventario() {
     const cepa = cepas.find(c => c.id === ajusteCepa)
     if (!cepa) return
     let nuevoStock = cepa.stock_gramos
-    if (ajusteTipo === 'agregar') nuevoStock += parseInt(ajusteGramos)
-    else if (ajusteTipo === 'restar') nuevoStock = Math.max(0, nuevoStock - parseInt(ajusteGramos))
-    else nuevoStock = parseInt(ajusteGramos)
+    const gramosNum = parseInt(ajusteGramos)
+    if (ajusteTipo === 'agregar') nuevoStock += gramosNum
+    else if (ajusteTipo === 'restar') nuevoStock = Math.max(0, nuevoStock - gramosNum)
+    else nuevoStock = gramosNum
 
     const { error } = await supabase.from('cepas').update({ stock_gramos: nuevoStock }).eq('id', ajusteCepa)
-    if (error) setMensaje('❌ Error: ' + error.message)
-    else {
+    if (error) {
+      setMensaje('❌ Error: ' + error.message)
+    } else {
+      // Registrar en audit trail de movimientos de stock
+      const { data: { user: adminUser } } = await supabase.auth.getUser()
+      const adminNombre = adminUser?.user_metadata?.nombre || adminUser?.email || 'Admin'
+      const deltaGramos = ajusteTipo === 'agregar' ? gramosNum : ajusteTipo === 'restar' ? -gramosNum : nuevoStock - cepa.stock_gramos
+      await supabase.from('movimientos_stock').insert({
+        cepa_nombre: cepa.nombre,
+        tipo: 'ajuste_manual',
+        gramos: deltaGramos,
+        stock_antes: cepa.stock_gramos,
+        stock_despues: nuevoStock,
+        motivo: ajusteMotivo || `Ajuste manual (${ajusteTipo})`,
+        registrado_por: adminNombre,
+      })
       setMensaje(`✅ Stock de ${cepa.nombre} actualizado a ${nuevoStock} gr`)
       setMostrarAjuste(false)
       setAjusteCepa(''); setAjusteGramos(''); setAjusteMotivo('')

@@ -73,6 +73,27 @@ export async function POST(req: NextRequest) {
       }, { status: 403 })
     }
 
+    // ── VALIDACIÓN 4: Stock suficiente por cepa ──────────────────────────────
+    // Agrupar gramos por cepa para verificar stock antes de insertar
+    const gramosPorCepa: Record<string, number> = {}
+    for (const item of items) {
+      gramosPorCepa[item.cepa] = (gramosPorCepa[item.cepa] || 0) + item.gramos
+    }
+
+    for (const [nombreCepa, gramosRequeridos] of Object.entries(gramosPorCepa)) {
+      const { data: cepaData } = await supabaseAdmin
+        .from('cepas')
+        .select('id, stock_gramos')
+        .eq('nombre', nombreCepa)
+        .single()
+
+      if (!cepaData || cepaData.stock_gramos < gramosRequeridos) {
+        return NextResponse.json({
+          error: `Stock insuficiente para ${nombreCepa}: disponible ${cepaData?.stock_gramos ?? 0}gr, solicitado ${gramosRequeridos}gr.`
+        }, { status: 409 })
+      }
+    }
+
     // Insertar cada item del carrito con sufijo único en orden_numero
     for (let idx = 0; idx < items.length; idx++) {
       const item = items[idx]
@@ -92,6 +113,26 @@ export async function POST(req: NextRequest) {
       if (error) {
         console.error('[api/dispensacion] insert error:', error)
         return NextResponse.json({ error: error.message }, { status: 500 })
+      }
+    }
+
+    // ── Descontar stock en servidor (atómico: leer → validar → escribir) ─────
+    for (const [nombreCepa, gramosRequeridos] of Object.entries(gramosPorCepa)) {
+      const { data: cepaActual } = await supabaseAdmin
+        .from('cepas').select('id, stock_gramos').eq('nombre', nombreCepa).single()
+      if (cepaActual) {
+        const nuevoStock = Math.max(0, cepaActual.stock_gramos - gramosRequeridos)
+        await supabaseAdmin.from('cepas').update({ stock_gramos: nuevoStock }).eq('id', cepaActual.id)
+        // Registrar en audit trail de stock
+        await supabaseAdmin.from('movimientos_stock').insert({
+          cepa_nombre: nombreCepa,
+          tipo: 'salida_dispensacion',
+          gramos: -gramosRequeridos,
+          stock_antes: cepaActual.stock_gramos,
+          stock_despues: nuevoStock,
+          motivo: `Dispensación orden ${orden} — socio ${socio.rut}`,
+          registrado_por: socio.rut,
+        })
       }
     }
 
