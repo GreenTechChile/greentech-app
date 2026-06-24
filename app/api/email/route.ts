@@ -68,6 +68,12 @@ function dato(label: string, valor: string) {
 function tabla(filas: string) {
   return `<table cellpadding="0" cellspacing="0" style="width:100%;background:#f9fafb;border-radius:8px;padding:4px 16px;margin:12px 0;">${filas}</table>`
 }
+function formatFecha(fecha: string): string {
+  if (!fecha) return ''
+  const partes = fecha.split('-')
+  if (partes.length !== 3) return fecha
+  return `${partes[2]}-${partes[1]}-${partes[0]}`
+}
 
 // ─── Templates por evento ─────────────────────────────────────────────
 type Datos = Record<string, string | number | undefined>
@@ -269,7 +275,7 @@ function template(evento: string, datos: Datos): { subject: string; html: string
       const diagnostico = String(datos.diagnostico || '')
       const medico = String(datos.medico || '')
       const folio = String(datos.folio || '')
-      const vencimiento = String(datos.vencimiento || '')
+      const vencimiento = formatFecha(String(datos.vencimiento || ''))
       const cuota = datos.cuota ? `$${Number(datos.cuota).toLocaleString('es-CL')}` : ''
       const html = layout('Receta médica aprobada — GreenTech', `
         ${h1('Tu receta médica fue aprobada ✅')}
@@ -290,7 +296,7 @@ function template(evento: string, datos: Datos): { subject: string; html: string
       const nombre     = String(datos.nombre     || 'Socio')
       const folio      = String(datos.folio      || '')
       const medico     = String(datos.medico     || '')
-      const vencimiento= String(datos.vencimiento|| '')
+      const vencimiento= formatFecha(String(datos.vencimiento|| ''))
       const cuota      = String(datos.cuota      || '')
       const conDelegacion = !!datos.delegacion_gramos
       const delegGramos= conDelegacion ? String(datos.delegacion_gramos) : ''
