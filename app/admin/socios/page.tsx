@@ -77,20 +77,6 @@ export default function AdminSocios() {
       if (filtroRecetas === 'pendiente') query = query.eq('estado', 'pendiente')
       const { data } = await query
       setRecetas(data || [])
-    } else if (tab === 'pagos_incompletos') {
-      const { data: pagos } = await supabase.from('pagos_incorporacion').select('*').eq('estado', 'aprobado').order('fecha', { ascending: false })
-      if (pagos && pagos.length > 0) {
-        const ruts = pagos.map((p: any) => p.rut).filter(Boolean)
-        const { data: sociosExistentes } = await supabase.from('socios').select('rut').in('rut', ruts.length > 0 ? ruts : ['__ninguno__'])
-        const rutsCompletos = new Set((sociosExistentes || []).map((s: any) => s.rut))
-        if (filtroPagos === 'incompletos') {
-          setPagosIncompletos(pagos.filter((p: any) => !rutsCompletos.has(p.rut)))
-        } else {
-          setPagosIncompletos(pagos.map((p: any) => ({ ...p, _completo: rutsCompletos.has(p.rut) })))
-        }
-      } else {
-        setPagosIncompletos([])
-      }
     } else if (tab === 'delegaciones') {
       let query = supabase.from('socios').select('*, delegacion_nueva_cuota, delegacion_pdf_url, delegacion_estado').not('delegacion_estado', 'is', null).order('created_at', { ascending: false })
       if (filtroDelegaciones === 'pendiente_firma') query = (query as any).eq('delegacion_estado', 'pendiente_firma')
