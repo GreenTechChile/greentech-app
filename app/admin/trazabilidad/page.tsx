@@ -12,9 +12,10 @@ interface Socio {
   reglamento_aceptado_at?: string; reglamento_ip?: string
 }
 interface Dispensacion { id: string; cepa: string; gramos: number; monto: number; orden_numero: string; estado: string; mes: number; año: number; medio_pago: string; created_at: string; rut_socio?: string }
+interface AuditLogEntry { id: string; accion: string; entidad: string; entidad_id: string; realizado_por: string; detalles: Record<string, any>; created_at: string }
 
 export default function Trazabilidad() {
-  const [tab, setTab] = useState<'log'|'expediente'|'exportar'>('log')
+  const [tab, setTab] = useState<'log'|'expediente'|'exportar'|'auditlog'>('log')
   const [dispensaciones, setDispensaciones] = useState<Dispensacion[]>([])
   const [socios, setSocios] = useState<Socio[]>([])
   const [loading, setLoading] = useState(true)
@@ -27,17 +28,24 @@ export default function Trazabilidad() {
   const [exportando, setExportando] = useState(false)
   const [fechaDesde, setFechaDesde] = useState('2026-03-01')
   const [fechaHasta, setFechaHasta] = useState(new Date().toISOString().split('T')[0])
+  const [auditLog, setAuditLog] = useState<AuditLogEntry[]>([])
+  const [auditFiltroEntidad, setAuditFiltroEntidad] = useState('todas')
+  const [auditFiltroAdmin, setAuditFiltroAdmin] = useState('')
+  const [auditDesde, setAuditDesde] = useState('2026-01-01')
+  const [auditHasta, setAuditHasta] = useState(new Date().toISOString().split('T')[0])
 
   useEffect(() => { cargarDatos() }, [])
 
   const cargarDatos = async () => {
     setLoading(true)
-    const [{ data: disp }, { data: soc }] = await Promise.all([
+    const [{ data: disp }, { data: soc }, { data: audit }] = await Promise.all([
       supabase.from('dispensaciones').select('*').order('created_at', { ascending: false }),
       supabase.from('socios').select('id,rut,nombre,email,estado,created_at,telefono,direccion,comuna,ciudad,diagnostico,medico_nombre,medico_rut,folio_receta,cuota_mensual,gramos_delegados,vencimiento_receta,notas_admin,reglamento_aceptado_at,reglamento_ip').order('nombre'),
+      supabase.from('audit_log').select('*').order('created_at', { ascending: false }).limit(1000),
     ])
     if (disp) setDispensaciones(disp)
     if (soc) setSocios(soc)
+    if (audit) setAuditLog(audit)
     setLoading(false)
   }
 
@@ -119,7 +127,7 @@ export default function Trazabilidad() {
 
         {/* Tabs */}
         <div style={{ display:'flex', borderBottom:'1px solid #e5e7eb', marginBottom:20 }}>
-          {[{key:'log',label:'📋 Log general'},{key:'expediente',label:'👤 Por socio'},{key:'exportar',label:'📤 Exportar fiscalización'}].map(t => (
+          {[{key:'log',label:'📋 Log general'},{key:'expediente',label:'👤 Por socio'},{key:'auditlog',label:'🔐 Acciones admin'},{key:'exportar',label:'📤 Exportar fiscalización'}].map(t => (
             <button key={t.key} onClick={() => setTab(t.key as typeof tab)}
               style={{ padding:'8px 18px', fontSize:13, background:'none', border:'none', cursor:'pointer', borderBottom:tab===t.key?'2px solid #185FA5':'2px solid transparent', color:tab===t.key?'#185FA5':'#6b7280', fontWeight:tab===t.key?600:400, marginBottom:-1 }}>
               {t.label}
@@ -422,6 +430,127 @@ export default function Trazabilidad() {
             </div>
           </div>
         )}
+
+        {/* ── AUDIT LOG ── */}
+        {tab === 'auditlog' && (() => {
+          const adminsUnicos = Array.from(new Set(auditLog.map(e => e.realizado_por))).sort()
+          const auditFiltrado = auditLog.filter(e => {
+            if (auditFiltroEntidad !== 'todas' && e.entidad !== auditFiltroEntidad) return false
+            if (auditFiltroAdmin && e.realizado_por !== auditFiltroAdmin) return false
+            const fecha = e.created_at.split('T')[0]
+            if (fecha < auditDesde || fecha > auditHasta) return false
+            return true
+          })
+
+          const ACCION_LABELS: Record<string, {label:string; bg:string; color:string}> = {
+            aprobar_socio:     { label:'Aprobar socio',      bg:'#EAF3DE', color:'#3B6D11' },
+            rechazar_socio:    { label:'Rechazar socio',     bg:'#FEE2E2', color:'#991B1B' },
+            aprobar_receta:    { label:'Aprobar receta',     bg:'#EAF3DE', color:'#3B6D11' },
+            rechazar_receta:   { label:'Rechazar receta',    bg:'#FEE2E2', color:'#991B1B' },
+            firmar_delegacion: { label:'Firmar delegación',  bg:'#E6F1FB', color:'#185FA5' },
+            enviar_link_retorno: { label:'Enviar link',      bg:'#F5F3FF', color:'#5B21B6' },
+          }
+
+          const exportarCSV = () => {
+            const headers = ['Fecha/Hora','Acción','Realizado por','Entidad','ID entidad','Detalles']
+            const filas = auditFiltrado.map(e => {
+              const fecha = new Date(e.created_at).toLocaleString('es-CL', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' })
+              const detalles = Object.entries(e.detalles||{}).map(([k,v]) => `${k}: ${v}`).join(' | ')
+              return [fecha, e.accion, e.realizado_por, e.entidad, e.entidad_id||'', detalles].map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')
+            })
+            const csv = [headers.join(','), ...filas].join('\n')
+            const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' })
+            const url = URL.createObjectURL(blob)
+            const a = document.createElement('a')
+            a.href = url
+            a.download = `AuditLog_GreenTech_${auditDesde}_${auditHasta}.csv`
+            a.click()
+            URL.revokeObjectURL(url)
+          }
+
+          return (
+            <>
+              <div style={{ background:'#F5F3FF', border:'1px solid #DDD6FE', borderRadius:10, padding:'10px 14px', fontSize:12, color:'#4C1D95', marginBottom:16, display:'flex', gap:8 }}>
+                <span style={{ fontSize:16 }}>🔐</span>
+                <span>Registro inmutable de todas las acciones realizadas por los administradores. Exporta como CSV para incluir en informes de fiscalización.</span>
+              </div>
+
+              {/* Filtros */}
+              <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap', alignItems:'center' }}>
+                <select value={auditFiltroEntidad} onChange={e=>setAuditFiltroEntidad(e.target.value)}
+                  style={{ padding:'7px 10px', border:'1px solid #e5e7eb', borderRadius:8, fontSize:12, background:'#fff', outline:'none' }}>
+                  <option value="todas">Todas las acciones</option>
+                  <option value="socio">Socios</option>
+                  <option value="receta">Recetas</option>
+                  <option value="delegacion">Delegaciones</option>
+                  <option value="pago_incorporacion">Pagos inscripción</option>
+                </select>
+                <select value={auditFiltroAdmin} onChange={e=>setAuditFiltroAdmin(e.target.value)}
+                  style={{ padding:'7px 10px', border:'1px solid #e5e7eb', borderRadius:8, fontSize:12, background:'#fff', outline:'none' }}>
+                  <option value="">Todos los admins</option>
+                  {adminsUnicos.map(a => <option key={a} value={a}>{a}</option>)}
+                </select>
+                <input type="date" value={auditDesde} onChange={e=>setAuditDesde(e.target.value)}
+                  style={{ padding:'7px 10px', border:'1px solid #e5e7eb', borderRadius:8, fontSize:12, outline:'none' }}/>
+                <span style={{ fontSize:12, color:'#6b7280' }}>→</span>
+                <input type="date" value={auditHasta} onChange={e=>setAuditHasta(e.target.value)}
+                  style={{ padding:'7px 10px', border:'1px solid #e5e7eb', borderRadius:8, fontSize:12, outline:'none' }}/>
+                <span style={{ fontSize:12, color:'#9ca3af', marginLeft:4 }}>{auditFiltrado.length} registro{auditFiltrado.length !== 1 ? 's' : ''}</span>
+                <button onClick={exportarCSV} disabled={auditFiltrado.length === 0}
+                  style={{ marginLeft:'auto', padding:'7px 14px', border:'none', borderRadius:8, background:auditFiltrado.length>0?'#185FA5':'#9ca3af', color:'#fff', fontSize:12, fontWeight:600, cursor:auditFiltrado.length>0?'pointer':'not-allowed', display:'flex', alignItems:'center', gap:6 }}>
+                  📥 Exportar CSV
+                </button>
+              </div>
+
+              {loading ? (
+                <div style={{ fontSize:13, color:'#9ca3af', padding:40, textAlign:'center' }}>Cargando registros...</div>
+              ) : auditFiltrado.length === 0 ? (
+                <div style={{ fontSize:13, color:'#9ca3af', padding:40, textAlign:'center', border:'1px dashed #e5e7eb', borderRadius:12 }}>
+                  No hay acciones registradas para los filtros seleccionados
+                </div>
+              ) : (
+                <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
+                  <thead>
+                    <tr style={{ background:'#f9fafb', borderBottom:'1px solid #e5e7eb' }}>
+                      {['Fecha y hora','Acción','Realizado por','Entidad / ID','Detalles'].map(h => (
+                        <th key={h} style={{ textAlign:'left', padding:'8px 12px', fontSize:11, color:'#9ca3af', fontWeight:500 }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {auditFiltrado.map(entry => {
+                      const badge = ACCION_LABELS[entry.accion]
+                      const fecha = new Date(entry.created_at)
+                      const detallesStr = Object.entries(entry.detalles||{}).map(([k,v]) => `${k}: ${v}`).join(' · ')
+                      return (
+                        <tr key={entry.id} style={{ borderBottom:'1px solid #f3f4f6' }}>
+                          <td style={{ padding:'9px 12px', color:'#6b7280', whiteSpace:'nowrap', fontSize:11 }}>
+                            <div>{fecha.toLocaleDateString('es-CL',{day:'2-digit',month:'short',year:'numeric'})}</div>
+                            <div style={{ color:'#9ca3af' }}>{fecha.toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}</div>
+                          </td>
+                          <td style={{ padding:'9px 12px' }}>
+                            {badge
+                              ? <span style={{ fontSize:10, padding:'2px 8px', borderRadius:20, background:badge.bg, color:badge.color, whiteSpace:'nowrap' }}>{badge.label}</span>
+                              : <span style={{ fontSize:10, padding:'2px 8px', borderRadius:20, background:'#f3f4f6', color:'#374151' }}>{entry.accion}</span>
+                            }
+                          </td>
+                          <td style={{ padding:'9px 12px', fontWeight:500 }}>{entry.realizado_por}</td>
+                          <td style={{ padding:'9px 12px', fontSize:11 }}>
+                            <div style={{ color:'#6b7280' }}>{entry.entidad}</div>
+                            {entry.entidad_id && <div style={{ color:'#9ca3af', fontFamily:'monospace', fontSize:10 }}>{entry.entidad_id}</div>}
+                          </td>
+                          <td style={{ padding:'9px 12px', color:'#6b7280', fontSize:11, maxWidth:300 }}>
+                            {detallesStr || <span style={{ color:'#d1d5db', fontStyle:'italic' }}>—</span>}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </>
+          )
+        })()}
 
         {/* ── EXPORTAR ── */}
         {tab === 'exportar' && (
@@ -774,6 +903,28 @@ export default function Trazabilidad() {
                           </tr></tfoot>
                         </table>`
                     }
+                    <h2>Log de auditoría — acciones de administradores</h2>
+                    ${auditLog.length === 0
+                      ? '<p style="color:#9ca3af;font-style:italic">Sin registros de auditoría.</p>'
+                      : `<table>
+                          <thead><tr>
+                            <th>Fecha y hora</th><th>Acción</th><th>Realizado por</th><th>Entidad</th><th>ID</th><th>Detalles</th>
+                          </tr></thead>
+                          <tbody>${auditLog.map((e: AuditLogEntry, i: number) => {
+                            const fechaAudit = new Date(e.created_at).toLocaleString('es-CL',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'})
+                            const detallesAudit = Object.entries(e.detalles||{}).map(([k,v]) => `${k}: ${v}`).join(' · ')
+                            return `<tr style="border-bottom:1px solid #e5e7eb;${i%2===0?'':'background:#f9fafb'}">
+                              <td style="padding:7px 10px;white-space:nowrap;font-size:11px;color:#6b7280">${fechaAudit}</td>
+                              <td style="padding:7px 10px">${e.accion}</td>
+                              <td style="padding:7px 10px;font-weight:500">${e.realizado_por}</td>
+                              <td style="padding:7px 10px;color:#6b7280">${e.entidad}</td>
+                              <td style="padding:7px 10px;font-size:10px;color:#9ca3af;font-family:monospace">${e.entidad_id||'—'}</td>
+                              <td style="padding:7px 10px;font-size:11px;color:#6b7280">${detallesAudit||'—'}</td>
+                            </tr>`
+                          }).join('')}</tbody>
+                        </table>`
+                    }
+
                     <div class="footer">
                       Informe generado automáticamente por el sistema GreenTech.<br>
                       Los registros cumplen con Ley 19.628 (datos personales), Ley 20.000 y Ley 21.575.

@@ -122,6 +122,21 @@ export default function AdminSocios() {
     }
   }
 
+  // Helper de auditoría — registra cada acción admin en audit_log
+  const logAudit = async (
+    accion: string,
+    entidad: string,
+    entidadId: string,
+    realizadoPor: string,
+    detalles: Record<string, any> = {}
+  ) => {
+    await supabase.from('audit_log').insert({
+      accion, entidad, entidad_id: entidadId,
+      realizado_por: realizadoPor,
+      detalles,
+    })
+  }
+
   // Descarga el PDF original (sin firma)
   const bajarDoc = async (e: React.MouseEvent, rut: string, storageKey: string) => {
     e.stopPropagation()
@@ -175,6 +190,7 @@ export default function AdminSocios() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Error al aprobar')
+      await logAudit('aprobar_socio', 'socio', socio.id, nombreAdmin, { socio_nombre: socio.nombre, rut: socio.rut })
       setMensaje(`✅ ${socio.nombre} aprobado. Usuario creado automáticamente. Contraseña temporal: ${data.tempPassword}`)
       setSocios(prev => prev.filter(s => s.id !== socio.id))
     } catch (err) {
@@ -195,6 +211,7 @@ export default function AdminSocios() {
       aprobado_por: nombreAdmin,
       aprobado_at: new Date().toISOString(),
     }).eq('id', socio.id)
+    await logAudit('rechazar_socio', 'socio', socio.id, nombreAdmin, { socio_nombre: socio.nombre, rut: socio.rut, motivo: notas[socio.id] || null })
     setMensaje(`Solicitud de ${socio.nombre} rechazada.`)
     setSocios(prev => prev.filter(s => s.id !== socio.id))
     setProcesando(null)
@@ -294,6 +311,11 @@ export default function AdminSocios() {
       }).eq('id', receta.id)
 
       // 3. Email al socio
+      await logAudit('aprobar_receta', 'receta', receta.id, nombreAdmin, {
+        socio_nombre: socio.nombre, rut: socio.rut,
+        cuota_mensual: nuevaCuota, vencimiento: receta.vencimiento_receta,
+        ajuste_gramos: necesitaAjusteGramos ? { de: gramosActualesDelSocio, a: nuevaCuota } : null,
+      })
       try {
         await sendEmail('receta_aprobada', socio.email, { nombre: socio.nombre, rut: socio.rut, vencimiento: receta.vencimiento_receta })
       } catch {}
@@ -325,6 +347,7 @@ export default function AdminSocios() {
         aprobado_por: nombreAdmin,
         aprobado_at: new Date().toISOString(),
       }).eq('id', receta.id)
+      await logAudit('rechazar_receta', 'receta', receta.id, nombreAdmin, { socio_nombre: socio.nombre, rut: socio.rut, motivo })
       try {
         await sendEmail('receta_rechazada', socio.email, { nombre: socio.nombre, rut: socio.rut, motivo })
       } catch {}
@@ -415,9 +438,21 @@ export default function AdminSocios() {
                         Delegación actual: <strong>{socio.gramos_delegados}g</strong> → Nueva solicitud: <strong>{socio.delegacion_nueva_cuota}g</strong>
                       </div>
                     </div>
-                    <span style={{ background: '#FEF3C7', color: '#92400E', fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 20 }}>
-                      ⏳ Pendiente de firma
-                    </span>
+                    <div style={{ textAlign: 'right' as const }}>
+                      {socio.delegacion_estado === 'firmado' ? (
+                        <>
+                          <span style={{ background: '#D1FAE5', color: '#065F46', fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 20, display: 'block', marginBottom: 4 }}>✅ Firmado</span>
+                          {socio.delegacion_aprobado_por && (
+                            <div style={{ fontSize: 10, color: '#6b7280' }}>
+                              {socio.delegacion_aprobado_por}<br/>
+                              {socio.delegacion_aprobado_at ? new Date(socio.delegacion_aprobado_at).toLocaleString('es-CL', { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' }) : ''}
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <span style={{ background: '#FEF3C7', color: '#92400E', fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 20 }}>⏳ Pendiente de firma</span>
+                      )}
+                    </div>
                   </div>
                   <div style={{ padding: '10px 18px 14px', borderTop: '1px solid #FDE68A', display: 'flex', gap: 8, flexWrap: 'wrap' as const }}>
                     <button onClick={async () => {
@@ -436,12 +471,18 @@ export default function AdminSocios() {
                         if (error) { alert('Error al subir: ' + error.message); return }
                         const { data: { user: adminUser } } = await supabase.auth.getUser()
                         const nombreAdmin = adminUser?.user_metadata?.nombre || adminUser?.email || adminUser?.user_metadata?.rut || 'Admin'
+                        const ahora = new Date().toISOString()
                         await supabase.from('socios').update({
                           delegacion_estado: 'firmado',
                           gramos_delegados: socio.delegacion_nueva_cuota,
                           delegacion_aprobado_por: nombreAdmin,
-                          delegacion_aprobado_at: new Date().toISOString(),
+                          delegacion_aprobado_at: ahora,
                         }).eq('id', socio.id)
+                        await logAudit('firmar_delegacion', 'delegacion', socio.id, nombreAdmin, {
+                          socio_nombre: socio.nombre, rut: socio.rut,
+                          gramos_anteriores: socio.gramos_delegados,
+                          gramos_nuevos: socio.delegacion_nueva_cuota,
+                        })
                         setMensaje(`✅ Contrato de ${socio.nombre} subido y aprobado por ${nombreAdmin}. Límite de dispensación actualizado a ${socio.delegacion_nueva_cuota}g.`)
                         setTimeout(() => setMensaje(''), 6000)
                         cargarSocios()
