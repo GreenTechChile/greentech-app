@@ -437,8 +437,36 @@ export default function AdminSocios() {
         {tab !== 'renovaciones' && tab !== 'pagos_incompletos' && (loading ? (
           <div style={{ fontSize: 13, color: '#9ca3af', padding: 40, textAlign: 'center' }}>Cargando solicitudes...</div>
         ) : socios.length === 0 ? (
-          <div style={{ fontSize: 13, color: '#9ca3af', padding: 40, textAlign: 'center' }}>
-            {tab === 'pendientes' ? '✅ No hay solicitudes pendientes' : 'No hay registros'}
+          <div>
+            {tab === 'pendientes' && (tabCounts.renovaciones > 0 || tabCounts.pagos_incompletos > 0) ? (
+              <div>
+                <div style={{ fontSize: 13, color: '#9ca3af', padding: '24px 0 16px', textAlign: 'center' }}>✅ No hay solicitudes de ingreso nuevas</div>
+                {tabCounts.renovaciones > 0 && (
+                  <button onClick={() => setTab('renovaciones')} style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '12px 16px', background: '#FFFBF5', border: '1px solid #EF9F27', borderRadius: 10, marginBottom: 10, cursor: 'pointer', textAlign: 'left' }}>
+                    <span style={{ fontSize: 22 }}>🩺</span>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: '#111' }}>{tabCounts.renovaciones} renovación{tabCounts.renovaciones > 1 ? 'es' : ''} de receta pendiente{tabCounts.renovaciones > 1 ? 's' : ''}</div>
+                      <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>Clic para revisar en el tab Renovaciones →</div>
+                    </div>
+                    <span style={{ background: '#FEF3C7', color: '#92400E', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 10 }}>{tabCounts.renovaciones}</span>
+                  </button>
+                )}
+                {tabCounts.pagos_incompletos > 0 && (
+                  <button onClick={() => setTab('pagos_incompletos')} style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '12px 16px', background: '#FFFDF0', border: '1px solid #FBBF24', borderRadius: 10, marginBottom: 10, cursor: 'pointer', textAlign: 'left' }}>
+                    <span style={{ fontSize: 22 }}>💳</span>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: '#111' }}>{tabCounts.pagos_incompletos} pago{tabCounts.pagos_incompletos > 1 ? 's' : ''} de inscripción sin completar</div>
+                      <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>Clic para revisar en el tab Pagos incompletos →</div>
+                    </div>
+                    <span style={{ background: '#FEF3C7', color: '#92400E', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 10 }}>{tabCounts.pagos_incompletos}</span>
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div style={{ fontSize: 13, color: '#9ca3af', padding: 40, textAlign: 'center' }}>
+                {tab === 'pendientes' ? '✅ No hay solicitudes pendientes' : 'No hay registros'}
+              </div>
+            )}
           </div>
         ) : socios.map(socio => {
           const dias = diasDesde(socio.created_at)
