@@ -46,8 +46,16 @@ export default function AdminSocios() {
   const [enviandoLink, setEnviandoLink] = useState<Record<string,boolean>>({})
   const [filtroPI, setFiltroPI] = useState<'pendientes'|'historial'>('pendientes')
   const [rutsConSocio, setRutsConSocio] = useState<Set<string>>(new Set())
+  const [recetasExpandidas, setRecetasExpandidas] = useState<Set<string>>(new Set())
+  const [nombresPorEmail, setNombresPorEmail] = useState<Record<string,string>>({})
 
-  useEffect(() => { cargarConteos() }, [])
+  useEffect(() => {
+    cargarConteos()
+    // Cargar mapa email→nombre para mostrar nombre admin en lugar del email
+    supabase.from('socios').select('email,nombre').then(({ data }) => {
+      if (data) setNombresPorEmail(Object.fromEntries(data.map((s: any) => [s.email, s.nombre])))
+    })
+  }, [])
   useEffect(() => { cargarSocios() }, [tab, filtroRecetas, filtroSocios, filtroDelegaciones, filtroPI])
 
   const cargarConteos = async () => {
@@ -527,24 +535,48 @@ export default function AdminSocios() {
               : r.estado === 'rechazada'
               ? { label: '❌ Rechazada', bg: '#FEE2E2', color: '#991B1B' }
               : null
+            const esHistorial = filtroRecetas === 'todas'
+            const estaExpandido = !esHistorial || recetasExpandidas.has(r.id)
+            const toggleExpandir = () => {
+              if (!esHistorial) return
+              setRecetasExpandidas(prev => {
+                const next = new Set(prev)
+                next.has(r.id) ? next.delete(r.id) : next.add(r.id)
+                return next
+              })
+            }
+            const nombreAdminProceso = r.aprobado_por ? (nombresPorEmail[r.aprobado_por] || r.aprobado_por) : null
             return (
-              <div key={r.id} style={{ border: `1px solid ${r.estado === 'pendiente' ? '#e5e7eb' : r.estado === 'aprobada' ? '#97C459' : '#F5C5C5'}`, borderRadius: 12, marginBottom: 14, overflow: 'hidden' }}>
-                <div style={{ padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f9fafb' }}>
-                  <div>
+              <div key={r.id} style={{ border: `1px solid ${r.estado === 'pendiente' ? '#e5e7eb' : r.estado === 'aprobada' ? '#97C459' : '#F5C5C5'}`, borderRadius: 12, marginBottom: 10, overflow: 'hidden' }}>
+                <div onClick={esHistorial ? toggleExpandir : undefined}
+                  style={{ padding: '12px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f9fafb', cursor: esHistorial ? 'pointer' : 'default' }}>
+                  <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 14, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
                       {socio?.nombre}
                       {estadoBadge && <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 12, background: estadoBadge.bg, color: estadoBadge.color }}>{estadoBadge.label}</span>}
                     </div>
                     <div style={{ fontSize: 12, color: '#6b7280' }}>{socio?.rut} · {socio?.email}</div>
-                    <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>Enviada hace {diasDesde(r.created_at)} días</div>
+                    {esHistorial && nombreAdminProceso && (
+                      <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>
+                        Procesado por <strong style={{ color: '#6b7280' }}>{nombreAdminProceso}</strong>
+                        {r.aprobado_at ? ` · ${new Date(r.aprobado_at).toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: 'numeric' })}` : ''}
+                      </div>
+                    )}
+                    {!esHistorial && <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>Enviada hace {diasDesde(r.created_at)} días</div>}
                   </div>
-                  {r.archivo_url && (
-                    <button onClick={() => verReceta(r.archivo_url)}
-                      style={{ padding: '6px 12px', border: '1px solid #185FA5', borderRadius: 7, fontSize: 12, color: '#185FA5', background: '#fff', cursor: 'pointer' }}>
-                      📄 Ver receta
-                    </button>
-                  )}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    {r.archivo_url && (
+                      <button onClick={e => { e.stopPropagation(); verReceta(r.archivo_url) }}
+                        style={{ padding: '6px 12px', border: '1px solid #185FA5', borderRadius: 7, fontSize: 12, color: '#185FA5', background: '#fff', cursor: 'pointer' }}>
+                        📄 Ver receta
+                      </button>
+                    )}
+                    {esHistorial && (
+                      <span style={{ fontSize: 14, color: '#9ca3af', userSelect: 'none' }}>{estaExpandido ? '▲' : '▼'}</span>
+                    )}
+                  </div>
                 </div>
+                {estaExpandido && <>
                 <div style={{ padding: '14px 18px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
                   {[
                     { label: 'Diagnóstico', val: r.diagnostico },
@@ -612,13 +644,13 @@ export default function AdminSocios() {
                     </div>
                   )}
                 </div>}
-                {/* Pie: quién procesó / motivo de rechazo */}
-                {r.estado !== 'pendiente' && (r.aprobado_por || r.motivo_rechazo) && (
-                  <div style={{ padding: '8px 18px', borderTop: '1px solid #f3f4f6', background: '#fafafa', fontSize: 11, color: '#6b7280' }}>
-                    {r.aprobado_por && <span>Procesado por <strong>{r.aprobado_por}</strong>{r.aprobado_at ? ` · ${new Date(r.aprobado_at).toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: 'numeric' })}` : ''}</span>}
-                    {r.motivo_rechazo && <span style={{ color: '#A32D2D', marginLeft: r.aprobado_por ? 12 : 0 }}>Motivo: {r.motivo_rechazo}</span>}
+                {/* Pie: motivo de rechazo (el admin ya aparece en el encabezado) */}
+                {r.estado !== 'pendiente' && r.motivo_rechazo && (
+                  <div style={{ padding: '8px 18px', borderTop: '1px solid #f3f4f6', background: '#fafafa', fontSize: 11, color: '#A32D2D' }}>
+                    Motivo: {r.motivo_rechazo}
                   </div>
                 )}
+                </>}
               </div>
             )
           })
