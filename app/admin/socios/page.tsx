@@ -13,6 +13,7 @@ interface Socio {
   vencimiento_receta: string; estado: string; rol: string
   notas_admin: string; created_at: string
   aprobado_por?: string; aprobado_at?: string
+  delegacion_nueva_cuota?: number; delegacion_pdf_url?: string; delegacion_estado?: string
 }
 
 // Qué documentos firmados se requieren antes de poder aprobar
@@ -96,7 +97,7 @@ export default function AdminSocios() {
       }
     } else {
       const estadoMap = { pendientes: 'pendiente', aprobados: 'activo', rechazados: 'rechazado' }
-      const { data } = await supabase.from('socios').select('*').eq('estado', estadoMap[tab as 'pendientes'|'aprobados'|'rechazados']).order('created_at', { ascending: false })
+      const { data } = await supabase.from('socios').select('*, delegacion_nueva_cuota, delegacion_pdf_url, delegacion_estado').eq('estado', estadoMap[tab as 'pendientes'|'aprobados'|'rechazados']).order('created_at', { ascending: false })
       if (data) setSocios(data)
     }
     setLoading(false)
@@ -714,6 +715,51 @@ export default function AdminSocios() {
                       </button>
                     </div>
                   )}
+                  {/* ── Delegación de cultivo pendiente (solo Aprobados) ── */}
+                  {tab === 'aprobados' && socio.delegacion_estado === 'pendiente_firma' && (
+                    <div style={{ padding: '12px 16px', background: '#FFF7ED', borderTop: '1px solid #FED7AA' }}>
+                      <div style={{ fontWeight: 600, color: '#92400E', fontSize: 12, marginBottom: 8 }}>
+                        📋 Actualización de contrato de delegación pendiente de firma
+                      </div>
+                      <div style={{ fontSize: 12, color: '#78350F', marginBottom: 10 }}>
+                        El socio solicitó actualizar su delegación a <strong>{socio.delegacion_nueva_cuota}g</strong> (actual: {socio.gramos_delegados}g).
+                        Descarga el contrato generado, envíalo a firmar y sube la versión firmada.
+                      </div>
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' as const }}>
+                        <button onClick={async (e) => {
+                          e.stopPropagation()
+                          const { data } = await supabase.storage.from('documentos').createSignedUrl(`${socio.rut}/contrato_renovacion.pdf`, 120)
+                          if (data?.signedUrl) {
+                            const a = document.createElement('a')
+                            a.href = data.signedUrl
+                            a.download = `contrato_delegacion_${socio.rut}.pdf`
+                            a.click()
+                          } else { alert('Documento no encontrado en storage.') }
+                        }} style={{ fontSize: 11, padding: '6px 12px', background: '#E6F1FB', color: '#185FA5', border: '1px solid #A8CBF0', borderRadius: 6, cursor: 'pointer', fontWeight: 500 }}>
+                          ⬇ Descargar contrato
+                        </button>
+                        <label style={{ fontSize: 11, padding: '6px 12px', background: '#fff', color: '#374151', border: '1px solid #d1d5db', borderRadius: 6, cursor: 'pointer', fontWeight: 500 }}>
+                          ⬆ Subir firmado
+                          <input type="file" accept="application/pdf" style={{ display: 'none' }}
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0]
+                              if (!file) return
+                              const { error } = await supabase.storage.from('documentos').upload(`${socio.rut}/contrato_firmado.pdf`, file, { contentType: 'application/pdf', upsert: true })
+                              if (error) { alert('Error al subir: ' + error.message); return }
+                              await supabase.from('socios').update({
+                                delegacion_estado: 'firmado',
+                                gramos_delegados: socio.delegacion_nueva_cuota,
+                              }).eq('id', socio.id)
+                              setMensaje(`✅ Contrato de ${socio.nombre} subido. Gramos delegados actualizados a ${socio.delegacion_nueva_cuota}g.`)
+                              setTimeout(() => setMensaje(''), 6000)
+                              cargarSocios()
+                              e.target.value = ''
+                            }} />
+                        </label>
+                      </div>
+                    </div>
+                  )}
+
                   {tab !== 'pendientes' && (socio.notas_admin || socio.aprobado_por) && (
                     <div style={{ padding: '10px 16px', fontSize: 12, color: '#6b7280', background: '#f9fafb', borderTop: '1px solid #e5e7eb', display: 'flex', flexDirection: 'column', gap: 4 }}>
                       {socio.aprobado_por && (

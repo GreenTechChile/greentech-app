@@ -69,7 +69,8 @@ export default function MisDocumentos() {
   const [gramosDelegados, setGramosDelegados] = useState<number>(0)
   const [rutMedicoValido, setRutMedicoValido] = useState<boolean|null>(null)
   const [delegacionSolicitada, setDelegacionSolicitada] = useState(false)
-  const [solicitandoDelegacion, setSolicitandoDelegacion] = useState(false)
+  const [firmandoContrato, setFirmandoContrato] = useState(false)
+  const [socioData, setSocioData] = useState<any>(null)
   const [formReceta, setFormReceta] = useState<FormReceta>({
     diagnostico:'', diagnostico_secundario:'', medico_nombre:'', medico_rut:'',
     folio_receta:'', vencimiento_receta:'', cuota_mensual:'', observaciones:''
@@ -83,10 +84,11 @@ export default function MisDocumentos() {
       if (rut) {
         setRutSocio(rut)
           supabase.from('socios')
-            .select('id, nombre, vencimiento_receta, reglamento_aceptado_at, gramos_delegados')
+            .select('*')
             .eq('rut', rut)
             .single()
             .then(({ data }) => {
+              if (data) setSocioData(data)
               if (data?.nombre) setNombreSocio(data.nombre)
               if (data?.gramos_delegados) setGramosDelegados(data.gramos_delegados)
               if (data?.id) {
@@ -185,28 +187,78 @@ export default function MisDocumentos() {
   const delegacionOpcional = gramosDelegados > 0 && nuevaCuota > gramosDelegados && !!formReceta.cuota_mensual
   const delegacionObligatoria = gramosDelegados > 0 && nuevaCuota < gramosDelegados && !!formReceta.cuota_mensual
 
-  const solicitarActualizacionDelegacion = async () => {
-    if (!rutSocio || !socioId) return
-    setSolicitandoDelegacion(true)
+  const iniciarActualizacionDelegacion = async () => {
+    if (!rutSocio || !socioId || !socioData) return
+    setFirmandoContrato(true)
     try {
-      // Registrar solicitud de actualización de delegación en BD
+      const { jsPDF } = await import('jspdf')
+      const m = 20
+      const w = 216 - m * 2
+      const lh = 6
+      const fecha = new Date().toLocaleDateString('es-CL', { day:'numeric', month:'long', year:'numeric' })
+
+      const addWrappedText = (doc: InstanceType<typeof jsPDF>, text: string, x: number, y: number, maxWidth: number, lineHeight: number): number => {
+        const lines = doc.splitTextToSize(text, maxWidth)
+        doc.text(lines, x, y)
+        return y + (lines.length * lineHeight)
+      }
+
+      // Generar nuevo Contrato de Delegación con gramos actualizados
+      const docContrato = new jsPDF({ unit:'mm', format:'letter' })
+      docContrato.setFont('helvetica','bold')
+      docContrato.setFontSize(13)
+      docContrato.text('Contrato de Previsión y Delegación de Cultivo', 108, 25, { align:'center' })
+      docContrato.setFontSize(10)
+      docContrato.setFont('helvetica','normal')
+      docContrato.text('Asociación de usuarios de plantas medicinales GreenTech', 108, 32, { align:'center' })
+      docContrato.setLineWidth(0.4)
+      docContrato.line(m, 36, 216 - m, 36)
+      let y = 46
+      for (const p of [
+        `Don/Doña ${nombreSocio}, RUT: ${rutSocio}, miembro asociado de la Corporación (Asociación de Usuarios de Plantas Medicinales) para su investigación, desarrollo y tratamiento "GREENTECH".`,
+        'Por la presente declara:',
+      ]) { y = addWrappedText(docContrato, p, m, y, w, lh); y += 4 }
+      for (const p of [
+        '1. Ser Usuario/a de cannabis o haber sido diagnosticado/a de alguna enfermedad para la cual la eficacia del uso terapéutico o paliativo del cannabis es prescrita por un médico bajo los parámetros del artículo 8° inciso 2° de la ley 20.000.',
+        '2. Haber leído los derechos y deberes del paciente medicinal de cannabis (ley 20.584).',
+        '3. La obligación excluyente de no vender el cannabis que la corporación le proporcione, total o parcialmente, bajo el resultado de expulsión de la corporación.',
+        '4. Su compromiso de cumplir los estatutos, reglamento de régimen interno, a observar sus fines sociales y a respetar las decisiones de sus órganos internos.',
+        '5. Estar en conocimiento de pertenecer a un tratamiento médico el cual sigue la recomendación de un profesional de la salud calificado.',
+        `6. Delegar la entrega de ${nuevaCuota} gr. de Cannabis mensualmente según recomendación médica a la corporación GREENTECH.`,
+      ]) { y = addWrappedText(docContrato, p, m, y, w, lh); y += 3 }
+      y += 8
+      docContrato.text(`FECHA: ${fecha}`, m, y); y += 10
+      docContrato.line(m, y, m + 80, y); y += 5
+      docContrato.text(nombreSocio, m, y); y += 5
+      docContrato.text(`RUT: ${rutSocio}`, m, y)
+      docContrato.setFont('helvetica','italic'); docContrato.setFontSize(8); docContrato.setTextColor(150)
+      docContrato.text('Pendiente de firma — entregue a la directiva para gestionar la firma', m, y + 8)
+      docContrato.setTextColor(0)
+      const pdfBuffer = docContrato.output('arraybuffer')
+
+      // Subir PDF a storage como contrato_renovacion (no reemplaza el contrato firmado actual)
+      const storagePath = `${rutSocio}/contrato_renovacion.pdf`
+      const { error: uploadErr } = await supabase.storage
+        .from('documentos')
+        .upload(storagePath, pdfBuffer, { contentType:'application/pdf', upsert:true })
+      if (uploadErr) throw new Error(uploadErr.message)
+
+      const { data: urlData } = supabase.storage.from('documentos').getPublicUrl(storagePath)
+
+      // Registrar solicitud en el registro del socio
       await supabase.from('socios').update({
-        notas_admin: `[DELEGACION] Socio solicitó actualización de contrato de delegación. Nueva cuota propuesta: ${nuevaCuota}g (actual delegado: ${gramosDelegados}g). Fecha solicitud: ${new Date().toLocaleDateString('es-CL')}`
+        delegacion_nueva_cuota: nuevaCuota,
+        delegacion_pdf_url: urlData.publicUrl,
+        delegacion_estado: 'pendiente_firma',
       }).eq('id', socioId)
-      // Intentar enviar email al admin
-      try {
-        await sendEmail('notificacion_admin', 'admin@asociaciongreentech.cl', {
-          asunto: 'Actualización de contrato de delegación',
-          mensaje: `El socio ${nombreSocio} (${rutSocio}) solicita actualizar su contrato de delegación de cultivo. Nueva cuota propuesta: ${nuevaCuota}g | Gramos delegados actuales: ${gramosDelegados}g.`
-        })
-      } catch { /* no bloquear si el email falla */ }
+
       setDelegacionSolicitada(true)
-      setMensaje('✅ Solicitud de actualización de contrato enviada. La directiva la procesará y te contactará.')
-      setTimeout(() => setMensaje(''), 6000)
-    } catch {
-      setMensaje('❌ No se pudo registrar la solicitud. Intenta nuevamente.')
+      setMensaje('✅ Solicitud enviada. La directiva descargará el contrato, lo gestionará para su firma y subirá la versión firmada.')
+      setTimeout(() => setMensaje(''), 10000)
+    } catch (e: any) {
+      setMensaje('❌ Error al generar el contrato: ' + (e instanceof Error ? e.message : 'Intenta nuevamente.'))
     } finally {
-      setSolicitandoDelegacion(false)
+      setFirmandoContrato(false)
     }
   }
 
@@ -440,17 +492,17 @@ export default function MisDocumentos() {
                   </div>
                   <p style={{ fontSize:12, color:'#78350F', margin:'0 0 12px', lineHeight:1.6 }}>
                     La nueva cuota propuesta (<strong>{nuevaCuota}g</strong>) es menor a los gramos actualmente delegados en tu contrato (<strong>{gramosDelegados}g</strong>).
-                    Antes de enviar la receta, debes actualizar el contrato de previsión y delegación de cultivo con los nuevos valores.
+                    Antes de enviar la receta, debes solicitar la actualización del contrato de delegación. Se generará el nuevo documento y la directiva lo gestionará para su firma.
                   </p>
                   {!delegacionSolicitada ? (
-                    <button onClick={solicitarActualizacionDelegacion} disabled={solicitandoDelegacion}
-                      style={{ padding:'8px 18px', border:'none', borderRadius:8, background: solicitandoDelegacion ? '#9ca3af' : '#D97706', color:'#fff', fontSize:13, fontWeight:600, cursor:'pointer' }}>
-                      {solicitandoDelegacion ? '⏳ Enviando solicitud...' : '📋 Solicitar actualización de contrato →'}
+                    <button onClick={iniciarActualizacionDelegacion} disabled={firmandoContrato}
+                      style={{ padding:'8px 18px', border:'none', borderRadius:8, background: firmandoContrato ? '#9ca3af' : '#D97706', color:'#fff', fontSize:13, fontWeight:600, cursor: firmandoContrato ? 'not-allowed' : 'pointer' }}>
+                      {firmandoContrato ? '⏳ Generando documento...' : '📋 Solicitar actualización de contrato →'}
                     </button>
                   ) : (
                     <div style={{ display:'flex', alignItems:'center', gap:8, fontSize:13, color:'#3B6D11', fontWeight:500 }}>
                       <span style={{ fontSize:18 }}>✅</span>
-                      Solicitud enviada. La directiva preparará el nuevo contrato y te contactará. Puedes enviar tu receta ahora.
+                      Solicitud enviada. La directiva recibirá el contrato para gestionar la firma. Puedes enviar tu receta ahora.
                     </div>
                   )}
                 </div>
@@ -463,15 +515,15 @@ export default function MisDocumentos() {
                       Se recomienda actualizar el contrato de delegación de cultivo
                     </div>
                     <p style={{ fontSize:12, color:'#1E40AF', margin:'0 0 10px', lineHeight:1.5 }}>
-                      La nueva cuota ({nuevaCuota}g) supera los gramos delegados actuales ({gramosDelegados}g). Puedes solicitar la actualización ahora o después.
+                      La nueva cuota ({nuevaCuota}g) supera los gramos delegados actuales ({gramosDelegados}g). Puedes firmar el contrato actualizado ahora o continuar sin hacerlo.
                     </p>
                     {!delegacionSolicitada ? (
-                      <button onClick={solicitarActualizacionDelegacion} disabled={solicitandoDelegacion}
-                        style={{ padding:'6px 14px', border:'1px solid #2563EB', borderRadius:7, background:'#fff', color:'#2563EB', fontSize:12, cursor:'pointer' }}>
-                        {solicitandoDelegacion ? '⏳ Enviando...' : '📋 Solicitar actualización (opcional)'}
+                      <button onClick={iniciarActualizacionDelegacion} disabled={firmandoContrato}
+                        style={{ padding:'6px 14px', border:'1px solid #2563EB', borderRadius:7, background:'#fff', color:'#2563EB', fontSize:12, cursor: firmandoContrato ? 'not-allowed' : 'pointer' }}>
+                        {firmandoContrato ? '⏳ Generando...' : '📋 Solicitar actualización de contrato (opcional)'}
                       </button>
                     ) : (
-                      <div style={{ fontSize:12, color:'#3B6D11', fontWeight:500 }}>✅ Solicitud enviada — la directiva te contactará.</div>
+                      <div style={{ fontSize:12, color:'#3B6D11', fontWeight:500 }}>✅ Solicitud enviada — la directiva gestionará la firma del nuevo contrato.</div>
                     )}
                   </div>
                 </div>
