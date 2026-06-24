@@ -185,8 +185,8 @@ export default function MisDocumentos() {
 
   // Computa si la cuota nueva requiere actualizar delegación
   const nuevaCuota = parseInt(formReceta.cuota_mensual) || 0
-  const delegacionOpcional = gramosDelegados > 0 && nuevaCuota !== gramosDelegados && nuevaCuota > 0 && !!formReceta.cuota_mensual
-  const delegacionObligatoria = false
+  const delegacionOpcional    = gramosDelegados > 0 && nuevaCuota > gramosDelegados && nuevaCuota > 0 && !!formReceta.cuota_mensual
+  const delegacionObligatoria = gramosDelegados > 0 && nuevaCuota < gramosDelegados && nuevaCuota > 0 && !!formReceta.cuota_mensual
 
   const iniciarActualizacionDelegacion = async () => {
     if (!rutSocio || !socioId || !socioData) return
@@ -473,8 +473,11 @@ export default function MisDocumentos() {
                   <label style={{ fontSize:11, color:'#6b7280', display:'block', marginBottom:4 }}>Cuota mensual indicada (gr) <span style={{ color:'#A32D2D' }}>*</span></label>
                   <input type="number" min="1" value={formReceta.cuota_mensual} onChange={e => { updateForm('cuota_mensual', e.target.value); setDelegacionSolicitada(false); setCuotaDelegacion('') }}
                     placeholder="Ej: 30" style={{ width:'100%', padding:'8px 10px', border:`1px solid ${delegacionOpcional ? '#3b82f6' : '#d1d5db'}`, borderRadius:7, fontSize:13, boxSizing:'border-box' as const }} />
+                  {delegacionObligatoria && (
+                    <div style={{ fontSize:11, color:'#ea580c', marginTop:4 }}>⚠️ Menor a los gramos delegados ({gramosDelegados}g) — debes actualizar el contrato antes de enviar</div>
+                  )}
                   {delegacionOpcional && (
-                    <div style={{ fontSize:11, color:'#2563eb', marginTop:4 }}>ℹ️ Distinto a los gramos delegados actuales ({gramosDelegados}g)</div>
+                    <div style={{ fontSize:11, color:'#2563eb', marginTop:4 }}>ℹ️ Mayor a los gramos delegados ({gramosDelegados}g) — puedes actualizar el contrato opcionalmente</div>
                   )}
                 </div>
                 <div>
@@ -485,46 +488,57 @@ export default function MisDocumentos() {
               </div>
 
               {/* ── Sección delegación de cultivo ── */}
-              {delegacionOpcional && (
-                <div style={{ background:'#EFF6FF', border:'1px solid #BFDBFE', borderRadius:10, padding:14, marginBottom:14, display:'flex', alignItems:'flex-start', gap:12 }}>
-                  <span style={{ fontSize:20, flexShrink:0 }}>🌱</span>
-                  <div style={{ flex:1 }}>
-                    <div style={{ fontWeight:600, color:'#1D4ED8', fontSize:12, marginBottom:4 }}>
-                      Actualizar contrato de delegación de cultivo
-                    </div>
-                    <p style={{ fontSize:12, color:'#1E40AF', margin:'0 0 10px', lineHeight:1.5 }}>
-                      Tu receta indica <strong>{nuevaCuota}g</strong> mensuales. ¿Cuántos gramos deseas delegar a la asociación? Debe ser entre 1 y {nuevaCuota}g.
-                    </p>
-                    {!delegacionSolicitada ? (
-                      <div style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' as const }}>
-                        <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-                          <input
-                            type="number" min="1" max={nuevaCuota}
-                            value={cuotaDelegacion}
-                            onChange={e => setCuotaDelegacion(e.target.value)}
-                            placeholder={`1 – ${nuevaCuota}`}
-                            style={{ width:90, padding:'6px 10px', border:'1px solid #93C5FD', borderRadius:7, fontSize:13, textAlign:'center' as const }}
-                          />
-                          <span style={{ fontSize:12, color:'#1E40AF' }}>gr</span>
-                        </div>
-                        {cuotaDelegacion && (parseInt(cuotaDelegacion) < 1 || parseInt(cuotaDelegacion) > nuevaCuota) && (
-                          <span style={{ fontSize:11, color:'#DC2626' }}>Debe ser entre 1 y {nuevaCuota}g</span>
-                        )}
-                        <button
-                          onClick={iniciarActualizacionDelegacion}
-                          disabled={firmandoContrato || !cuotaDelegacion || parseInt(cuotaDelegacion) < 1 || parseInt(cuotaDelegacion) > nuevaCuota}
-                          style={{ padding:'7px 16px', border:'none', borderRadius:8, fontSize:12, fontWeight:600, color:'#fff',
-                            background: (firmandoContrato || !cuotaDelegacion || parseInt(cuotaDelegacion) < 1 || parseInt(cuotaDelegacion) > nuevaCuota) ? '#9ca3af' : '#2563EB',
-                            cursor: (firmandoContrato || !cuotaDelegacion || parseInt(cuotaDelegacion) < 1 || parseInt(cuotaDelegacion) > nuevaCuota) ? 'not-allowed' : 'pointer' }}>
-                          {firmandoContrato ? '⏳ Generando...' : '🌱 Actualizar Delegación de Cultivo'}
-                        </button>
+              {(delegacionObligatoria || delegacionOpcional) && (() => {
+                const esObligatorio = delegacionObligatoria
+                const inputValido = !!cuotaDelegacion && parseInt(cuotaDelegacion) >= 1 && parseInt(cuotaDelegacion) <= nuevaCuota
+                return (
+                  <div style={{
+                    background: esObligatorio ? '#FFF7ED' : '#EFF6FF',
+                    border: `1px solid ${esObligatorio ? '#FED7AA' : '#BFDBFE'}`,
+                    borderRadius:10, padding:14, marginBottom:14, display:'flex', alignItems:'flex-start', gap:12
+                  }}>
+                    <span style={{ fontSize:20, flexShrink:0 }}>{esObligatorio ? '⚠️' : '🌱'}</span>
+                    <div style={{ flex:1 }}>
+                      <div style={{ fontWeight:600, color: esObligatorio ? '#92400E' : '#1D4ED8', fontSize:12, marginBottom:4 }}>
+                        {esObligatorio ? 'Paso obligatorio: ' : ''}Actualizar contrato de delegación de cultivo
                       </div>
-                    ) : (
-                      <div style={{ fontSize:12, color:'#3B6D11', fontWeight:500 }}>✅ Solicitud enviada — la directiva gestionará la firma del nuevo contrato.</div>
-                    )}
+                      <p style={{ fontSize:12, color: esObligatorio ? '#78350F' : '#1E40AF', margin:'0 0 10px', lineHeight:1.5 }}>
+                        {esObligatorio
+                          ? <>Tu receta indica <strong>{nuevaCuota}g</strong> mensuales, que es menor a tu delegación actual de <strong>{gramosDelegados}g</strong>. Debes actualizar el contrato antes de enviar la receta. Indica cuántos gramos deseas delegar (entre 1 y {nuevaCuota}g).</>
+                          : <>Tu receta indica <strong>{nuevaCuota}g</strong> mensuales. Si deseas actualizar tu delegación actual de <strong>{gramosDelegados}g</strong>, indica el nuevo monto (entre 1 y {nuevaCuota}g). Este paso es opcional.</>
+                        }
+                      </p>
+                      {!delegacionSolicitada ? (
+                        <div style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' as const }}>
+                          <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                            <input
+                              type="number" min="1" max={nuevaCuota}
+                              value={cuotaDelegacion}
+                              onChange={e => setCuotaDelegacion(e.target.value)}
+                              placeholder={`1 – ${nuevaCuota}`}
+                              style={{ width:90, padding:'6px 10px', border:`1px solid ${esObligatorio ? '#FCD34D' : '#93C5FD'}`, borderRadius:7, fontSize:13, textAlign:'center' as const }}
+                            />
+                            <span style={{ fontSize:12, color: esObligatorio ? '#92400E' : '#1E40AF' }}>gr</span>
+                          </div>
+                          {cuotaDelegacion && !inputValido && (
+                            <span style={{ fontSize:11, color:'#DC2626' }}>Debe ser entre 1 y {nuevaCuota}g</span>
+                          )}
+                          <button
+                            onClick={iniciarActualizacionDelegacion}
+                            disabled={firmandoContrato || !inputValido}
+                            style={{ padding:'7px 16px', border:'none', borderRadius:8, fontSize:12, fontWeight:600, color:'#fff',
+                              background: (firmandoContrato || !inputValido) ? '#9ca3af' : esObligatorio ? '#D97706' : '#2563EB',
+                              cursor: (firmandoContrato || !inputValido) ? 'not-allowed' : 'pointer' }}>
+                            {firmandoContrato ? '⏳ Generando...' : '🌱 Actualizar Delegación de Cultivo'}
+                          </button>
+                        </div>
+                      ) : (
+                        <div style={{ fontSize:12, color:'#3B6D11', fontWeight:500 }}>✅ Solicitud enviada — la directiva gestionará la firma del nuevo contrato.</div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
+                )
+              })()}
 
               {/* Upload archivo */}
               <div style={{ marginBottom:16 }}>
@@ -546,8 +560,12 @@ export default function MisDocumentos() {
                   Cancelar
                 </button>
                 <button onClick={enviarSolicitudReceta}
-                  disabled={enviando || !archivoNuevo}
-                  style={{ padding:'7px 16px', border:'none', borderRadius:8, background:(enviando||!archivoNuevo)?'#9ca3af':'#3B6D11', color:'#EAF3DE', fontSize:13, fontWeight:600, cursor:(enviando||!archivoNuevo)?'not-allowed':'pointer' }}>
+                  disabled={enviando || !archivoNuevo || (delegacionObligatoria && !delegacionSolicitada)}
+                  title={delegacionObligatoria && !delegacionSolicitada ? 'Debes actualizar el contrato de delegación primero' : undefined}
+                  style={{ padding:'7px 16px', border:'none', borderRadius:8,
+                    background:(enviando||!archivoNuevo||(delegacionObligatoria&&!delegacionSolicitada))?'#9ca3af':'#3B6D11',
+                    color:'#EAF3DE', fontSize:13, fontWeight:600,
+                    cursor:(enviando||!archivoNuevo||(delegacionObligatoria&&!delegacionSolicitada))?'not-allowed':'pointer' }}>
                   {enviando ? '⏳ Enviando...' : 'Enviar para revisión →'}
                 </button>
               </div>
