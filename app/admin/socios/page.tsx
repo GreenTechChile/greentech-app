@@ -51,23 +51,14 @@ export default function AdminSocios() {
     const [
       { count: pendientes },
       { count: renovaciones },
-      { data: pagos },
       { count: delegaciones },
     ] = await Promise.all([
       supabase.from('socios').select('*', { count: 'exact', head: true }).eq('estado', 'pendiente'),
       supabase.from('recetas_pendientes').select('*', { count: 'exact', head: true }).eq('estado', 'pendiente'),
-      supabase.from('pagos_incorporacion').select('rut').eq('estado', 'aprobado'),
       supabase.from('socios').select('*', { count: 'exact', head: true }).eq('delegacion_estado', 'pendiente_firma'),
     ])
-    let incompletos = 0
-    if (pagos && pagos.length > 0) {
-      const ruts = pagos.map((p: any) => p.rut).filter(Boolean)
-      const { data: sociosExist } = await supabase.from('socios').select('rut').in('rut', ruts.length > 0 ? ruts : ['__ninguno__'])
-      const rutsCompletos = new Set((sociosExist || []).map((s: any) => s.rut))
-      incompletos = pagos.filter((p: any) => !rutsCompletos.has(p.rut)).length
-    }
-    const totalPendiente = (pendientes || 0) + (renovaciones || 0) + incompletos + (delegaciones || 0)
-    setTabCounts({ pendientes: pendientes || 0, renovaciones: renovaciones || 0, pagos_incompletos: incompletos, delegaciones: delegaciones || 0, total_pendiente: totalPendiente })
+    const totalPendiente = (pendientes || 0) + (renovaciones || 0) + (delegaciones || 0)
+    setTabCounts({ pendientes: pendientes || 0, renovaciones: renovaciones || 0, delegaciones: delegaciones || 0, total_pendiente: totalPendiente })
   }
 
   const cargarSocios = async () => {
@@ -344,7 +335,6 @@ export default function AdminSocios() {
             { key: 'socios', label: '👤 Socios', countKey: '', badgeColor: '', badgeBg: '' },
             { key: 'delegaciones', label: '📋 Delegaciones', countKey: 'delegaciones', badgeColor: '#92400E', badgeBg: '#FEF3C7' },
             { key: 'renovaciones', label: '🩺 Renovaciones', countKey: 'renovaciones', badgeColor: '#92400E', badgeBg: '#FEF3C7' },
-            { key: 'pagos_incompletos', label: '💳 Pagos incompletos', countKey: 'pagos_incompletos', badgeColor: '#92400E', badgeBg: '#FEF3C7' },
           ].map(t => {
             const count = t.countKey ? tabCounts[t.countKey] : 0
             return (
@@ -360,65 +350,6 @@ export default function AdminSocios() {
             )
           })}
         </div>
-
-        {/* ── Panel de pagos incompletos ── */}
-        {tab === 'pagos_incompletos' && (
-          <>
-          <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
-            {([['incompletos', 'Pendientes'], ['todos', 'Historial completo']] as const).map(([val, label]) => (
-              <button key={val} onClick={() => setFiltroPagos(val)}
-                style={{ padding: '5px 14px', fontSize: 12, borderRadius: 20, border: '1px solid', cursor: 'pointer',
-                  background: filtroPagos === val ? '#185FA5' : '#fff',
-                  color: filtroPagos === val ? '#fff' : '#6b7280',
-                  borderColor: filtroPagos === val ? '#185FA5' : '#d1d5db' }}>
-                {label}
-              </button>
-            ))}
-          </div>
-          {loading ? (
-            <div style={{ fontSize: 13, color: '#9ca3af', padding: 40, textAlign: 'center' }}>Cargando...</div>
-          ) : pagosIncompletos.length === 0 ? (
-            <div style={{ fontSize: 13, color: '#9ca3af', padding: 40, textAlign: 'center' }}>✅ No hay pagos sin inscripción completada</div>
-          ) : (
-            <div>
-              <div style={{ background: '#FFF3CD', border: '1px solid #FBBF24', borderRadius: 10, padding: '10px 14px', fontSize: 12, color: '#92400E', marginBottom: 18 }}>
-                ⚠️ Estas personas realizaron el pago de incorporación pero <strong>no completaron el formulario de inscripción</strong>. Considera contactarlas para que finalicen el proceso.
-              </div>
-              {pagosIncompletos.map((p: any) => {
-                const dias = diasDesde(p.fecha || p.created_at)
-                return (
-                  <div key={p.id} style={{ border: '1px solid #FBBF24', borderRadius: 12, marginBottom: 12, overflow: 'hidden', background: '#FFFDF0' }}>
-                    <div style={{ padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <div>
-                        <div style={{ fontSize: 14, fontWeight: 600 }}>{p.nombre || '—'}</div>
-                        <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>{p.rut} {p.email ? `· ${p.email}` : ''}</div>
-                        <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>
-                          Pagó hace {dias} días · ${(p.monto || 0).toLocaleString('es-CL')} CLP
-                        </div>
-                      </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
-                        <span style={{ background: dias > 7 ? '#FEE2E2' : '#FEF3C7', color: dias > 7 ? '#991B1B' : '#92400E', fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 20 }}>
-                          {dias > 7 ? '🔴 Sin completar hace ' + dias + ' días' : '🟡 Pendiente · ' + dias + ' días'}
-                        </span>
-                        {p.email && (
-                          <a href={`mailto:${p.email}?subject=Tu%20solicitud%20de%20ingreso%20a%20GreenTech&body=Hola%20${encodeURIComponent(p.nombre || '')}%2C%20realizaste%20el%20pago%20de%20incorporaci%C3%B3n%20pero%20a%C3%BAn%20no%20has%20completado%20el%20formulario%20de%20inscripci%C3%B3n.%20Puedes%20continuar%20en%3A%20https%3A%2F%2Fgreentech.vercel.app%2Finscripcion`}
-                            style={{ fontSize: 11, color: '#185FA5', textDecoration: 'none', border: '1px solid #185FA5', padding: '4px 10px', borderRadius: 6 }}>
-                            ✉️ Enviar recordatorio
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                    <div style={{ padding: '8px 18px 12px', fontSize: 11, color: '#9ca3af', borderTop: '1px solid #FDE68A' }}>
-                      ID pago: {p.mp_payment_id} · {new Date(p.fecha || p.created_at).toLocaleDateString('es-CL', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          )
-          }
-          </>
-        )}
 
         {/* ── Panel de delegaciones pendientes ── */}
         {tab === 'delegaciones' && (() => {
@@ -647,16 +578,6 @@ export default function AdminSocios() {
                       <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>Clic para revisar en el tab Renovaciones →</div>
                     </div>
                     <span style={{ background: '#FEF3C7', color: '#92400E', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 10 }}>{tabCounts.renovaciones}</span>
-                  </button>
-                )}
-                {tabCounts.pagos_incompletos > 0 && (
-                  <button onClick={() => setTab('pagos_incompletos')} style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '12px 16px', background: '#FFFDF0', border: '1px solid #FBBF24', borderRadius: 10, cursor: 'pointer', textAlign: 'left' as const }}>
-                    <span style={{ fontSize: 22 }}>💳</span>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: '#111' }}>{tabCounts.pagos_incompletos} pago{tabCounts.pagos_incompletos > 1 ? 's' : ''} de inscripción sin completar</div>
-                      <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>Clic para revisar en el tab Pagos incompletos →</div>
-                    </div>
-                    <span style={{ background: '#FEF3C7', color: '#92400E', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 10 }}>{tabCounts.pagos_incompletos}</span>
                   </button>
                 )}
               </div>
