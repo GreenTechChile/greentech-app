@@ -59,7 +59,7 @@ export default function AdminSocios() {
       supabase.from('socios').select('*', { count: 'exact', head: true }).eq('estado', 'pendiente'),
       supabase.from('recetas_pendientes').select('*', { count: 'exact', head: true }).eq('estado', 'pendiente'),
       supabase.from('socios').select('*', { count: 'exact', head: true }).eq('delegacion_estado', 'pendiente_firma'),
-      supabase.from('pagos_incorporacion').select('*', { count: 'exact', head: true }).neq('estado', 'pagado'),
+      supabase.from('pagos_incorporacion').select('*', { count: 'exact', head: true }).neq('estado', 'pagado').neq('estado', 'link_enviado'),
     ])
     const totalPendiente = (pendientes || 0) + (renovaciones || 0) + (delegaciones || 0) + (pagosInc || 0)
     setTabCounts({ pendientes: pendientes || 0, renovaciones: renovaciones || 0, delegaciones: delegaciones || 0, pagos_incompletos: pagosInc || 0, total_pendiente: totalPendiente })
@@ -69,7 +69,7 @@ export default function AdminSocios() {
     setLoading(true)
     if (tab === 'pagos_incompletos') {
       let query = supabase.from('pagos_incorporacion').select('*').order('created_at', { ascending: false })
-      if (filtroPI === 'pendientes') query = query.neq('estado', 'pagado')
+      if (filtroPI === 'pendientes') query = query.neq('estado', 'pagado').neq('estado', 'link_enviado')
       const { data } = await query
       setPagosIncompletos(data || [])
       setLoading(false)
@@ -696,11 +696,13 @@ export default function AdminSocios() {
                           const nombreAdmin = user?.user_metadata?.nombre || user?.email || user?.user_metadata?.rut || 'Admin'
                           const link = `${window.location.origin}/inscripcion?retomar=${p.id}`
                           await sendEmail('retorno_inscripcion', p.email, { nombre: p.nombre || 'Estimado/a', link })
-                          // Registrar quién envió el link y cuándo
+                          // Registrar quién envió el link, cuándo, y mover a historial
                           await supabase.from('pagos_incorporacion').update({
+                            estado: 'link_enviado',
                             link_enviado_por: nombreAdmin,
                             link_enviado_at: new Date().toISOString(),
                           }).eq('id', p.id)
+                          cargarConteos() // actualizar badge del tab
                           setMensaje(`✅ Link de retorno enviado a ${p.email}`)
                           cargarSocios() // refrescar para mostrar en historial
                         } catch {
