@@ -19,8 +19,21 @@ const tipoColor: Record<string,string> = {
 
 interface DocEstado { existe: boolean; path: string | null; fecha: string | null }
 
+interface FormReceta {
+  diagnostico: string; diagnostico_secundario: string; medico_nombre: string
+  medico_rut: string; folio_receta: string; vencimiento_receta: string
+  cuota_mensual: string; observaciones: string
+}
+
+const calcularHash = async (file: File): Promise<string> => {
+  const buffer = await file.arrayBuffer()
+  const hashBuffer = await crypto.subtle.digest('SHA-256', buffer)
+  return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2,'0')).join('')
+}
+
 export default function MisDocumentos() {
   const [rutSocio, setRutSocio] = useState('')
+  const [socioId, setSocioId] = useState('')
   const [nombreSocio, setNombreSocio] = useState('...')
   const [subiendoReceta, setSubiendoReceta] = useState(false)
   const [archivoNuevo, setArchivoNuevo] = useState<File|null>(null)
@@ -29,6 +42,14 @@ export default function MisDocumentos() {
   const [reglamentoAceptadoAt, setReglamentoAceptadoAt] = useState<string|null>(null)
   const [docEstados, setDocEstados] = useState<Record<string, DocEstado>>({})
   const [cargandoDocs, setCargandoDocs] = useState(true)
+  const [enviando, setEnviando] = useState(false)
+  const [recetaPendiente, setRecetaPendiente] = useState<{id:string, created_at:string} | null>(null)
+  const [formReceta, setFormReceta] = useState<FormReceta>({
+    diagnostico:'', diagnostico_secundario:'', medico_nombre:'', medico_rut:'',
+    folio_receta:'', vencimiento_receta:'', cuota_mensual:'', observaciones:''
+  })
+
+  const updateForm = (k: keyof FormReceta, v: string) => setFormReceta(p => ({...p, [k]: v}))
 
   useEffect(() => {
     try {
@@ -39,11 +60,21 @@ export default function MisDocumentos() {
         if (rut) {
           setRutSocio(rut)
           supabase.from('socios')
-            .select('nombre, vencimiento_receta, reglamento_aceptado_at')
+            .select('id, nombre, vencimiento_receta, reglamento_aceptado_at')
             .eq('rut', rut)
             .single()
             .then(({ data }) => {
               if (data?.nombre) setNombreSocio(data.nombre)
+              if (data?.id) {
+                setSocioId(data.id)
+                // Buscar receta pendiente
+                supabase.from('recetas_pendientes')
+                  .select('id, created_at')
+                  .eq('socio_id', data.id)
+                  .eq('estado', 'pendiente')
+                  .maybeSingle()
+                  .then(({ data: rp }) => { if (rp) setRecetaPendiente(rp) })
+              }
               if (data?.vencimiento_receta) setVencimientoReceta(data.vencimiento_receta)
               if (data?.reglamento_aceptado_at) setReglamentoAceptadoAt(data.reglamento_aceptado_at)
               verificarDocumentos(rut, data?.reglamento_aceptado_at || null)
@@ -126,15 +157,52 @@ export default function MisDocumentos() {
     setTimeout(() => setMensaje(''), 4000)
   }
 
-  const subirReceta = async () => {
-    if (!archivoNuevo || !rutSocio) return
-    const ext = archivoNuevo.name.split('.').pop()
-    const { error } = await supabase.storage.from('documentos').upload(`${rutSocio}/receta_nueva.${ext}`, archivoNuevo, { upsert: true })
-    if (error) { setMensaje('❌ Error al subir: ' + error.message); return }
-    setMensaje('✅ Receta enviada. La directiva la revisará en 5 días hábiles.')
-    setSubiendoReceta(false); setArchivoNuevo(null)
-    await verificarDocumentos(rutSocio, reglamentoAceptadoAt)
-    setTimeout(() => setMensaje(''), 5000)
+  const enviarSolicitudReceta = async () => {
+    if (!archivoNuevo || !rutSocio || !socioId) return
+    const { diagnostico, medico_nombre, medico_rut, folio_receta, vencimiento_receta, cuota_mensual } = formReceta
+    if (!diagnostico || !medico_nombre || !medico_rut || !folio_receta || !vencimiento_receta || !cuota_mensual) {
+      setMensaje('❌ Completa todos los campos obligatorios.'); return
+    }
+    setEnviando(true)
+    try {
+      // 1. Calcular hash SHA-256
+      const hash = await calcularHash(archivoNuevo)
+      // 2. Subir archivo a storage
+      const ext = archivoNuevo.name.split('.').pop()
+      const path = `${rutSocio}/receta_renovacion_${Date.now()}.${ext}`
+      const { error: uploadErr } = await supabase.storage.from('documentos').upload(path, archivoNuevo, { upsert: true })
+      if (uploadErr) throw new Error(uploadErr.message)
+      // 3. Obtener URL pública
+      const { data: urlData } = supabase.storage.from('documentos').getPublicUrl(path)
+      // 4. Insertar en recetas_pendientes
+      const { error: insertErr } = await supabase.from('recetas_pendientes').insert({
+        socio_id: socioId,
+        diagnostico: formReceta.diagnostico,
+        diagnostico_secundario: formReceta.diagnostico_secundario || null,
+        medico_nombre: formReceta.medico_nombre,
+        medico_rut: formReceta.medico_rut,
+        folio_receta: formReceta.folio_receta,
+        vencimiento_receta: formReceta.vencimiento_receta,
+        cuota_mensual: parseInt(formReceta.cuota_mensual),
+        observaciones: formReceta.observaciones || null,
+        archivo_url: urlData.publicUrl,
+        hash_sha256: hash,
+        estado: 'pendiente',
+      })
+      if (insertErr) throw new Error(insertErr.message)
+      setMensaje('✅ Solicitud enviada. La directiva revisará tu receta en 5 días hábiles.')
+      setSubiendoReceta(false)
+      setArchivoNuevo(null)
+      setFormReceta({ diagnostico:'', diagnostico_secundario:'', medico_nombre:'', medico_rut:'', folio_receta:'', vencimiento_receta:'', cuota_mensual:'', observaciones:'' })
+      // Refrescar estado pendiente
+      const { data: rp } = await supabase.from('recetas_pendientes').select('id, created_at').eq('socio_id', socioId).eq('estado', 'pendiente').maybeSingle()
+      setRecetaPendiente(rp ?? null)
+    } catch (e: unknown) {
+      setMensaje('❌ Error: ' + (e instanceof Error ? e.message : 'Error desconocido'))
+    } finally {
+      setEnviando(false)
+      setTimeout(() => setMensaje(''), 6000)
+    }
   }
 
   if (!rutSocio) return <div style={{ display:'flex', minHeight:'100vh', alignItems:'center', justifyContent:'center', fontSize:13, color:'#9ca3af' }}>Cargando...</div>
@@ -221,32 +289,93 @@ export default function MisDocumentos() {
         <div style={{ background:'#fff', border:'1px solid #e5e7eb', borderRadius:14, padding:18 }}>
           <div style={{ fontSize:13, fontWeight:600, marginBottom:6 }}>🩺 Renovar receta médica</div>
           <p style={{ fontSize:12, color:'#6b7280', marginBottom:14, lineHeight:1.6 }}>
-            Cuando obtengas una nueva receta, súbela aquí. La directiva la revisará en 5 días hábiles.<br/>
-            Tu receta actual vence en <strong style={{ color: recetaStatus.color }}>{fechaVencimientoLabel}</strong>.
+            Cuando obtengas una nueva receta, completa los datos médicos y adjunta el archivo. La directiva la revisará en 5 días hábiles.
+            {fechaVencimientoLabel && <><br/>Tu receta actual vence en <strong style={{ color: recetaStatus.color }}>{fechaVencimientoLabel}</strong>.</>}
             {recetaStatus.alerta && <><br/><span style={{ color: recetaStatus.color, fontWeight:600 }}>{recetaStatus.alerta}</span></>}
           </p>
-          {!subiendoReceta ? (
+
+          {/* Receta en revisión */}
+          {recetaPendiente ? (
+            <div style={{ background:'#FDF5E6', border:'1px solid #F5D87A', borderRadius:10, padding:'12px 16px', fontSize:12 }}>
+              <div style={{ fontWeight:600, color:'#BA7517', marginBottom:4 }}>⏳ Receta en revisión</div>
+              <div style={{ color:'#6b7280' }}>Enviada el {new Date(recetaPendiente.created_at).toLocaleDateString('es-CL', { day:'2-digit', month:'long', year:'numeric' })}. La directiva te notificará por email cuando sea revisada.</div>
+            </div>
+          ) : !subiendoReceta ? (
             <button onClick={() => setSubiendoReceta(true)}
               style={{ padding:'8px 18px', border:'1px solid #3B6D11', borderRadius:8, background:'transparent', color:'#3B6D11', fontSize:13, cursor:'pointer' }}>
-              + Subir nueva receta
+              + Actualizar receta médica
             </button>
           ) : (
-            <div style={{ border:'1px solid #e5e7eb', borderRadius:10, padding:16, background:'#f9fafb' }}>
-              <div style={{ border:'1px dashed #d1d5db', borderRadius:8, padding:20, textAlign:'center' as const, background:'#fff', marginBottom:12, cursor:'pointer' }}
-                onClick={() => document.getElementById('file-receta')?.click()}>
-                {archivoNuevo
-                  ? <div><div style={{ fontSize:24 }}>📄</div><div style={{ fontSize:13, color:'#3B6D11', fontWeight:500 }}>{archivoNuevo.name}</div></div>
-                  : <div><div style={{ fontSize:24 }}>☁️</div><div style={{ fontSize:13, color:'#6b7280' }}>Haz clic para seleccionar</div><div style={{ fontSize:11, color:'#9ca3af' }}>PDF, JPG, JPEG · máx. 10 MB</div></div>
-                }
-                <input id="file-receta" type="file" accept=".pdf,.jpg,.jpeg,.png" style={{ display:'none' }}
-                  onChange={e => e.target.files?.[0] && setArchivoNuevo(e.target.files[0])} />
+            <div style={{ border:'1px solid #e5e7eb', borderRadius:10, padding:20, background:'#f9fafb' }}>
+              <div style={{ fontSize:13, fontWeight:600, marginBottom:16, color:'#111' }}>Datos de la nueva receta</div>
+
+              {/* Grilla de campos */}
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:12 }}>
+                <div>
+                  <label style={{ fontSize:11, color:'#6b7280', display:'block', marginBottom:4 }}>Diagnóstico principal <span style={{ color:'#A32D2D' }}>*</span></label>
+                  <input value={formReceta.diagnostico} onChange={e => updateForm('diagnostico', e.target.value)}
+                    placeholder="Ej: Dolor crónico" style={{ width:'100%', padding:'8px 10px', border:'1px solid #d1d5db', borderRadius:7, fontSize:13, boxSizing:'border-box' as const }} />
+                </div>
+                <div>
+                  <label style={{ fontSize:11, color:'#6b7280', display:'block', marginBottom:4 }}>Diagnóstico secundario</label>
+                  <input value={formReceta.diagnostico_secundario} onChange={e => updateForm('diagnostico_secundario', e.target.value)}
+                    placeholder="Opcional" style={{ width:'100%', padding:'8px 10px', border:'1px solid #d1d5db', borderRadius:7, fontSize:13, boxSizing:'border-box' as const }} />
+                </div>
+                <div>
+                  <label style={{ fontSize:11, color:'#6b7280', display:'block', marginBottom:4 }}>Nombre del médico <span style={{ color:'#A32D2D' }}>*</span></label>
+                  <input value={formReceta.medico_nombre} onChange={e => updateForm('medico_nombre', e.target.value)}
+                    placeholder="Dr. Nombre Apellido" style={{ width:'100%', padding:'8px 10px', border:'1px solid #d1d5db', borderRadius:7, fontSize:13, boxSizing:'border-box' as const }} />
+                </div>
+                <div>
+                  <label style={{ fontSize:11, color:'#6b7280', display:'block', marginBottom:4 }}>RUT del médico <span style={{ color:'#A32D2D' }}>*</span></label>
+                  <input value={formReceta.medico_rut} onChange={e => updateForm('medico_rut', e.target.value)}
+                    placeholder="12345678-9" style={{ width:'100%', padding:'8px 10px', border:'1px solid #d1d5db', borderRadius:7, fontSize:13, boxSizing:'border-box' as const }} />
+                </div>
+                <div>
+                  <label style={{ fontSize:11, color:'#6b7280', display:'block', marginBottom:4 }}>Folio de receta <span style={{ color:'#A32D2D' }}>*</span></label>
+                  <input value={formReceta.folio_receta} onChange={e => updateForm('folio_receta', e.target.value)}
+                    placeholder="Folio" style={{ width:'100%', padding:'8px 10px', border:'1px solid #d1d5db', borderRadius:7, fontSize:13, boxSizing:'border-box' as const }} />
+                </div>
+                <div>
+                  <label style={{ fontSize:11, color:'#6b7280', display:'block', marginBottom:4 }}>Vencimiento de receta <span style={{ color:'#A32D2D' }}>*</span></label>
+                  <input type="date" value={formReceta.vencimiento_receta} onChange={e => updateForm('vencimiento_receta', e.target.value)}
+                    min={new Date().toISOString().split('T')[0]}
+                    style={{ width:'100%', padding:'8px 10px', border:'1px solid #d1d5db', borderRadius:7, fontSize:13, boxSizing:'border-box' as const }} />
+                </div>
+                <div>
+                  <label style={{ fontSize:11, color:'#6b7280', display:'block', marginBottom:4 }}>Cuota mensual propuesta (gr) <span style={{ color:'#A32D2D' }}>*</span></label>
+                  <input type="number" min="1" value={formReceta.cuota_mensual} onChange={e => updateForm('cuota_mensual', e.target.value)}
+                    placeholder="Ej: 30" style={{ width:'100%', padding:'8px 10px', border:'1px solid #d1d5db', borderRadius:7, fontSize:13, boxSizing:'border-box' as const }} />
+                </div>
+                <div>
+                  <label style={{ fontSize:11, color:'#6b7280', display:'block', marginBottom:4 }}>Observaciones</label>
+                  <input value={formReceta.observaciones} onChange={e => updateForm('observaciones', e.target.value)}
+                    placeholder="Opcional" style={{ width:'100%', padding:'8px 10px', border:'1px solid #d1d5db', borderRadius:7, fontSize:13, boxSizing:'border-box' as const }} />
+                </div>
               </div>
+
+              {/* Upload archivo */}
+              <div style={{ marginBottom:16 }}>
+                <label style={{ fontSize:11, color:'#6b7280', display:'block', marginBottom:6 }}>Archivo de receta (PDF o imagen) <span style={{ color:'#A32D2D' }}>*</span></label>
+                <div style={{ border:'1px dashed #d1d5db', borderRadius:8, padding:16, textAlign:'center' as const, background:'#fff', cursor:'pointer' }}
+                  onClick={() => document.getElementById('file-receta-nueva')?.click()}>
+                  {archivoNuevo
+                    ? <div><div style={{ fontSize:22 }}>📄</div><div style={{ fontSize:13, color:'#3B6D11', fontWeight:500 }}>{archivoNuevo.name}</div></div>
+                    : <div><div style={{ fontSize:22 }}>☁️</div><div style={{ fontSize:12, color:'#6b7280' }}>Haz clic para seleccionar</div><div style={{ fontSize:11, color:'#9ca3af' }}>PDF, JPG, JPEG · máx. 10 MB</div></div>
+                  }
+                  <input id="file-receta-nueva" type="file" accept=".pdf,.jpg,.jpeg,.png" style={{ display:'none' }}
+                    onChange={e => e.target.files?.[0] && setArchivoNuevo(e.target.files[0])} />
+                </div>
+              </div>
+
               <div style={{ display:'flex', gap:8, justifyContent:'flex-end' }}>
-                <button onClick={() => { setSubiendoReceta(false); setArchivoNuevo(null) }}
-                  style={{ padding:'7px 16px', border:'1px solid #e5e7eb', borderRadius:8, background:'#fff', fontSize:13, cursor:'pointer', color:'#6b7280' }}>Cancelar</button>
-                <button onClick={subirReceta} disabled={!archivoNuevo}
-                  style={{ padding:'7px 16px', border:'none', borderRadius:8, background:archivoNuevo?'#3B6D11':'#9ca3af', color:'#EAF3DE', fontSize:13, fontWeight:600, cursor:'pointer' }}>
-                  Enviar para revisión →
+                <button onClick={() => { setSubiendoReceta(false); setArchivoNuevo(null) }} disabled={enviando}
+                  style={{ padding:'7px 16px', border:'1px solid #e5e7eb', borderRadius:8, background:'#fff', fontSize:13, cursor:'pointer', color:'#6b7280' }}>
+                  Cancelar
+                </button>
+                <button onClick={enviarSolicitudReceta} disabled={enviando || !archivoNuevo}
+                  style={{ padding:'7px 16px', border:'none', borderRadius:8, background:(enviando||!archivoNuevo)?'#9ca3af':'#3B6D11', color:'#EAF3DE', fontSize:13, fontWeight:600, cursor:'pointer' }}>
+                  {enviando ? '⏳ Enviando...' : 'Enviar para revisión →'}
                 </button>
               </div>
             </div>

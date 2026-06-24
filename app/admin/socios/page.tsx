@@ -21,7 +21,8 @@ const DOCS_FIRMA = [
 ]
 
 export default function AdminSocios() {
-  const [tab, setTab] = useState<'pendientes'|'aprobados'|'rechazados'>('pendientes')
+  const [tab, setTab] = useState<'pendientes'|'aprobados'|'rechazados'|'renovaciones'>('pendientes')
+  const [recetas, setRecetas] = useState<any[]>([])
   const [socios, setSocios] = useState<Socio[]>([])
   const [loading, setLoading] = useState(true)
   const [notas, setNotas] = useState<Record<string,string>>({})
@@ -33,14 +34,25 @@ export default function AdminSocios() {
   const [firmados, setFirmados] = useState<Record<string, Record<string,boolean>>>({})
   const [subiendo, setSubiendo] = useState<Record<string,boolean>>({})
   const fileInputRefs = useRef<Record<string, HTMLInputElement|null>>({})
+  const [motivosRechazo, setMotivosRechazo] = useState<Record<string,string>>({})
+  const [rechazandoRecetaId, setRechazandoRecetaId] = useState<string|null>(null)
 
   useEffect(() => { cargarSocios() }, [tab])
 
   const cargarSocios = async () => {
     setLoading(true)
-    const estadoMap = { pendientes: 'pendiente', aprobados: 'activo', rechazados: 'rechazado' }
-    const { data } = await supabase.from('socios').select('*').eq('estado', estadoMap[tab]).order('created_at', { ascending: false })
-    if (data) setSocios(data)
+    if (tab === 'renovaciones') {
+      const { data } = await supabase
+        .from('recetas_pendientes')
+        .select('*, socios(nombre, rut, email)')
+        .eq('estado', 'pendiente')
+        .order('created_at', { ascending: false })
+      setRecetas(data || [])
+    } else {
+      const estadoMap = { pendientes: 'pendiente', aprobados: 'activo', rechazados: 'rechazado' }
+      const { data } = await supabase.from('socios').select('*').eq('estado', estadoMap[tab as 'pendientes'|'aprobados'|'rechazados']).order('created_at', { ascending: false })
+      if (data) setSocios(data)
+    }
     setLoading(false)
   }
 
@@ -158,6 +170,54 @@ export default function AdminSocios() {
     }
   }
 
+  const aprobarReceta = async (receta: any) => {
+    setProcesando(receta.id)
+    try {
+      const socio = receta.socios
+      // 1. Actualizar datos médicos del socio
+      await supabase.from('socios').update({
+        diagnostico: receta.diagnostico,
+        diagnostico_secundario: receta.diagnostico_secundario,
+        medico_nombre: receta.medico_nombre,
+        medico_rut: receta.medico_rut,
+        folio_receta: receta.folio_receta,
+        vencimiento_receta: receta.vencimiento_receta,
+        cuota_mensual: receta.cuota_mensual,
+      }).eq('id', receta.socio_id)
+      // 2. Marcar receta como aprobada
+      await supabase.from('recetas_pendientes').update({ estado: 'aprobada' }).eq('id', receta.id)
+      // 3. Email al socio
+      try {
+        await sendEmail('receta_aprobada', socio.email, { nombre: socio.nombre, rut: socio.rut, vencimiento: receta.vencimiento_receta })
+      } catch {}
+      setMensaje(`✅ Receta de ${socio.nombre} aprobada. Datos médicos actualizados.`)
+      cargarSocios()
+    } catch (e: any) {
+      setMensaje('❌ Error: ' + e.message)
+    } finally {
+      setProcesando(null)
+      setTimeout(() => setMensaje(''), 5000)
+    }
+  }
+
+  const rechazarReceta = async (receta: any, motivo: string) => {
+    setProcesando(receta.id)
+    try {
+      const socio = receta.socios
+      await supabase.from('recetas_pendientes').update({ estado: 'rechazada', notas_admin: motivo }).eq('id', receta.id)
+      try {
+        await sendEmail('receta_rechazada', socio.email, { nombre: socio.nombre, rut: socio.rut, motivo })
+      } catch {}
+      setMensaje(`✅ Receta de ${socio.nombre} rechazada.`)
+      cargarSocios()
+    } catch (e: any) {
+      setMensaje('❌ Error: ' + e.message)
+    } finally {
+      setProcesando(null)
+      setTimeout(() => setMensaje(''), 5000)
+    }
+  }
+
   const diasDesde = (fecha: string) => Math.floor((Date.now() - new Date(fecha).getTime()) / (1000*60*60*24))
 
   return (
@@ -176,7 +236,7 @@ export default function AdminSocios() {
         )}
 
         <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', marginBottom: 20 }}>
-          {[{key:'pendientes',label:'Pendientes'},{key:'aprobados',label:'Aprobados'},{key:'rechazados',label:'Rechazados'}].map(t => (
+          {[{key:'pendientes',label:'Pendientes'},{key:'aprobados',label:'Aprobados'},{key:'rechazados',label:'Rechazados'},{key:'renovaciones',label:'🩺 Renovaciones'}].map(t => (
             <button key={t.key} onClick={() => setTab(t.key as typeof tab)}
               style={{ padding: '8px 18px', fontSize: 13, background: 'none', border: 'none', cursor: 'pointer', borderBottom: tab === t.key ? '2px solid #185FA5' : '2px solid transparent', color: tab === t.key ? '#185FA5' : '#6b7280', fontWeight: tab === t.key ? 600 : 400, marginBottom: -1 }}>
               {t.label}
@@ -184,7 +244,85 @@ export default function AdminSocios() {
           ))}
         </div>
 
-        {loading ? (
+        {/* ── Panel de renovaciones de receta ── */}
+        {tab === 'renovaciones' && (
+          loading ? (
+            <div style={{ fontSize: 13, color: '#9ca3af', padding: 40, textAlign: 'center' }}>Cargando...</div>
+          ) : recetas.length === 0 ? (
+            <div style={{ fontSize: 13, color: '#9ca3af', padding: 40, textAlign: 'center' }}>✅ No hay renovaciones pendientes</div>
+          ) : recetas.map(r => {
+            const socio = r.socios
+            const esRechazando = rechazandoRecetaId === r.id
+            return (
+              <div key={r.id} style={{ border: '1px solid #e5e7eb', borderRadius: 12, marginBottom: 14, overflow: 'hidden' }}>
+                <div style={{ padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f9fafb' }}>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 600 }}>{socio?.nombre}</div>
+                    <div style={{ fontSize: 12, color: '#6b7280' }}>{socio?.rut} · {socio?.email}</div>
+                    <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>Enviada hace {diasDesde(r.created_at)} días</div>
+                  </div>
+                  {r.archivo_url && (
+                    <a href={r.archivo_url} target="_blank" rel="noreferrer"
+                      style={{ padding: '6px 12px', border: '1px solid #185FA5', borderRadius: 7, fontSize: 12, color: '#185FA5', textDecoration: 'none', background: '#fff' }}>
+                      📄 Ver receta
+                    </a>
+                  )}
+                </div>
+                <div style={{ padding: '14px 18px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+                  {[
+                    { label: 'Diagnóstico', val: r.diagnostico },
+                    { label: 'Diagnóstico secundario', val: r.diagnostico_secundario || '—' },
+                    { label: 'Médico', val: r.medico_nombre },
+                    { label: 'RUT médico', val: r.medico_rut },
+                    { label: 'Folio', val: r.folio_receta },
+                    { label: 'Vencimiento', val: r.vencimiento_receta ? new Date(r.vencimiento_receta).toLocaleDateString('es-CL', { month: 'long', year: 'numeric' }) : '—' },
+                    { label: 'Cuota propuesta', val: `${r.cuota_mensual} gr/mes` },
+                    { label: 'Observaciones', val: r.observaciones || '—' },
+                    { label: 'Hash SHA-256', val: r.hash_sha256 ? r.hash_sha256.slice(0, 16) + '...' : '—' },
+                  ].map((f, i) => (
+                    <div key={i}>
+                      <div style={{ fontSize: 10, color: '#9ca3af', marginBottom: 2 }}>{f.label}</div>
+                      <div style={{ fontSize: 12, fontWeight: 500, wordBreak: 'break-all' }}>{f.val}</div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ padding: '12px 18px', borderTop: '1px solid #f3f4f6', background: '#fafafa' }}>
+                  {!esRechazando ? (
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button onClick={() => aprobarReceta(r)} disabled={procesando === r.id}
+                        style={{ padding: '7px 18px', border: 'none', borderRadius: 8, background: procesando === r.id ? '#9ca3af' : '#3B6D11', color: '#EAF3DE', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+                        {procesando === r.id ? 'Procesando...' : '✅ Aprobar receta'}
+                      </button>
+                      <button onClick={() => setRechazandoRecetaId(r.id)} disabled={procesando === r.id}
+                        style={{ padding: '7px 18px', border: '1px solid #e5e7eb', borderRadius: 8, background: '#fff', color: '#A32D2D', fontSize: 13, cursor: 'pointer' }}>
+                        ❌ Rechazar
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                      <input value={motivosRechazo[r.id] || ''}
+                        onChange={e => setMotivosRechazo(p => ({...p, [r.id]: e.target.value}))}
+                        placeholder="Motivo del rechazo (se enviará por email)"
+                        style={{ flex: 1, padding: '7px 10px', border: '1px solid #d1d5db', borderRadius: 7, fontSize: 13 }} />
+                      <button onClick={() => rechazarReceta(r, motivosRechazo[r.id] || '')}
+                        disabled={!motivosRechazo[r.id] || procesando === r.id}
+                        style={{ padding: '7px 14px', border: 'none', borderRadius: 8, background: motivosRechazo[r.id] ? '#A32D2D' : '#9ca3af', color: '#fff', fontSize: 13, cursor: 'pointer' }}>
+                        Confirmar
+                      </button>
+                      <button onClick={() => setRechazandoRecetaId(null)}
+                        style={{ padding: '7px 12px', border: '1px solid #e5e7eb', borderRadius: 8, background: '#fff', color: '#6b7280', fontSize: 13, cursor: 'pointer' }}>
+                        Cancelar
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )
+          })
+        )}
+
+        {/* ── Panel de socios (pendientes / aprobados / rechazados) ── */}
+        {tab !== 'renovaciones' && (loading ? (
           <div style={{ fontSize: 13, color: '#9ca3af', padding: 40, textAlign: 'center' }}>Cargando solicitudes...</div>
         ) : socios.length === 0 ? (
           <div style={{ fontSize: 13, color: '#9ca3af', padding: 40, textAlign: 'center' }}>
@@ -372,7 +510,7 @@ export default function AdminSocios() {
               )}
             </div>
           )
-        })}
+        }))}
       </main>
     </div>
   )
