@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 
 interface FormData {
@@ -52,7 +52,6 @@ const formatearRut = (valor: string): string => {
 
 export default function Inscripcion() {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const [paso, setPaso] = useState(0)
   const [form, setForm] = useState<FormData>(initialForm)
   const [ciudadesDisponibles, setCiudadesDisponibles] = useState<string[]>([])
@@ -80,7 +79,8 @@ export default function Inscripcion() {
 
   // Detectar link de retorno enviado por administrador (?retomar=UUID)
   useEffect(() => {
-    const tokenRetorno = searchParams?.get('retomar')
+    const params = new URLSearchParams(window.location.search)
+    const tokenRetorno = params.get('retomar')
     if (!tokenRetorno) return
     supabase.from('pagos_incorporacion').select('*').eq('id', tokenRetorno).single()
       .then(({ data }) => {
@@ -97,7 +97,7 @@ export default function Inscripcion() {
         // Limpiar el token de la URL sin recargar la página
         window.history.replaceState({}, '', '/inscripcion')
       })
-  }, [searchParams])
+  }, [])
 
   // 🚧 BYPASS TEMPORAL — cambiar a false para activar MP en producción
   const BYPASS_PAGO = true
