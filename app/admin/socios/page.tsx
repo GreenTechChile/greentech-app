@@ -475,17 +475,24 @@ export default function AdminSocios() {
                       <input type="file" accept=".pdf" style={{ display: 'none' }} onChange={async (e) => {
                         const file = e.target.files?.[0]
                         if (!file) return
-                        const { error } = await supabase.storage.from('documentos').upload(`${socio.rut}/contrato_firmado.pdf`, file, { contentType: 'application/pdf', upsert: true })
-                        if (error) { alert('Error al subir: ' + error.message); return }
+                        const { error: uploadError } = await supabase.storage.from('documentos').upload(`${socio.rut}/contrato_firmado.pdf`, file, { contentType: 'application/pdf', upsert: true })
+                        if (uploadError) { alert('Error al subir el archivo: ' + uploadError.message); return }
                         const { data: { user: adminUser } } = await supabase.auth.getUser()
                         const nombreAdmin = adminUser?.user_metadata?.nombre || adminUser?.email || adminUser?.user_metadata?.rut || 'Admin'
                         const ahora = new Date().toISOString()
-                        await supabase.from('socios').update({
+                        // Verificar que gramos_delegados no supere cuota_mensual
+                        if ((socio.delegacion_nueva_cuota || 0) > (socio.cuota_mensual || 0)) {
+                          alert(`⚠️ No se puede aprobar: la nueva cuota de delegación (${socio.delegacion_nueva_cuota}g) supera la cuota médica autorizada (${socio.cuota_mensual}g).\n\nPrimero aprueba una renovación de receta con la cuota correcta.`)
+                          e.target.value = ''
+                          return
+                        }
+                        const { error: dbError } = await supabase.from('socios').update({
                           delegacion_estado: 'firmado',
                           gramos_delegados: socio.delegacion_nueva_cuota,
                           delegacion_aprobado_por: nombreAdmin,
                           delegacion_aprobado_at: ahora,
                         }).eq('id', socio.id)
+                        if (dbError) { alert('Error al actualizar el registro: ' + dbError.message); return }
                         await logAudit('firmar_delegacion', 'delegacion', socio.id, nombreAdmin, {
                           socio_nombre: socio.nombre, rut: socio.rut,
                           gramos_anteriores: socio.gramos_delegados,
@@ -1060,16 +1067,21 @@ export default function AdminSocios() {
                             onChange={async (e) => {
                               const file = e.target.files?.[0]
                               if (!file) return
-                              const { error } = await supabase.storage.from('documentos').upload(`${socio.rut}/contrato_firmado.pdf`, file, { contentType: 'application/pdf', upsert: true })
-                              if (error) { alert('Error al subir: ' + error.message); return }
+                              const { error: uploadErr } = await supabase.storage.from('documentos').upload(`${socio.rut}/contrato_firmado.pdf`, file, { contentType: 'application/pdf', upsert: true })
+                              if (uploadErr) { alert('Error al subir el archivo: ' + uploadErr.message); return }
                               const { data: { user: adminUser } } = await supabase.auth.getUser()
                               const nombreAdmin = adminUser?.user_metadata?.nombre || adminUser?.email || adminUser?.user_metadata?.rut || 'Admin'
-                              await supabase.from('socios').update({
+                              if ((socio.delegacion_nueva_cuota || 0) > (socio.cuota_mensual || 0)) {
+                                alert(`⚠️ No se puede aprobar: la nueva cuota de delegación (${socio.delegacion_nueva_cuota}g) supera la cuota médica autorizada (${socio.cuota_mensual}g).\n\nPrimero aprueba una renovación de receta con la cuota correcta.`)
+                                e.target.value = ''; return
+                              }
+                              const { error: dbErr } = await supabase.from('socios').update({
                                 delegacion_estado: 'firmado',
                                 gramos_delegados: socio.delegacion_nueva_cuota,
                                 delegacion_aprobado_por: nombreAdmin,
                                 delegacion_aprobado_at: new Date().toISOString(),
                               }).eq('id', socio.id)
+                              if (dbErr) { alert('Error al actualizar el registro: ' + dbErr.message); return }
                               setMensaje(`✅ Contrato de ${socio.nombre} subido y aprobado por ${nombreAdmin}. Límite de dispensación actualizado a ${socio.delegacion_nueva_cuota}g.`)
                               setTimeout(() => setMensaje(''), 6000)
                               cargarSocios()
