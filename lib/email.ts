@@ -13,6 +13,9 @@ type Evento =
   | 'despacho_entregado'
   | 'receta_aprobada'
   | 'receta_rechazada'
+  | 'alerta_stock_bajo'
+  | 'alerta_receta_vence'
+  | 'alerta_plazo_aprobacion'
 
 type Datos = Record<string, string | number | undefined>
 

@@ -221,6 +221,49 @@ function template(evento: string, datos: Datos): { subject: string; html: string
       return { subject: `Tu dispensación #${orden} fue entregada — GreenTech`, html }
     }
 
+    case 'alerta_stock_bajo': {
+      const nombre = String(datos.nombre || 'Administrador')
+      const cepas = String(datos.cepas || '')
+      const html = layout('⚠️ Alerta: Stock bajo en cepas — GreenTech', `
+        ${h1('⚠️ Alerta de stock bajo')}
+        ${p(`Hola <strong>${nombre}</strong>, las siguientes cepas tienen menos de 20 gramos disponibles y requieren reposición:`)}
+        ${warningBox(cepas || 'Ver inventario para más detalles.')}
+        ${p('Te recomendamos revisar el inventario y coordinar la reposición de stock lo antes posible para no interrumpir las dispensaciones.')}
+        ${btn('Ver inventario', `${APP_URL}/admin/inventario`)}
+      `)
+      return { subject: '⚠️ Alerta de stock bajo — GreenTech', html }
+    }
+
+    case 'alerta_receta_vence': {
+      const nombre = String(datos.nombre || 'Socio')
+      const vencimiento = String(datos.vencimiento || '')
+      const dias = String(datos.dias || '')
+      const html = layout('Tu receta médica vence pronto — GreenTech', `
+        ${h1('Tu receta médica vence pronto')}
+        ${p(`Hola <strong>${nombre}</strong>, te informamos que tu receta médica está próxima a vencer.`)}
+        ${warningBox(`<strong>Fecha de vencimiento:</strong> ${vencimiento}<br>
+          ${dias ? `<strong>Días restantes:</strong> ${dias} días` : ''}`)}
+        ${p('Para continuar recibiendo tus dispensaciones sin interrupciones, debes renovar tu receta médica. Puedes hacerlo desde la sección <strong>Mis Documentos</strong> en el portal.')}
+        ${btn('Renovar receta médica', `${APP_URL}/socio/documentos`)}
+        ${p(`Si ya presentaste tu nueva receta y está en proceso de revisión, puedes ignorar este mensaje. Ante cualquier duda, contáctanos a <a href="mailto:contacto@asociaciongreentech.cl" style="color:${C.verde};">contacto@asociaciongreentech.cl</a>.`)}
+      `)
+      return { subject: 'Tu receta médica vence pronto — GreenTech', html }
+    }
+
+    case 'alerta_plazo_aprobacion': {
+      const nombre = String(datos.nombre || 'Administrador')
+      const cantidad = String(datos.cantidad || '1')
+      const socios = String(datos.socios || '')
+      const html = layout('⚠️ Solicitudes pendientes por más de 4 días — GreenTech', `
+        ${h1('⚠️ Solicitudes pendientes sin resolver')}
+        ${p(`Hola <strong>${nombre}</strong>, hay <strong>${cantidad} solicitud(es)</strong> de ingreso que llevan más de 4 días esperando revisión:`)}
+        ${warningBox(socios || 'Revisar solicitudes en el panel de administración.')}
+        ${p('Los socios esperan una respuesta en un plazo máximo de 5 días hábiles. Por favor revisa y resuelve estas solicitudes a la brevedad.')}
+        ${btn('Revisar solicitudes', `${APP_URL}/admin/socios`)}
+      `)
+      return { subject: `⚠️ ${cantidad} solicitud(es) sin resolver por más de 4 días — GreenTech`, html }
+    }
+
     case 'receta_aprobada': {
       const nombre = String(datos.nombre || 'Socio')
       const diagnostico = String(datos.diagnostico || '')

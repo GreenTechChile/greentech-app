@@ -129,8 +129,9 @@ export default function Configuracion() {
     nuevaSolicitud: true,
     plazoAprobacion: true,
   })
+  const [cargandoNotifs, setCargandoNotifs] = useState(false)
 
-  useEffect(() => { cargarCobertura(); cargarCorporacion(); cargarDatosBancarios(); cargarEnvioGratis(); cargarPagoIncorporacion() }, [])
+  useEffect(() => { cargarCobertura(); cargarCorporacion(); cargarDatosBancarios(); cargarEnvioGratis(); cargarPagoIncorporacion(); cargarNotificaciones() }, [])
   useEffect(() => { if (tabActiva === 'documentos') { cargarDocsInstitucionales(); cargarActas() } }, [tabActiva])
 
   const cargarCobertura = async () => {
@@ -182,6 +183,20 @@ export default function Configuracion() {
     if (!error) { setEditandoPago(false); setMensaje('✅ Monto de incorporación guardado') }
     else setMensaje('❌ Error al guardar')
     setGuardandoPago(false)
+    setTimeout(() => setMensaje(''), 3000)
+  }
+
+  const cargarNotificaciones = async () => {
+    const { data } = await supabase.from('configuracion').select('datos').eq('id', 'notificaciones').single()
+    if (data?.datos) setNotifs(prev => ({ ...prev, ...data.datos }))
+  }
+
+  const guardarNotificaciones = async () => {
+    setCargandoNotifs(true)
+    const { error } = await supabase.from('configuracion').upsert({ id: 'notificaciones', datos: notifs, updated_at: new Date().toISOString() })
+    if (!error) setMensaje('✅ Preferencias de notificaciones guardadas')
+    else setMensaje('❌ Error al guardar preferencias')
+    setCargandoNotifs(false)
     setTimeout(() => setMensaje(''), 3000)
   }
 
@@ -998,9 +1013,9 @@ export default function Configuracion() {
               </div>
             ))}
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16 }}>
-              <button onClick={async () => { setGuardando(true); await new Promise(r=>setTimeout(r,500)); setMensaje('✅ Preferencias guardadas'); setGuardando(false); setTimeout(()=>setMensaje(''),3000) }}
-                style={{ background: '#185FA5', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 20px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
-                Guardar preferencias
+              <button onClick={guardarNotificaciones} disabled={cargandoNotifs}
+                style={{ background: cargandoNotifs ? '#9ca3af' : '#185FA5', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 20px', fontSize: 13, fontWeight: 600, cursor: cargandoNotifs ? 'not-allowed' : 'pointer' }}>
+                {cargandoNotifs ? 'Guardando...' : 'Guardar preferencias'}
               </button>
             </div>
           </div>
