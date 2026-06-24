@@ -44,10 +44,10 @@ export default function AdminSocios() {
   const [rechazandoRecetaId, setRechazandoRecetaId] = useState<string|null>(null)
   const [tabCounts, setTabCounts] = useState<Record<string,number>>({})
   const [enviandoLink, setEnviandoLink] = useState<Record<string,boolean>>({})
-
+  const [filtroPI, setFiltroPI] = useState<'pendientes'|'historial'>('pendientes')
 
   useEffect(() => { cargarConteos() }, [])
-  useEffect(() => { cargarSocios() }, [tab, filtroRecetas, filtroSocios, filtroDelegaciones])
+  useEffect(() => { cargarSocios() }, [tab, filtroRecetas, filtroSocios, filtroDelegaciones, filtroPI])
 
   const cargarConteos = async () => {
     const [
@@ -68,7 +68,9 @@ export default function AdminSocios() {
   const cargarSocios = async () => {
     setLoading(true)
     if (tab === 'pagos_incompletos') {
-      const { data } = await supabase.from('pagos_incorporacion').select('*').neq('estado', 'pagado').order('created_at', { ascending: false })
+      let query = supabase.from('pagos_incorporacion').select('*').order('created_at', { ascending: false })
+      if (filtroPI === 'pendientes') query = query.neq('estado', 'pagado')
+      const { data } = await query
       setPagosIncompletos(data || [])
       setLoading(false)
       return
@@ -619,22 +621,41 @@ export default function AdminSocios() {
         {/* ── Panel de pagos incompletos ── */}
         {tab === 'pagos_incompletos' && (
           <>
-            <div style={{ fontSize: 13, color: '#6b7280', marginBottom: 16 }}>
+            <div style={{ fontSize: 13, color: '#6b7280', marginBottom: 12 }}>
               Personas que iniciaron el proceso de incorporación pero no completaron el pago. Envía un link personalizado para que retomen desde donde quedaron.
             </div>
+
+            {/* Sub-filtro Pendientes / Historial */}
+            <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
+              {([['pendientes', 'Pendientes'], ['historial', 'Historial completo']] as const).map(([val, label]) => (
+                <button key={val} onClick={() => setFiltroPI(val)}
+                  style={{ padding: '6px 14px', borderRadius: 20, border: '1.5px solid', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                    background: filtroPI === val ? '#185FA5' : '#fff',
+                    color: filtroPI === val ? '#fff' : '#374151',
+                    borderColor: filtroPI === val ? '#185FA5' : '#e5e7eb' }}>
+                  {label}
+                </button>
+              ))}
+            </div>
+
             {loading ? (
               <div style={{ fontSize: 13, color: '#9ca3af', padding: 40, textAlign: 'center' }}>Cargando...</div>
             ) : pagosIncompletos.length === 0 ? (
               <div style={{ fontSize: 13, color: '#9ca3af', padding: 40, textAlign: 'center', border: '1px dashed #e5e7eb', borderRadius: 12 }}>
-                ✅ No hay pagos incompletos
+                {filtroPI === 'pendientes' ? '✅ No hay pagos incompletos pendientes' : '📭 Sin registros'}
               </div>
             ) : (
               <div style={{ border: '1px solid #e5e7eb', borderRadius: 12, overflow: 'hidden' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr auto', padding: '10px 16px', background: '#f9fafb', borderBottom: '1px solid #e5e7eb', fontSize: 11, color: '#9ca3af', fontWeight: 500 }}>
-                  {['Nombre / Email', 'RUT', 'Monto', 'Estado', 'Fecha', ''].map(h => <span key={h}>{h}</span>)}
+                {/* Cabecera dinámica según filtro */}
+                <div style={{ display: 'grid', gridTemplateColumns: filtroPI === 'historial' ? '2fr 1fr 1fr 1fr 1fr 1.5fr auto' : '2fr 1fr 1fr 1fr 1fr auto', padding: '10px 16px', background: '#f9fafb', borderBottom: '1px solid #e5e7eb', fontSize: 11, color: '#9ca3af', fontWeight: 500 }}>
+                  {(filtroPI === 'historial'
+                    ? ['Nombre / Email', 'RUT', 'Monto', 'Estado', 'Fecha', 'Link enviado por', '']
+                    : ['Nombre / Email', 'RUT', 'Monto', 'Estado', 'Fecha', '']
+                  ).map(h => <span key={h}>{h}</span>)}
                 </div>
+
                 {pagosIncompletos.map((p: any) => (
-                  <div key={p.id} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr auto', padding: '12px 16px', borderBottom: '1px solid #f3f4f6', fontSize: 13, alignItems: 'center', gap: 8 }}>
+                  <div key={p.id} style={{ display: 'grid', gridTemplateColumns: filtroPI === 'historial' ? '2fr 1fr 1fr 1fr 1fr 1.5fr auto' : '2fr 1fr 1fr 1fr 1fr auto', padding: '12px 16px', borderBottom: '1px solid #f3f4f6', fontSize: 13, alignItems: 'center', gap: 8 }}>
                     <div>
                       <div style={{ fontWeight: 500 }}>{p.nombre || '—'}</div>
                       <div style={{ fontSize: 11, color: '#9ca3af' }}>{p.email || 'Sin email'}</div>
@@ -642,21 +663,46 @@ export default function AdminSocios() {
                     <span style={{ fontSize: 12, color: '#374151' }}>{p.rut || '—'}</span>
                     <span style={{ fontWeight: 600, color: '#374151' }}>{p.monto ? `$${p.monto.toLocaleString('es-CL')}` : '—'}</span>
                     <span>
-                      <span style={{ fontSize: 10, background: p.estado === 'pendiente' ? '#FAEEDA' : '#f3f4f6', color: p.estado === 'pendiente' ? '#633806' : '#374151', padding: '2px 8px', borderRadius: 20, fontWeight: 600 }}>
+                      <span style={{ fontSize: 10, background: p.estado === 'pagado' ? '#D1FAE5' : p.estado === 'pendiente' ? '#FAEEDA' : '#f3f4f6', color: p.estado === 'pagado' ? '#065F46' : p.estado === 'pendiente' ? '#633806' : '#374151', padding: '2px 8px', borderRadius: 20, fontWeight: 600 }}>
                         {p.estado || '—'}
                       </span>
                     </span>
                     <span style={{ fontSize: 11, color: '#9ca3af' }}>
                       {p.created_at ? new Date(p.created_at).toLocaleDateString('es-CL') : '—'}
                     </span>
+
+                    {/* Columna "Link enviado por" solo en historial */}
+                    {filtroPI === 'historial' && (
+                      <div>
+                        {p.link_enviado_por ? (
+                          <>
+                            <div style={{ fontSize: 11, fontWeight: 500, color: '#374151' }}>{p.link_enviado_por}</div>
+                            <div style={{ fontSize: 10, color: '#9ca3af' }}>
+                              {p.link_enviado_at ? new Date(p.link_enviado_at).toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }) : ''}
+                            </div>
+                          </>
+                        ) : (
+                          <span style={{ fontSize: 11, color: '#d1d5db' }}>No enviado</span>
+                        )}
+                      </div>
+                    )}
+
                     <button
                       onClick={async () => {
                         if (!p.email) { setMensaje('❌ Este registro no tiene email guardado.'); return }
                         setEnviandoLink(prev => ({ ...prev, [p.id]: true }))
                         try {
+                          const { data: { user } } = await supabase.auth.getUser()
+                          const nombreAdmin = user?.user_metadata?.nombre || user?.email || user?.user_metadata?.rut || 'Admin'
                           const link = `${window.location.origin}/inscripcion?retomar=${p.id}`
                           await sendEmail('retorno_inscripcion', p.email, { nombre: p.nombre || 'Estimado/a', link })
+                          // Registrar quién envió el link y cuándo
+                          await supabase.from('pagos_incorporacion').update({
+                            link_enviado_por: nombreAdmin,
+                            link_enviado_at: new Date().toISOString(),
+                          }).eq('id', p.id)
                           setMensaje(`✅ Link de retorno enviado a ${p.email}`)
+                          cargarSocios() // refrescar para mostrar en historial
                         } catch {
                           setMensaje('❌ Error al enviar el correo. Intenta nuevamente.')
                         } finally {
@@ -667,12 +713,14 @@ export default function AdminSocios() {
                       disabled={enviandoLink[p.id] || !p.email}
                       title={!p.email ? 'Sin email registrado' : `Enviar link de retorno a ${p.email}`}
                       style={{ padding: '6px 12px', border: 'none', borderRadius: 8, background: enviandoLink[p.id] ? '#9ca3af' : !p.email ? '#f3f4f6' : '#185FA5', color: !p.email ? '#9ca3af' : '#fff', fontSize: 12, fontWeight: 600, cursor: !p.email ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' as const }}>
-                      {enviandoLink[p.id] ? '⏳ Enviando...' : '📧 Enviar link'}
+                      {enviandoLink[p.id] ? '⏳ Enviando...' : p.link_enviado_por ? '📧 Reenviar' : '📧 Enviar link'}
                     </button>
                   </div>
                 ))}
+
                 <div style={{ padding: '10px 16px', background: '#f9fafb', fontSize: 12, color: '#6b7280', borderTop: '1px solid #e5e7eb' }}>
-                  {pagosIncompletos.length} registro{pagosIncompletos.length !== 1 ? 's' : ''} con pago incompleto
+                  {pagosIncompletos.length} registro{pagosIncompletos.length !== 1 ? 's' : ''}
+                  {filtroPI === 'historial' && ` · ${pagosIncompletos.filter((p: any) => p.link_enviado_por).length} con link enviado`}
                 </div>
               </div>
             )}
