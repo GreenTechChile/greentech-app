@@ -23,10 +23,9 @@ const DOCS_FIRMA = [
 ]
 
 export default function AdminSocios() {
-  const [tab, setTab] = useState<'pendientes'|'socios'|'delegaciones'|'renovaciones'|'pagos_incompletos'>('pendientes')
+  const [tab, setTab] = useState<'pendientes'|'socios'|'delegaciones'|'renovaciones'>('pendientes')
   const [filtroSocios, setFiltroSocios] = useState<'pendiente'|'activo'|'rechazado'>('pendiente')
   const [filtroDelegaciones, setFiltroDelegaciones] = useState<'pendiente_firma'|'todas'>('pendiente_firma')
-  const [filtroPagos, setFiltroPagos] = useState<'incompletos'|'todos'>('incompletos')
   const [recetas, setRecetas] = useState<any[]>([])
   const [filtroRecetas, setFiltroRecetas] = useState<'pendiente'|'todas'>('pendiente')
   const [socios, setSocios] = useState<Socio[]>([])
@@ -42,12 +41,11 @@ export default function AdminSocios() {
   const fileInputRefs = useRef<Record<string, HTMLInputElement|null>>({})
   const [motivosRechazo, setMotivosRechazo] = useState<Record<string,string>>({})
   const [rechazandoRecetaId, setRechazandoRecetaId] = useState<string|null>(null)
-  const [pagosIncompletos, setPagosIncompletos] = useState<any[]>([])
   const [tabCounts, setTabCounts] = useState<Record<string,number>>({})
 
 
   useEffect(() => { cargarConteos() }, [])
-  useEffect(() => { cargarSocios() }, [tab, filtroRecetas, filtroSocios, filtroDelegaciones, filtroPagos])
+  useEffect(() => { cargarSocios() }, [tab, filtroRecetas, filtroSocios, filtroDelegaciones])
 
   const cargarConteos = async () => {
     const [
@@ -254,7 +252,24 @@ export default function AdminSocios() {
       const socio = receta.socios
       const { data: { user } } = await supabase.auth.getUser()
       const nombreAdmin = user?.user_metadata?.nombre || user?.email || user?.user_metadata?.rut || 'Admin'
-      // 1. Actualizar datos médicos del socio
+
+      // 0. Verificar si hay delegación obligatoria pendiente (punto 4)
+      const { data: socioActual } = await supabase
+        .from('socios').select('gramos_delegados, delegacion_estado').eq('id', receta.socio_id).single()
+      if (socioActual?.delegacion_estado === 'pendiente_firma') {
+        const nuevaCuota = receta.cuota_mensual
+        const gramosActuales = socioActual.gramos_delegados || 0
+        const esObligatoria = nuevaCuota < gramosActuales
+        if (esObligatoria) {
+          setMensaje('❌ No se puede aprobar la receta: el socio tiene una actualización de delegación de cultivo OBLIGATORIA pendiente de firma (la nueva cuota es menor a los gramos delegados actuales). Resuelve la delegación primero.')
+          setProcesando(null)
+          setTimeout(() => setMensaje(''), 8000)
+          return
+        }
+      }
+
+      // 1. Actualizar datos médicos + fechas (punto 5)
+      const hoy = new Date().toISOString().split('T')[0]
       await supabase.from('socios').update({
         diagnostico: receta.diagnostico,
         diagnostico_secundario: receta.diagnostico_secundario,
@@ -263,25 +278,29 @@ export default function AdminSocios() {
         folio_receta: receta.folio_receta,
         vencimiento_receta: receta.vencimiento_receta,
         cuota_mensual: receta.cuota_mensual,
+        fecha_renovacion_receta: hoy,
+        max_fecha_dispensacion: receta.vencimiento_receta,
       }).eq('id', receta.socio_id)
+
       // 2. Marcar receta como aprobada + audit trail
       await supabase.from('recetas_pendientes').update({
         estado: 'aprobada',
         aprobado_por: nombreAdmin,
         aprobado_at: new Date().toISOString(),
       }).eq('id', receta.id)
+
       // 3. Email al socio
       try {
         await sendEmail('receta_aprobada', socio.email, { nombre: socio.nombre, rut: socio.rut, vencimiento: receta.vencimiento_receta })
       } catch {}
-      setMensaje(`✅ Receta de ${socio.nombre} aprobada por ${nombreAdmin}. Datos médicos actualizados.`)
+      setMensaje(`✅ Receta de ${socio.nombre} aprobada por ${nombreAdmin}. Datos médicos y fechas actualizados.`)
       cargarSocios()
       cargarConteos()
     } catch (e: any) {
       setMensaje('❌ Error: ' + e.message)
     } finally {
       setProcesando(null)
-      setTimeout(() => setMensaje(''), 5000)
+      setTimeout(() => setMensaje(''), 6000)
     }
   }
 
@@ -469,11 +488,15 @@ export default function AdminSocios() {
                         if (!file) return
                         const { error } = await supabase.storage.from('documentos').upload(`${socio.rut}/contrato_firmado.pdf`, file, { contentType: 'application/pdf', upsert: true })
                         if (error) { alert('Error al subir: ' + error.message); return }
+                        const { data: { user: adminUser } } = await supabase.auth.getUser()
+                        const nombreAdmin = adminUser?.user_metadata?.nombre || adminUser?.email || adminUser?.user_metadata?.rut || 'Admin'
                         await supabase.from('socios').update({
                           delegacion_estado: 'firmado',
                           gramos_delegados: socio.delegacion_nueva_cuota,
+                          delegacion_aprobado_por: nombreAdmin,
+                          delegacion_aprobado_at: new Date().toISOString(),
                         }).eq('id', socio.id)
-                        setMensaje(`✅ Contrato de ${socio.nombre} subido. Gramos delegados actualizados a ${socio.delegacion_nueva_cuota}g.`)
+                        setMensaje(`✅ Contrato de ${socio.nombre} subido y aprobado por ${nombreAdmin}. Límite de dispensación actualizado a ${socio.delegacion_nueva_cuota}g.`)
                         setTimeout(() => setMensaje(''), 6000)
                         cargarSocios()
                         cargarConteos()
@@ -877,11 +900,15 @@ export default function AdminSocios() {
                               if (!file) return
                               const { error } = await supabase.storage.from('documentos').upload(`${socio.rut}/contrato_firmado.pdf`, file, { contentType: 'application/pdf', upsert: true })
                               if (error) { alert('Error al subir: ' + error.message); return }
+                              const { data: { user: adminUser } } = await supabase.auth.getUser()
+                              const nombreAdmin = adminUser?.user_metadata?.nombre || adminUser?.email || adminUser?.user_metadata?.rut || 'Admin'
                               await supabase.from('socios').update({
                                 delegacion_estado: 'firmado',
                                 gramos_delegados: socio.delegacion_nueva_cuota,
+                                delegacion_aprobado_por: nombreAdmin,
+                                delegacion_aprobado_at: new Date().toISOString(),
                               }).eq('id', socio.id)
-                              setMensaje(`✅ Contrato de ${socio.nombre} subido. Gramos delegados actualizados a ${socio.delegacion_nueva_cuota}g.`)
+                              setMensaje(`✅ Contrato de ${socio.nombre} subido y aprobado por ${nombreAdmin}. Límite de dispensación actualizado a ${socio.delegacion_nueva_cuota}g.`)
                               setTimeout(() => setMensaje(''), 6000)
                               cargarSocios()
                               e.target.value = ''
