@@ -60,7 +60,7 @@ export default function AdminSocios() {
       supabase.from('socios').select('*', { count: 'exact', head: true }).eq('estado', 'pendiente'),
       supabase.from('recetas_pendientes').select('*', { count: 'exact', head: true }).eq('estado', 'pendiente'),
       supabase.from('socios').select('*', { count: 'exact', head: true }).eq('delegacion_estado', 'pendiente_firma'),
-      supabase.from('pagos_incorporacion').select('*', { count: 'exact', head: true }).eq('estado', 'pendiente'),
+      supabase.from('pagos_incorporacion').select('*', { count: 'exact', head: true }).eq('estado', 'aprobado'),
     ])
     const totalPendiente = (pendientes || 0) + (renovaciones || 0) + (delegaciones || 0) + (pagosInc || 0)
     setTabCounts({ pendientes: pendientes || 0, renovaciones: renovaciones || 0, delegaciones: delegaciones || 0, pagos_incompletos: pagosInc || 0, total_pendiente: totalPendiente })
@@ -70,7 +70,7 @@ export default function AdminSocios() {
     setLoading(true)
     if (tab === 'pagos_incompletos') {
       let query = supabase.from('pagos_incorporacion').select('*').order('created_at', { ascending: false })
-      if (filtroPI === 'pendientes') query = query.eq('estado', 'pendiente')
+      if (filtroPI === 'pendientes') query = query.eq('estado', 'aprobado')
       const [{ data }, { data: sociosData }] = await Promise.all([
         query,
         supabase.from('socios').select('rut'),
