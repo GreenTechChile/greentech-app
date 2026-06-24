@@ -11,7 +11,7 @@ const supabaseAdmin = createClient(
 
 export async function POST(req: NextRequest) {
   try {
-    const { socioId, notas } = await req.json()
+    const { socioId, notas, aprobadoPor } = await req.json()
     if (!socioId) return NextResponse.json({ error: 'Falta socioId' }, { status: 400 })
 
     // 1. Obtener datos del socio
@@ -55,7 +55,11 @@ export async function POST(req: NextRequest) {
     // 4. Actualizar estado del socio a 'activo' y activar rol_socio
     await supabaseAdmin
       .from('socios')
-      .update({ estado: 'activo', rol_socio: true, notas_admin: notas || null })
+      .update({
+        estado: 'activo', rol_socio: true, notas_admin: notas || null,
+        aprobado_por: aprobadoPor || null,
+        aprobado_at: new Date().toISOString(),
+      })
       .eq('id', socioId)
 
     // 5. Registrar ingreso en movimientos_financieros

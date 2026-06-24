@@ -12,6 +12,7 @@ interface Socio {
   folio_receta: string; cuota_mensual: number; gramos_delegados: number
   vencimiento_receta: string; estado: string; rol: string
   notas_admin: string; created_at: string
+  aprobado_por?: string; aprobado_at?: string
 }
 
 // Qué documentos firmados se requieren antes de poder aprobar
@@ -36,6 +37,7 @@ export default function AdminSocios() {
   const fileInputRefs = useRef<Record<string, HTMLInputElement|null>>({})
   const [motivosRechazo, setMotivosRechazo] = useState<Record<string,string>>({})
   const [rechazandoRecetaId, setRechazandoRecetaId] = useState<string|null>(null)
+
 
   useEffect(() => { cargarSocios() }, [tab])
 
@@ -121,10 +123,12 @@ export default function AdminSocios() {
   const aprobar = async (socio: Socio) => {
     setProcesando(socio.id)
     try {
+      const { data: { user } } = await supabase.auth.getUser()
+      const nombreAdmin = user?.user_metadata?.nombre || user?.email || user?.user_metadata?.rut || 'Admin'
       const res = await fetch('/api/aprobar-socio', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ socioId: socio.id, notas: notas[socio.id] || null }),
+        body: JSON.stringify({ socioId: socio.id, notas: notas[socio.id] || null, aprobadoPor: nombreAdmin }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Error al aprobar')
@@ -140,7 +144,14 @@ export default function AdminSocios() {
 
   const rechazar = async (socio: Socio) => {
     setProcesando(socio.id)
-    await supabase.from('socios').update({ estado: 'rechazado', notas_admin: notas[socio.id] || null }).eq('id', socio.id)
+    const { data: { user } } = await supabase.auth.getUser()
+    const nombreAdmin = user?.user_metadata?.nombre || user?.email || user?.user_metadata?.rut || 'Admin'
+    await supabase.from('socios').update({
+      estado: 'rechazado',
+      notas_admin: notas[socio.id] || null,
+      aprobado_por: nombreAdmin,
+      aprobado_at: new Date().toISOString(),
+    }).eq('id', socio.id)
     setMensaje(`Solicitud de ${socio.nombre} rechazada.`)
     setSocios(prev => prev.filter(s => s.id !== socio.id))
     setProcesando(null)
@@ -501,9 +512,22 @@ export default function AdminSocios() {
                       </button>
                     </div>
                   )}
-                  {tab !== 'pendientes' && socio.notas_admin && (
-                    <div style={{ padding: '10px 16px', fontSize: 12, color: '#6b7280', background: '#f9fafb', borderTop: '1px solid #e5e7eb' }}>
-                      📝 Nota: {socio.notas_admin}
+                  {tab !== 'pendientes' && (socio.notas_admin || socio.aprobado_por) && (
+                    <div style={{ padding: '10px 16px', fontSize: 12, color: '#6b7280', background: '#f9fafb', borderTop: '1px solid #e5e7eb', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      {socio.aprobado_por && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span>{tab === 'aprobados' ? '✅' : '✕'}</span>
+                          <span style={{ fontWeight: 500, color: tab === 'aprobados' ? '#3B6D11' : '#A32D2D' }}>
+                            {tab === 'aprobados' ? 'Aprobado' : 'Rechazado'} por {socio.aprobado_por}
+                            {socio.aprobado_at && (
+                              <span style={{ fontWeight: 400, color: '#9ca3af' }}>
+                                {' '}· {new Date(socio.aprobado_at).toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                            )}
+                          </span>
+                        </div>
+                      )}
+                      {socio.notas_admin && <div>📝 Nota: {socio.notas_admin}</div>}
                     </div>
                   )}
                 </div>
