@@ -189,10 +189,12 @@ export default function MisDocumentos() {
   const delegacionObligatoria = gramosDelegados > 0 && nuevaCuota < gramosDelegados && nuevaCuota > 0 && !!formReceta.cuota_mensual
 
   const iniciarActualizacionDelegacion = async () => {
-    if (!rutSocio || !socioId || !socioData) return
     const gramosDelegar = parseInt(cuotaDelegacion)
-    if (!gramosDelegar || gramosDelegar < 1 || gramosDelegar > nuevaCuota) return
+    if (!rutSocio) { setMensaje('❌ No se encontró tu RUT. Recarga la página.'); return }
+    if (!socioId) { setMensaje('❌ No se encontró tu ID de socio. Recarga la página.'); return }
+    if (!gramosDelegar || gramosDelegar < 1 || gramosDelegar > nuevaCuota) { setMensaje('❌ El monto de delegación no es válido.'); return }
     setFirmandoContrato(true)
+    setMensaje('')
     try {
       const { jsPDF } = await import('jspdf')
       const m = 20
