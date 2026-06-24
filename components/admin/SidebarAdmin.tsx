@@ -29,11 +29,9 @@ export default function SidebarAdmin() {
   }, [])
 
   useEffect(() => {
-    try {
-      const keys = Object.keys(localStorage).filter(k => k.startsWith('sb-') && k.endsWith('-auth-token'))
-      if (keys.length === 0) return
-      const token = JSON.parse(localStorage.getItem(keys[0]) || '{}')
-      const rutUsuario = token?.user?.user_metadata?.rut
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return
+      const rutUsuario = user.user_metadata?.rut
       if (!rutUsuario) return
       supabase.from('socios')
         .select('nombre, rut, rol_socio, rol_admin, rol_cultivador, rol_despachador')
@@ -49,7 +47,7 @@ export default function SidebarAdmin() {
             rol_despachador: data?.rol_despachador  ?? false,
           })
         })
-    } catch {}
+    })
   }, [])
 
   const cerrarSesion = async () => {
