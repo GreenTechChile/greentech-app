@@ -9,6 +9,7 @@ export default function AdminDashboard() {
     sociosActivos: 0, solicitudesPendientes: 0,
     despachosPendientes: 0, stockTotal: 0, cepasConStock: 0,
     ingresosMes: 0, dispensacionesMes: 0,
+    renovacionesPendientes: 0, pagosIncompletos: 0,
   })
   const [despachosPendientes, setDespachosPendientes] = useState<any[]>([])
   const [stockCepas, setStockCepas] = useState<any[]>([])
@@ -27,19 +28,31 @@ export default function AdminDashboard() {
       { data: despachos },
       { data: cepas },
       { data: dispensaciones },
+      { count: renovacionesPendientes },
+      { data: pagosAprobados },
     ] = await Promise.all([
       supabase.from('socios').select('*', { count: 'exact', head: true }).eq('estado', 'activo'),
       supabase.from('socios').select('*', { count: 'exact', head: true }).eq('estado', 'pendiente'),
       supabase.from('dispensaciones').select('*').in('estado', ['pagado','preparando','despachado']),
       supabase.from('cepas').select('*').eq('visible', true),
       supabase.from('dispensaciones').select('monto').eq('mes', mes).eq('año', año),
+      supabase.from('recetas_pendientes').select('*', { count: 'exact', head: true }).eq('estado', 'pendiente'),
+      supabase.from('pagos_incorporacion').select('rut').eq('estado', 'aprobado'),
     ])
+
+    // Calcular pagos sin inscripción completada
+    let pagosIncompletos = 0
+    if (pagosAprobados && pagosAprobados.length > 0) {
+      const ruts = pagosAprobados.map((p: any) => p.rut).filter(Boolean)
+      const { data: sociosExist } = await supabase.from('socios').select('rut').in('rut', ruts.length > 0 ? ruts : ['__ninguno__'])
+      const rutsCompletos = new Set((sociosExist || []).map((s: any) => s.rut))
+      pagosIncompletos = pagosAprobados.filter((p: any) => !rutsCompletos.has(p.rut)).length
+    }
 
     const stockTotal = cepas?.reduce((a, c) => a + (c.stock_gramos || 0), 0) || 0
     const cepasConStock = cepas?.filter(c => c.stock_gramos > 0).length || 0
     const ingresosMes = dispensaciones?.reduce((a, d) => a + d.monto, 0) || 0
 
-    // Agrupar despachos por orden base
     const ordenesUnicas = new Set((despachos || []).map((d: any) => d.orden_numero.split('-').slice(0,3).join('-')))
     setStats({
       sociosActivos: sociosActivos || 0,
@@ -47,6 +60,8 @@ export default function AdminDashboard() {
       despachosPendientes: ordenesUnicas.size,
       stockTotal, cepasConStock,
       ingresosMes, dispensacionesMes: dispensaciones?.length || 0,
+      renovacionesPendientes: renovacionesPendientes || 0,
+      pagosIncompletos,
     })
     setDespachosPendientes(despachos || [])
     setStockCepas(cepas || [])
@@ -109,6 +124,26 @@ export default function AdminDashboard() {
                   <span style={{ color:'#9ca3af' }}>→</span>
                 </Link>
               )}
+              {stats.renovacionesPendientes > 0 && (
+                <Link href="/admin/socios" style={{ display:'flex', alignItems:'center', gap:12, padding:'10px 14px', background:'#FFFBF5', border:'1px solid #EF9F27', borderRadius:8, marginBottom:8, textDecoration:'none', color:'#111' }}>
+                  <span style={{ fontSize:20 }}>🩺</span>
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontSize:13, fontWeight:500 }}>{stats.renovacionesPendientes} renovación{stats.renovacionesPendientes>1?'es':''} de receta pendiente{stats.renovacionesPendientes>1?'s':''}</div>
+                    <div style={{ fontSize:11, color:'#9ca3af' }}>Revisar en Nuevos socios → Renovaciones</div>
+                  </div>
+                  <span style={{ color:'#9ca3af' }}>→</span>
+                </Link>
+              )}
+              {stats.pagosIncompletos > 0 && (
+                <Link href="/admin/socios" style={{ display:'flex', alignItems:'center', gap:12, padding:'10px 14px', background:'#FFFBF5', border:'1px solid #FBBF24', borderRadius:8, marginBottom:8, textDecoration:'none', color:'#111' }}>
+                  <span style={{ fontSize:20 }}>💳</span>
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontSize:13, fontWeight:500 }}>{stats.pagosIncompletos} pago{stats.pagosIncompletos>1?'s':''} de inscripción sin completar</div>
+                    <div style={{ fontSize:11, color:'#9ca3af' }}>Persona{stats.pagosIncompletos>1?'s':''} que pagó pero no terminó el formulario · Revisar en Nuevos socios</div>
+                  </div>
+                  <span style={{ color:'#9ca3af' }}>→</span>
+                </Link>
+              )}
               {stats.stockTotal === 0 && (
                 <Link href="/admin/inventario" style={{ display:'flex', alignItems:'center', gap:12, padding:'10px 14px', background:'#FCEBEB', border:'1px solid #F5C5C5', borderRadius:8, marginBottom:8, textDecoration:'none', color:'#111' }}>
                   <span style={{ fontSize:20 }}>📦</span>
@@ -119,7 +154,7 @@ export default function AdminDashboard() {
                   <span style={{ color:'#9ca3af' }}>→</span>
                 </Link>
               )}
-              {stats.solicitudesPendientes === 0 && stats.despachosPendientes === 0 && stats.stockTotal > 0 && (
+              {stats.solicitudesPendientes === 0 && stats.despachosPendientes === 0 && stats.renovacionesPendientes === 0 && stats.pagosIncompletos === 0 && stats.stockTotal > 0 && (
                 <div style={{ fontSize:13, color:'#3B6D11', padding:'10px 14px', background:'#EAF3DE', borderRadius:8 }}>
                   ✅ Todo al día — sin tareas pendientes
                 </div>

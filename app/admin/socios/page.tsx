@@ -38,9 +38,31 @@ export default function AdminSocios() {
   const [motivosRechazo, setMotivosRechazo] = useState<Record<string,string>>({})
   const [rechazandoRecetaId, setRechazandoRecetaId] = useState<string|null>(null)
   const [pagosIncompletos, setPagosIncompletos] = useState<any[]>([])
+  const [tabCounts, setTabCounts] = useState<Record<string,number>>({})
 
 
+  useEffect(() => { cargarConteos() }, [])
   useEffect(() => { cargarSocios() }, [tab])
+
+  const cargarConteos = async () => {
+    const [
+      { count: pendientes },
+      { count: renovaciones },
+      { data: pagos },
+    ] = await Promise.all([
+      supabase.from('socios').select('*', { count: 'exact', head: true }).eq('estado', 'pendiente'),
+      supabase.from('recetas_pendientes').select('*', { count: 'exact', head: true }).eq('estado', 'pendiente'),
+      supabase.from('pagos_incorporacion').select('rut').eq('estado', 'aprobado'),
+    ])
+    let incompletos = 0
+    if (pagos && pagos.length > 0) {
+      const ruts = pagos.map((p: any) => p.rut).filter(Boolean)
+      const { data: sociosExist } = await supabase.from('socios').select('rut').in('rut', ruts.length > 0 ? ruts : ['__ninguno__'])
+      const rutsCompletos = new Set((sociosExist || []).map((s: any) => s.rut))
+      incompletos = pagos.filter((p: any) => !rutsCompletos.has(p.rut)).length
+    }
+    setTabCounts({ pendientes: pendientes || 0, renovaciones: renovaciones || 0, pagos_incompletos: incompletos })
+  }
 
   const cargarSocios = async () => {
     setLoading(true)
@@ -266,12 +288,26 @@ export default function AdminSocios() {
         )}
 
         <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', marginBottom: 20, flexWrap: 'wrap' }}>
-          {[{key:'pendientes',label:'Pendientes'},{key:'aprobados',label:'Aprobados'},{key:'rechazados',label:'Rechazados'},{key:'renovaciones',label:'🩺 Renovaciones'},{key:'pagos_incompletos',label:'💳 Pagos incompletos'}].map(t => (
-            <button key={t.key} onClick={() => setTab(t.key as typeof tab)}
-              style={{ padding: '8px 18px', fontSize: 13, background: 'none', border: 'none', cursor: 'pointer', borderBottom: tab === t.key ? '2px solid #185FA5' : '2px solid transparent', color: tab === t.key ? '#185FA5' : '#6b7280', fontWeight: tab === t.key ? 600 : 400, marginBottom: -1 }}>
-              {t.label}
-            </button>
-          ))}
+          {[
+            { key: 'pendientes', label: 'Pendientes', countKey: 'pendientes', badgeColor: '#A32D2D', badgeBg: '#FCEBEB' },
+            { key: 'aprobados', label: 'Aprobados', countKey: '', badgeColor: '', badgeBg: '' },
+            { key: 'rechazados', label: 'Rechazados', countKey: '', badgeColor: '', badgeBg: '' },
+            { key: 'renovaciones', label: '🩺 Renovaciones', countKey: 'renovaciones', badgeColor: '#92400E', badgeBg: '#FEF3C7' },
+            { key: 'pagos_incompletos', label: '💳 Pagos incompletos', countKey: 'pagos_incompletos', badgeColor: '#92400E', badgeBg: '#FEF3C7' },
+          ].map(t => {
+            const count = t.countKey ? tabCounts[t.countKey] : 0
+            return (
+              <button key={t.key} onClick={() => setTab(t.key as typeof tab)}
+                style={{ padding: '8px 18px', fontSize: 13, background: 'none', border: 'none', cursor: 'pointer', borderBottom: tab === t.key ? '2px solid #185FA5' : '2px solid transparent', color: tab === t.key ? '#185FA5' : '#6b7280', fontWeight: tab === t.key ? 600 : 400, marginBottom: -1, display: 'flex', alignItems: 'center', gap: 6 }}>
+                {t.label}
+                {count > 0 && (
+                  <span style={{ background: t.badgeBg, color: t.badgeColor, fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 10, lineHeight: 1.6 }}>
+                    {count}
+                  </span>
+                )}
+              </button>
+            )
+          })}
         </div>
 
         {/* ── Panel de pagos incompletos ── */}
