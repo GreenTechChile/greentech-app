@@ -11,6 +11,8 @@ type Evento =
   | 'dispensacion_confirmada'
   | 'despacho_enviado'
   | 'despacho_entregado'
+  | 'receta_aprobada'
+  | 'receta_rechazada'
 
 type Datos = Record<string, string | number | undefined>
 

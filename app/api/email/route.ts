@@ -221,6 +221,41 @@ function template(evento: string, datos: Datos): { subject: string; html: string
       return { subject: `Tu dispensación #${orden} fue entregada — GreenTech`, html }
     }
 
+    case 'receta_aprobada': {
+      const nombre = String(datos.nombre || 'Socio')
+      const diagnostico = String(datos.diagnostico || '')
+      const medico = String(datos.medico || '')
+      const folio = String(datos.folio || '')
+      const vencimiento = String(datos.vencimiento || '')
+      const cuota = datos.cuota ? `$${Number(datos.cuota).toLocaleString('es-CL')}` : ''
+      const html = layout('Receta médica aprobada — GreenTech', `
+        ${h1('Tu receta médica fue aprobada ✅')}
+        ${p(`Hola <strong>${nombre}</strong>, la directiva ha revisado y aprobado tu solicitud de renovación de receta médica.`)}
+        ${infoBox(`<strong>Datos actualizados en tu ficha:</strong><br>
+          ${diagnostico ? `<strong>Diagnóstico:</strong> ${diagnostico}<br>` : ''}
+          ${medico ? `<strong>Médico tratante:</strong> ${medico}<br>` : ''}
+          ${folio ? `<strong>Folio receta:</strong> ${folio}<br>` : ''}
+          ${vencimiento ? `<strong>Vencimiento:</strong> ${vencimiento}<br>` : ''}
+          ${cuota ? `<strong>Cuota mensual:</strong> ${cuota}` : ''}`)}
+        ${p('Tus datos médicos han sido actualizados en el sistema. Puedes continuar realizando tus solicitudes de dispensación normalmente.')}
+        ${btn('Ir al portal', `${APP_URL}/socio/documentos`)}
+      `)
+      return { subject: 'Tu receta médica fue aprobada — GreenTech', html }
+    }
+
+    case 'receta_rechazada': {
+      const nombre = String(datos.nombre || 'Socio')
+      const motivo = String(datos.motivo || 'No se especificó motivo.')
+      const html = layout('Resolución de receta médica — GreenTech', `
+        ${h1('Revisión de receta médica')}
+        ${p(`Hola <strong>${nombre}</strong>, lamentamos informarte que la directiva no pudo aprobar tu solicitud de renovación de receta médica en esta oportunidad.`)}
+        ${warningBox(`<strong>Motivo:</strong> ${motivo}`)}
+        ${p(`Si tienes dudas o deseas presentar documentación adicional, contáctanos a <a href="mailto:contacto@asociaciongreentech.cl" style="color:${C.verde};">contacto@asociaciongreentech.cl</a>.`)}
+        ${btn('Ir a Mis Documentos', `${APP_URL}/socio/documentos`)}
+      `)
+      return { subject: 'Resolución de tu solicitud de renovación de receta — GreenTech', html }
+    }
+
     default:
       return null
   }
