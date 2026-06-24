@@ -102,12 +102,21 @@ export default function SocioDashboard() {
         </div>
 
         {/* Estado */}
-        <div style={{ background:'#EAF3DE', border:'1px solid #97C459', borderRadius:8, padding:'10px 14px', fontSize:12, color:'#3B6D11', marginBottom:20 }}>
-          ✓ Socio activo
-          {socio.vencimiento_receta && ` · Receta vigente hasta ${new Date(socio.vencimiento_receta).toLocaleDateString('es-CL',{month:'long',year:'numeric'})}`}
-          {socio.folio_receta && ` · Folio ${socio.folio_receta}`}
-          {socio.medico_nombre && ` · ${socio.medico_nombre}`}
-        </div>
+        {(() => {
+          const hoy = new Date()
+          const venc = socio.vencimiento_receta ? new Date(socio.vencimiento_receta) : null
+          const diasRestantes = venc ? Math.floor((venc.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24)) : null
+          const alerta = diasRestantes !== null && diasRestantes <= 60
+          return (
+            <div style={{ background: alerta ? '#FFF0F0' : '#EAF3DE', border: `1px solid ${alerta ? '#F5C5C5' : '#97C459'}`, borderRadius:8, padding:'10px 14px', fontSize:12, color: alerta ? '#A32D2D' : '#3B6D11', marginBottom:20 }}>
+              {alerta ? '⚠️' : '✓'} Socio activo
+              {venc && ` · Receta vigente hasta ${venc.toLocaleDateString('es-CL',{month:'long',year:'numeric'})}`}
+              {alerta && diasRestantes !== null && ` · Vence en ${diasRestantes} día${diasRestantes !== 1 ? 's' : ''} — renueva tu receta`}
+              {!alerta && socio.folio_receta && ` · Folio ${socio.folio_receta}`}
+              {!alerta && socio.medico_nombre && ` · ${socio.medico_nombre}`}
+            </div>
+          )
+        })()}
 
         {/* Métricas */}
         <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4,1fr)', gap:10, marginBottom:20 }}>
