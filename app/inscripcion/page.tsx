@@ -81,18 +81,24 @@ export default function Inscripcion() {
   const BYPASS_PAGO = true
 
   const handlePagoMP = async () => {
+    // Validar datos básicos antes de pagar
+    if (!form.nombre.trim()) { setError('Ingresa tu nombre completo para continuar.'); return }
+    if (!form.rut.trim() || !validarRut(form.rut)) { setError('Ingresa un RUT válido para continuar.'); return }
+    if (!form.email.trim() || !validarEmail(form.email)) { setError('Ingresa un email válido para continuar.'); return }
+
     if (BYPASS_PAGO) {
       // ── MODO BYPASS: marcar pago como aprobado directamente ──
       setMpLoading(true)
       try {
         await supabase.from('pagos_incorporacion').upsert({
           rut: form.rut,
+          nombre: form.nombre.trim(),
+          email: form.email.trim().toLowerCase(),
           mp_payment_id: 'BYPASS-' + Date.now(),
           monto: montoIncorporacion,
           estado: 'aprobado',
           fecha: new Date().toISOString(),
-        })
-        await supabase.from('socios').update({ pago_incorporacion: true }).eq('rut', form.rut)
+        }, { onConflict: 'rut' })
         setPaso(2)
       } catch {
         setError('Error al registrar el pago.')
@@ -103,6 +109,17 @@ export default function Inscripcion() {
     }
 
     // ── MODO PRODUCCIÓN: flujo real MercadoPago ──
+    // Guardar pre-registro antes de redirigir a MP
+    await supabase.from('pagos_incorporacion').upsert({
+      rut: form.rut,
+      nombre: form.nombre.trim(),
+      email: form.email.trim().toLowerCase(),
+      mp_payment_id: 'PENDING-' + Date.now(),
+      monto: montoIncorporacion,
+      estado: 'pendiente',
+      fecha: new Date().toISOString(),
+    }, { onConflict: 'rut' })
+
     setMpLoading(true)
     setError('')
     try {
@@ -494,6 +511,37 @@ export default function Inscripcion() {
             <div>
               <h2 style={{fontSize:15,fontWeight:600,marginBottom:6}}>💳 Pago de incorporación</h2>
               <p style={{fontSize:12,color:'#6b7280',marginBottom:20}}>Para continuar con el proceso de incorporación, realiza primero el pago.</p>
+
+              {/* Identificación previa al pago */}
+              <div style={{border:'1px solid #e5e7eb',borderRadius:12,padding:16,marginBottom:20,background:'#f9fafb'}}>
+                <div style={{fontSize:13,fontWeight:600,color:'#111',marginBottom:12}}>👤 Tus datos de identificación</div>
+                <div style={{display:'flex',flexDirection:'column',gap:10}}>
+                  <div>
+                    <label style={{fontSize:11,fontWeight:600,color:'#374151',display:'block',marginBottom:4}}>Nombre completo *</label>
+                    <input value={form.nombre} onChange={e=>update('nombre',e.target.value)}
+                      placeholder="Ej: Juan Pérez González"
+                      style={{width:'100%',padding:'9px 11px',border:'1px solid #d1d5db',borderRadius:8,fontSize:13,boxSizing:'border-box'}}/>
+                  </div>
+                  <div>
+                    <label style={{fontSize:11,fontWeight:600,color:'#374151',display:'block',marginBottom:4}}>RUT *</label>
+                    <input value={form.rut}
+                      onChange={e=>{
+                        const v=formatearRut(e.target.value)
+                        update('rut',v)
+                        setRutValido(v.length>3?validarRut(v):null)
+                      }}
+                      placeholder="Ej: 12345678-9"
+                      style={{width:'100%',padding:'9px 11px',border:`1px solid ${rutValido===false?'#f87171':rutValido===true?'#4ade80':'#d1d5db'}`,borderRadius:8,fontSize:13,boxSizing:'border-box'}}/>
+                    {rutValido===false && <div style={{fontSize:11,color:'#ef4444',marginTop:3}}>RUT no válido</div>}
+                  </div>
+                  <div>
+                    <label style={{fontSize:11,fontWeight:600,color:'#374151',display:'block',marginBottom:4}}>Email *</label>
+                    <input value={form.email} onChange={e=>update('email',e.target.value)}
+                      type="email" placeholder="Ej: juan@email.com"
+                      style={{width:'100%',padding:'9px 11px',border:'1px solid #d1d5db',borderRadius:8,fontSize:13,boxSizing:'border-box'}}/>
+                  </div>
+                </div>
+              </div>
               <div style={{background:'#f0f9ff',border:'1px solid #7dd3fc',borderRadius:10,padding:'10px 14px',fontSize:12,color:'#0369a1',marginBottom:20,display:'flex',alignItems:'center',gap:8}}>
                 🔵 <span><strong>Pago seguro con Mercado Pago</strong> — Acepta tarjetas de débito, crédito y transferencia bancaria.</span>
               </div>

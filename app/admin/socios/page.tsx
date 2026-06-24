@@ -22,7 +22,7 @@ const DOCS_FIRMA = [
 ]
 
 export default function AdminSocios() {
-  const [tab, setTab] = useState<'pendientes'|'aprobados'|'rechazados'|'renovaciones'>('pendientes')
+  const [tab, setTab] = useState<'pendientes'|'aprobados'|'rechazados'|'renovaciones'|'pagos_incompletos'>('pendientes')
   const [recetas, setRecetas] = useState<any[]>([])
   const [socios, setSocios] = useState<Socio[]>([])
   const [loading, setLoading] = useState(true)
@@ -37,6 +37,7 @@ export default function AdminSocios() {
   const fileInputRefs = useRef<Record<string, HTMLInputElement|null>>({})
   const [motivosRechazo, setMotivosRechazo] = useState<Record<string,string>>({})
   const [rechazandoRecetaId, setRechazandoRecetaId] = useState<string|null>(null)
+  const [pagosIncompletos, setPagosIncompletos] = useState<any[]>([])
 
 
   useEffect(() => { cargarSocios() }, [tab])
@@ -50,6 +51,24 @@ export default function AdminSocios() {
         .eq('estado', 'pendiente')
         .order('created_at', { ascending: false })
       setRecetas(data || [])
+    } else if (tab === 'pagos_incompletos') {
+      // Buscar pagos aprobados cuyo RUT no tiene registro en socios
+      const { data: pagos } = await supabase
+        .from('pagos_incorporacion')
+        .select('*')
+        .eq('estado', 'aprobado')
+        .order('fecha', { ascending: false })
+      if (pagos && pagos.length > 0) {
+        const ruts = pagos.map((p: any) => p.rut).filter(Boolean)
+        const { data: sociosExistentes } = await supabase
+          .from('socios')
+          .select('rut')
+          .in('rut', ruts.length > 0 ? ruts : ['__ninguno__'])
+        const rutsCompletos = new Set((sociosExistentes || []).map((s: any) => s.rut))
+        setPagosIncompletos(pagos.filter((p: any) => !rutsCompletos.has(p.rut)))
+      } else {
+        setPagosIncompletos([])
+      }
     } else {
       const estadoMap = { pendientes: 'pendiente', aprobados: 'activo', rechazados: 'rechazado' }
       const { data } = await supabase.from('socios').select('*').eq('estado', estadoMap[tab as 'pendientes'|'aprobados'|'rechazados']).order('created_at', { ascending: false })
@@ -246,14 +265,59 @@ export default function AdminSocios() {
           </div>
         )}
 
-        <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', marginBottom: 20 }}>
-          {[{key:'pendientes',label:'Pendientes'},{key:'aprobados',label:'Aprobados'},{key:'rechazados',label:'Rechazados'},{key:'renovaciones',label:'🩺 Renovaciones'}].map(t => (
+        <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', marginBottom: 20, flexWrap: 'wrap' }}>
+          {[{key:'pendientes',label:'Pendientes'},{key:'aprobados',label:'Aprobados'},{key:'rechazados',label:'Rechazados'},{key:'renovaciones',label:'🩺 Renovaciones'},{key:'pagos_incompletos',label:'💳 Pagos incompletos'}].map(t => (
             <button key={t.key} onClick={() => setTab(t.key as typeof tab)}
               style={{ padding: '8px 18px', fontSize: 13, background: 'none', border: 'none', cursor: 'pointer', borderBottom: tab === t.key ? '2px solid #185FA5' : '2px solid transparent', color: tab === t.key ? '#185FA5' : '#6b7280', fontWeight: tab === t.key ? 600 : 400, marginBottom: -1 }}>
               {t.label}
             </button>
           ))}
         </div>
+
+        {/* ── Panel de pagos incompletos ── */}
+        {tab === 'pagos_incompletos' && (
+          loading ? (
+            <div style={{ fontSize: 13, color: '#9ca3af', padding: 40, textAlign: 'center' }}>Cargando...</div>
+          ) : pagosIncompletos.length === 0 ? (
+            <div style={{ fontSize: 13, color: '#9ca3af', padding: 40, textAlign: 'center' }}>✅ No hay pagos sin inscripción completada</div>
+          ) : (
+            <div>
+              <div style={{ background: '#FFF3CD', border: '1px solid #FBBF24', borderRadius: 10, padding: '10px 14px', fontSize: 12, color: '#92400E', marginBottom: 18 }}>
+                ⚠️ Estas personas realizaron el pago de incorporación pero <strong>no completaron el formulario de inscripción</strong>. Considera contactarlas para que finalicen el proceso.
+              </div>
+              {pagosIncompletos.map((p: any) => {
+                const dias = diasDesde(p.fecha || p.created_at)
+                return (
+                  <div key={p.id} style={{ border: '1px solid #FBBF24', borderRadius: 12, marginBottom: 12, overflow: 'hidden', background: '#FFFDF0' }}>
+                    <div style={{ padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <div>
+                        <div style={{ fontSize: 14, fontWeight: 600 }}>{p.nombre || '—'}</div>
+                        <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>{p.rut} {p.email ? `· ${p.email}` : ''}</div>
+                        <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>
+                          Pagó hace {dias} días · ${(p.monto || 0).toLocaleString('es-CL')} CLP
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
+                        <span style={{ background: dias > 7 ? '#FEE2E2' : '#FEF3C7', color: dias > 7 ? '#991B1B' : '#92400E', fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 20 }}>
+                          {dias > 7 ? '🔴 Sin completar hace ' + dias + ' días' : '🟡 Pendiente · ' + dias + ' días'}
+                        </span>
+                        {p.email && (
+                          <a href={`mailto:${p.email}?subject=Tu%20solicitud%20de%20ingreso%20a%20GreenTech&body=Hola%20${encodeURIComponent(p.nombre || '')}%2C%20realizaste%20el%20pago%20de%20incorporaci%C3%B3n%20pero%20a%C3%BAn%20no%20has%20completado%20el%20formulario%20de%20inscripci%C3%B3n.%20Puedes%20continuar%20en%3A%20https%3A%2F%2Fgreentech.vercel.app%2Finscripcion`}
+                            style={{ fontSize: 11, color: '#185FA5', textDecoration: 'none', border: '1px solid #185FA5', padding: '4px 10px', borderRadius: 6 }}>
+                            ✉️ Enviar recordatorio
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                    <div style={{ padding: '8px 18px 12px', fontSize: 11, color: '#9ca3af', borderTop: '1px solid #FDE68A' }}>
+                      ID pago: {p.mp_payment_id} · {new Date(p.fecha || p.created_at).toLocaleDateString('es-CL', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )
+        )}
 
         {/* ── Panel de renovaciones de receta ── */}
         {tab === 'renovaciones' && (
