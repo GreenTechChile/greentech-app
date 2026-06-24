@@ -250,12 +250,13 @@ export default function MisDocumentos() {
 
       const { data: urlData } = supabase.storage.from('documentos').getPublicUrl(storagePath)
 
-      // Registrar solicitud en el registro del socio
-      await supabase.from('socios').update({
-        delegacion_nueva_cuota: gramosDelegar,
-        delegacion_pdf_url: urlData.publicUrl,
-        delegacion_estado: 'pendiente_firma',
-      }).eq('id', socioId)
+      // Registrar solicitud via función segura (solo actualiza campos de delegación)
+      const { error: rpcErr } = await supabase.rpc('solicitar_actualizacion_delegacion', {
+        p_socio_id:   socioId,
+        p_nueva_cuota: gramosDelegar,
+        p_pdf_url:    urlData.publicUrl,
+      })
+      if (rpcErr) throw new Error(rpcErr.message)
 
       setDelegacionSolicitada(true)
       setMensaje('✅ Solicitud enviada. La directiva descargará el contrato, lo gestionará para su firma y subirá la versión firmada.')
