@@ -62,28 +62,8 @@ export async function POST(req: NextRequest) {
       })
       .eq('id', socioId)
 
-    // 5. Registrar ingreso en movimientos_financieros
-    try {
-      const { data: configPago } = await supabaseAdmin
-        .from('configuracion')
-        .select('datos')
-        .eq('id', 'pago_incorporacion')
-        .single()
-      const monto: number = configPago?.datos?.monto ?? 25000
-      const ahora = new Date()
-      await supabaseAdmin.from('movimientos_financieros').insert({
-        tipo: 'ingreso',
-        categoria: 'Incorporación',
-        concepto: `Pago de incorporación — ${socio.nombre} (${socio.rut})`,
-        monto,
-        socio_id: socio.id,
-        mes: ahora.getMonth() + 1,
-        año: ahora.getFullYear(),
-      })
-    } catch (finErr) {
-      console.error('[aprobar-socio] error registrando movimiento financiero:', finErr)
-      // No bloqueante — la aprobación continúa igualmente
-    }
+    // 5. El ingreso en movimientos_financieros se registra al completar la inscripción
+    //    (en inscripcion-api-route.ts), no al aprobar — el pago es independiente del estado.
 
     // 6. Enviar emails
     try {

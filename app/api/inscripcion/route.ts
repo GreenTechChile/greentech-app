@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: insertError.message }, { status: 500 })
     }
 
-    // Garantizar registro en pagos_incorporacion (por si el client-side falló silenciosamente)
+    // Garantizar registro en pagos_incorporacion + registrar ingreso en finanzas
     try {
       const { data: configPago } = await supabaseAdmin
         .from('configuracion').select('datos').eq('id', 'pago_incorporacion').single()
@@ -87,8 +87,20 @@ export async function POST(req: NextRequest) {
         estado: 'aprobado',
         fecha: new Date().toISOString(),
       }, { onConflict: 'rut', ignoreDuplicates: false })
+
+      // Registrar ingreso en finanzas al completar la inscripción
+      // (el pago ya fue realizado — se registra aquí sin importar si luego se aprueba o rechaza)
+      const ahora = new Date()
+      await supabaseAdmin.from('movimientos_financieros').insert({
+        tipo: 'ingreso',
+        categoria: 'Incorporación',
+        concepto: `Pago de incorporación — ${nombre.trim()} (${rut})`,
+        monto: montoPago,
+        mes: ahora.getMonth() + 1,
+        año: ahora.getFullYear(),
+      })
     } catch (pagoErr) {
-      console.error('[api/inscripcion] pagos_incorporacion error:', pagoErr)
+      console.error('[api/inscripcion] pagos_incorporacion/finanzas error:', pagoErr)
       // No bloqueante
     }
 
