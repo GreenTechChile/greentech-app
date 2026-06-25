@@ -64,6 +64,7 @@ export default function MisDocumentos() {
   const [vencimientoReceta, setVencimientoReceta] = useState<string|null>(null)
   const [reglamentoAceptadoAt, setReglamentoAceptadoAt] = useState<string|null>(null)
   const [reglamentoIp, setReglamentoIp] = useState<string|null>(null)
+  const [abriendo, setAbriendo] = useState(false)
   const [docEstados, setDocEstados] = useState<Record<string, DocEstado>>({})
   const [cargandoDocs, setCargandoDocs] = useState(true)
   const [enviando, setEnviando] = useState(false)
@@ -178,6 +179,17 @@ export default function MisDocumentos() {
     }
     setMensaje('❌ Documento firmado no encontrado. Contacta al administrador.')
     setTimeout(() => setMensaje(''), 5000)
+  }
+
+  const verReglamento = async () => {
+    setAbriendo(true)
+    try {
+      const res = await fetch('/api/reglamento-url')
+      const { url } = await res.json()
+      if (url) { window.open(url, '_blank') }
+      else { setMensaje('❌ Reglamento no disponible. Contacta al administrador.'); setTimeout(() => setMensaje(''), 5000) }
+    } catch { setMensaje('❌ Error al obtener el reglamento.'); setTimeout(() => setMensaje(''), 5000) }
+    finally { setAbriendo(false) }
   }
 
   const descargarDocumento = async (storageKey: string, nombre: string) => {
@@ -433,9 +445,9 @@ export default function MisDocumentos() {
                     <span style={{ fontSize:10, padding:'2px 8px', borderRadius:20, background:'#FCEBEB', color:'#A32D2D', whiteSpace:'nowrap' }}>⏳ Pendiente</span>
                   )}
                   {existe && doc.id === 'reglamento' ? (
-                    <button onClick={() => window.open('/reglamento', '_blank')}
-                      style={{ padding:'5px 10px', border:'1px solid #185FA5', borderRadius:6, background:'transparent', color:'#185FA5', fontSize:11, cursor:'pointer' }}>
-                      Ver
+                    <button onClick={verReglamento} disabled={abriendo}
+                      style={{ padding:'5px 10px', border:'1px solid #185FA5', borderRadius:6, background:'transparent', color:'#185FA5', fontSize:11, cursor:'pointer', opacity: abriendo ? 0.6 : 1 }}>
+                      {abriendo ? '...' : 'Ver'}
                     </button>
                   ) : existe && doc.id !== 'reglamento' ? (
                     <>
