@@ -393,7 +393,7 @@ export default function AdminSocios() {
         <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', marginBottom: 20, flexWrap: 'wrap' }}>
           {[
             { key: 'pendientes', label: 'Pendientes', countKey: 'total_pendiente', badgeColor: '#A32D2D', badgeBg: '#FCEBEB' },
-            { key: 'socios', label: '👤 Socios', countKey: '', badgeColor: '', badgeBg: '' },
+            { key: 'socios', label: '👤 Socios', countKey: 'pendientes', badgeColor: '#A32D2D', badgeBg: '#FCEBEB' },
             { key: 'delegaciones', label: '📋 Delegaciones', countKey: 'delegaciones', badgeColor: '#92400E', badgeBg: '#FEF3C7' },
             { key: 'renovaciones', label: '🩺 Renovaciones', countKey: 'renovaciones', badgeColor: '#92400E', badgeBg: '#FEF3C7' },
             { key: 'pagos_incompletos', label: '💳 Pagos incompletos', countKey: 'pagos_incompletos', badgeColor: '#A32D2D', badgeBg: '#FCEBEB' },
