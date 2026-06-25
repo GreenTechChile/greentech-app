@@ -491,7 +491,7 @@ export default function Inscripcion() {
                   {[
                     {icon:'🪪',titulo:'Cédula de identidad vigente',desc:'Se solicitará foto del anverso (frente) y reverso (dorso). Formato JPG, PNG o PDF.'},
                     {icon:'🩺',titulo:'Receta médica vigente',desc:'Debe incluir diagnóstico, folio, nombre y RUT del médico, cantidad de gramos autorizados y fecha de vencimiento.'},
-                    {icon:'📋',titulo:'Certificado de antecedentes penales',desc:'Puedes obtenerlo en www.registrocivil.cl. Debe estar vigente.'},
+                    {icon:'📋',titulo:'Certificado de antecedentes penales',desc:'Puedes obtenerlo en www.registrocivil.cl. Debe ser de emisión menor a 30 días.'},
                   ].map((d,i)=>(
                     <div key={i} style={{display:'flex',gap:12,padding:'10px 12px',background:'#f9fafb',borderRadius:10,border:'1px solid #e5e7eb'}}>
                       <span style={{fontSize:20,flexShrink:0}}>{d.icon}</span>
