@@ -122,18 +122,22 @@ export default function Inscripcion() {
     if (!form.email.trim() || !validarEmail(form.email)) { setError('Ingresa un email válido para continuar.'); return }
 
     if (BYPASS_PAGO) {
-      // ── MODO BYPASS: marcar pago como aprobado directamente ──
+      // ── MODO BYPASS: registrar pago vía API server-side (evita RLS) ──
       setMpLoading(true)
       try {
-        await supabase.from('pagos_incorporacion').upsert({
-          rut: form.rut,
-          nombre: form.nombre.trim(),
-          email: form.email.trim().toLowerCase(),
-          mp_payment_id: 'BYPASS-' + Date.now(),
-          monto: montoIncorporacion,
-          estado: 'aprobado',
-          fecha: new Date().toISOString(),
-        }, { onConflict: 'rut' })
+        const res = await fetch('/api/registrar-pago', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            rut: form.rut,
+            nombre: form.nombre.trim(),
+            email: form.email.trim().toLowerCase(),
+            monto: montoIncorporacion,
+            mp_payment_id: 'BYPASS-' + Date.now(),
+            estado: 'aprobado',
+          }),
+        })
+        if (!res.ok) throw new Error('Error al registrar el pago')
         setPaso(2)
       } catch {
         setError('Error al registrar el pago.')
