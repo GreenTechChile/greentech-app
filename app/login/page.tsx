@@ -4,6 +4,31 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 
+// Formatea RUT mientras el usuario escribe: strip todo, agrega guion antes del dígito verificador
+function formatRut(raw: string): string {
+  const clean = raw.replace(/[^0-9kK]/g, '').toUpperCase()
+  if (clean.length < 2) return clean
+  const body = clean.slice(0, -1)
+  const dv = clean.slice(-1)
+  return `${body}-${dv}`
+}
+
+// Valida dígito verificador chileno
+function validarRut(rut: string): boolean {
+  const clean = rut.replace(/[^0-9kK]/g, '').toUpperCase()
+  if (clean.length < 2) return false
+  const body = clean.slice(0, -1)
+  const dv = clean.slice(-1)
+  let sum = 0, factor = 2
+  for (let i = body.length - 1; i >= 0; i--) {
+    sum += parseInt(body[i]) * factor
+    factor = factor === 7 ? 2 : factor + 1
+  }
+  const expected = 11 - (sum % 11)
+  const dvCalc = expected === 11 ? '0' : expected === 10 ? 'K' : String(expected)
+  return dv === dvCalc
+}
+
 export default function Login() {
   const router = useRouter()
   const [rut, setRut] = useState('')
@@ -11,9 +36,25 @@ export default function Login() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [showPass, setShowPass] = useState(false)
+  const [rutInvalido, setRutInvalido] = useState(false)
+
+  const handleRutChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatRut(e.target.value)
+    setRut(formatted)
+    // Validar solo si ya tiene largo suficiente (mínimo 7+guion+1 = 9 chars)
+    if (formatted.length >= 9) {
+      setRutInvalido(!validarRut(formatted))
+    } else {
+      setRutInvalido(false)
+    }
+  }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!validarRut(rut)) {
+      setError('El RUT ingresado no es válido. Verifica el dígito verificador.')
+      return
+    }
     setLoading(true)
     setError('')
 
@@ -93,10 +134,13 @@ export default function Login() {
               type="text"
               placeholder="Ej: 12345678-9"
               value={rut}
-              onChange={e => setRut(e.target.value)}
+              onChange={handleRutChange}
               required
-              style={{ width: '100%', padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: 8, fontSize: 14, outline: 'none' }}
+              style={{ width: '100%', padding: '10px 12px', border: `1px solid ${rutInvalido ? '#F5C5C5' : '#d1d5db'}`, borderRadius: 8, fontSize: 14, outline: 'none', background: rutInvalido ? '#FFFAFA' : '#fff' }}
             />
+            {rutInvalido && (
+              <div style={{ fontSize: 11, color: '#A32D2D', marginTop: 4 }}>RUT inválido — verifica el dígito verificador</div>
+            )}
           </div>
 
           {/* Contraseña */}
