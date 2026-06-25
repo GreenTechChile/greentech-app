@@ -14,7 +14,7 @@ interface FormData {
 }
 
 const initialForm: FormData = {
-  nombre:'',rut:'',fecha_nacimiento:'',estado_civil:'',profesion:'',telefono:'',
+  nombre:'',rut:'',fecha_nacimiento:'',estado_civil:'',profesion:'',telefono:'+56',
   email:'',direccion:'',casa_depto:'',comuna:'',ciudad:'',diagnostico:'',
   diagnostico_secundario:'',medico_nombre:'',medico_rut:'',folio_receta:'',
   cuota_mensual:'',gramos_delegados:'',vencimiento_receta:'',observaciones:'',
@@ -647,7 +647,7 @@ export default function Inscripcion() {
                   </select>
                 </div>
                 <div style={s.field}><label style={s.label}>Profesión u oficio <span style={s.req}>*</span></label><input style={s.input} value={form.profesion} onChange={e=>update('profesion',e.target.value)} placeholder="Profesión u oficio"/></div>
-                <div style={s.field}><label style={s.label}>Teléfono móvil <span style={s.req}>*</span></label><input style={s.input} value={form.telefono} onChange={e=>update('telefono',e.target.value)} placeholder="+569XXXXXXXX"/></div>
+                <div style={s.field}><label style={s.label}>Teléfono móvil <span style={s.req}>*</span></label><input style={s.input} value={form.telefono} onChange={e=>{const v=e.target.value;if(!v.startsWith('+56'))return;update('telefono',v)}} placeholder="+569XXXXXXXX"/></div>
                 <div style={{...s.field,gridColumn:'1/-1'}}>
                   <label style={s.label}>Correo electrónico <span style={s.req}>*</span></label>
                   <input style={{...s.input, ...(retomandoInscripcion ? {background:'#f3f4f6',color:'#6b7280',cursor:'not-allowed'} : {})}} type="email" value={form.email} onChange={e=>!retomandoInscripcion&&update('email',e.target.value)} readOnly={retomandoInscripcion} placeholder="correo@ejemplo.com"/>
@@ -659,6 +659,7 @@ export default function Inscripcion() {
                   if(!form.nombre||!form.rut||!form.fecha_nacimiento||!form.estado_civil||!form.profesion||!form.telefono||!form.email){setError('Completa todos los campos obligatorios.');return}
                   if(!validarRut(form.rut)){setError('El RUT ingresado no es válido. Verifica el dígito verificador.');return}
                   if(!validarEmail(form.email)){setError('El correo electrónico no tiene un formato válido. Debe ser tipo correo@dominio.com');return}
+                  if(!/^\+56[0-9]{9}$/.test(form.telefono)){setError('El teléfono debe tener formato +56 seguido de 9 dígitos. Ej: +56912345678');return}
                   const hoy = new Date(); const nac = new Date(form.fecha_nacimiento); const edad = hoy.getFullYear()-nac.getFullYear()-(hoy<new Date(hoy.getFullYear(),nac.getMonth(),nac.getDate())?1:0)
                   if(edad<18){setError('Debes tener al menos 18 años para solicitar incorporación.');return}
                   setError('');setPaso(3)
