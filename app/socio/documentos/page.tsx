@@ -63,6 +63,7 @@ export default function MisDocumentos() {
   const [mensaje, setMensaje] = useState('')
   const [vencimientoReceta, setVencimientoReceta] = useState<string|null>(null)
   const [reglamentoAceptadoAt, setReglamentoAceptadoAt] = useState<string|null>(null)
+  const [reglamentoIp, setReglamentoIp] = useState<string|null>(null)
   const [docEstados, setDocEstados] = useState<Record<string, DocEstado>>({})
   const [cargandoDocs, setCargandoDocs] = useState(true)
   const [enviando, setEnviando] = useState(false)
@@ -105,6 +106,7 @@ export default function MisDocumentos() {
               }
               if (data?.vencimiento_receta) setVencimientoReceta(data.vencimiento_receta)
               if (data?.reglamento_aceptado_at) setReglamentoAceptadoAt(data.reglamento_aceptado_at)
+              if (data?.reglamento_ip) setReglamentoIp(data.reglamento_ip)
               verificarDocumentos(rut, data?.reglamento_aceptado_at || null)
             })
       }
@@ -400,6 +402,16 @@ export default function MisDocumentos() {
               ? (recetaStatus.alerta || (fechaVencimientoLabel ? `Vence ${fechaVencimientoLabel}` : doc.detalle))
               : doc.detalle
 
+            // Detalle extra para el reglamento: fecha, hora e IP de aceptación
+            const detalleReglamento = doc.id === 'reglamento' && reglamentoAceptadoAt
+              ? (() => {
+                  const dt = new Date(reglamentoAceptadoAt)
+                  const fechaStr = dt.toLocaleDateString('es-CL', { day:'2-digit', month:'short', year:'numeric' })
+                  const horaStr = dt.toLocaleTimeString('es-CL', { hour:'2-digit', minute:'2-digit' })
+                  return `Aceptado el ${fechaStr} a las ${horaStr}${reglamentoIp ? ` · IP ${reglamentoIp}` : ''}`
+                })()
+              : null
+
             return (
               <div key={doc.id} style={{ display:'flex', alignItems:'center', gap:14, padding:'14px 18px', borderBottom:i<documentosEsperados.length-1?'1px solid #f3f4f6':'none', opacity: cargandoDocs ? 0.5 : 1 }}>
                 <div style={{ width:40, height:40, borderRadius:10, background:tipoColor[doc.tipo], display:'flex', alignItems:'center', justifyContent:'center', fontSize:18, flexShrink:0 }}>
@@ -407,7 +419,9 @@ export default function MisDocumentos() {
                 </div>
                 <div style={{ flex:1 }}>
                   <div style={{ fontSize:13, fontWeight:500, marginBottom:2 }}>{doc.nombre}</div>
-                  <div style={{ fontSize:11, color: doc.tipo==='receta' && recetaStatus.alerta ? recetaStatus.color : '#9ca3af' }}>{detalleReceta}</div>
+                  <div style={{ fontSize:11, color: doc.tipo==='receta' && recetaStatus.alerta ? recetaStatus.color : '#9ca3af' }}>
+                    {detalleReglamento || detalleReceta}
+                  </div>
                 </div>
                 <div style={{ display:'flex', alignItems:'center', gap:8, flexShrink:0 }}>
                   <span style={{ fontSize:11, color:'#9ca3af' }}>{fecha}</span>
@@ -418,8 +432,12 @@ export default function MisDocumentos() {
                   ) : (
                     <span style={{ fontSize:10, padding:'2px 8px', borderRadius:20, background:'#FCEBEB', color:'#A32D2D', whiteSpace:'nowrap' }}>⏳ Pendiente</span>
                   )}
-                  {/* El reglamento no tiene archivo descargable */}
-                  {existe && doc.id !== 'reglamento' ? (
+                  {existe && doc.id === 'reglamento' ? (
+                    <button onClick={() => window.open('/reglamento', '_blank')}
+                      style={{ padding:'5px 10px', border:'1px solid #185FA5', borderRadius:6, background:'transparent', color:'#185FA5', fontSize:11, cursor:'pointer' }}>
+                      Ver
+                    </button>
+                  ) : existe && doc.id !== 'reglamento' ? (
                     <>
                       <button onClick={() => verDocumento(doc.storageKey)}
                         style={{ padding:'5px 10px', border:'1px solid #185FA5', borderRadius:6, background:'transparent', color:'#185FA5', fontSize:11, cursor:'pointer' }}>
