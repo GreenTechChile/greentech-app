@@ -21,7 +21,7 @@ const estadoConfig: Record<string, {label:string,bg:string,color:string,border:s
 // Estado siguiente permitido para cada estado actual
 const siguienteEstado: Record<string, {value:string, label:string}> = {
   crecimiento: { value:'cosechado', label:'Cosecha (registrar gramaje húmedo)' },
-  cosechado:   { value:'secado',    label:'Inicio de secado' },
+  cosechado:   { value:'secado',    label:'Inicio de curado' },
   secado:      { value:'procesado', label:'Secado completo → ingresar a stock' },
 }
 
