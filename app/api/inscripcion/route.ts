@@ -73,6 +73,25 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: insertError.message }, { status: 500 })
     }
 
+    // Garantizar registro en pagos_incorporacion (por si el client-side falló silenciosamente)
+    try {
+      const { data: configPago } = await supabaseAdmin
+        .from('configuracion').select('datos').eq('id', 'pago_incorporacion').single()
+      const montoPago: number = configPago?.datos?.monto ?? 25000
+      await supabaseAdmin.from('pagos_incorporacion').upsert({
+        rut,
+        nombre: nombre.trim(),
+        email: email.trim().toLowerCase(),
+        mp_payment_id: 'BYPASS-' + Date.now(),
+        monto: montoPago,
+        estado: 'aprobado',
+        fecha: new Date().toISOString(),
+      }, { onConflict: 'rut', ignoreDuplicates: false })
+    } catch (pagoErr) {
+      console.error('[api/inscripcion] pagos_incorporacion error:', pagoErr)
+      // No bloqueante
+    }
+
     // Generar PDFs server-side con supabaseAdmin (bypasea RLS, siempre funciona)
     try {
       const { jsPDF } = await import('jspdf')
