@@ -480,7 +480,7 @@ export default function Inscripcion() {
                 <div>
                   <div style={{fontSize:13,fontWeight:600,color:'#0369a1',marginBottom:2}}>Costo del proceso de incorporación</div>
                   <div style={{fontSize:22,fontWeight:700,color:'#0369a1'}}>${montoIncorporacion.toLocaleString('es-CL')} CLP</div>
-                  <div style={{fontSize:11,color:'#6b7280',marginTop:2}}>Pago único · Se realiza en el paso 6 del formulario · Mercado Pago</div>
+                  <div style={{fontSize:11,color:'#6b7280',marginTop:2}}>Pago único · Mercado Pago</div>
                 </div>
               </div>
 
