@@ -459,6 +459,29 @@ export default function Inscripcion() {
 
         <div style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:16,padding:28}}>
 
+          {/* PANTALLA DE CARGA — visible mientras se envía */}
+          {loading && (
+            <div style={{textAlign:'center',padding:'40px 20px'}}>
+              <div style={{fontSize:48,marginBottom:16,animation:'spin 1.5s linear infinite',display:'inline-block'}}>⏳</div>
+              <h2 style={{fontSize:18,fontWeight:700,color:'#3B6D11',marginBottom:8}}>Enviando tu solicitud...</h2>
+              <p style={{fontSize:13,color:'#6b7280',marginBottom:32}}>Por favor no cierres ni recargues esta página.</p>
+              <div style={{maxWidth:360,margin:'0 auto',display:'flex',flexDirection:'column',gap:10,textAlign:'left'}}>
+                {[
+                  '📤 Subiendo documentos adjuntos',
+                  '💾 Guardando datos en el sistema',
+                  '📄 Generando contrato y declaración',
+                  '📧 Enviando correo de confirmación',
+                ].map((paso,i) => (
+                  <div key={i} style={{display:'flex',alignItems:'center',gap:10,padding:'10px 14px',background:'#f9fafb',borderRadius:8,border:'1px solid #e5e7eb',fontSize:12,color:'#374151'}}>
+                    <span style={{width:18,height:18,borderRadius:'50%',border:'2px solid #97C459',borderTopColor:'#3B6D11',display:'inline-block',flexShrink:0,animation:`spin ${1+i*0.3}s linear infinite`}}/>
+                    {paso}
+                  </div>
+                ))}
+              </div>
+              <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+            </div>
+          )}
+
           {/* PASO 0 — Bienvenida y requisitos */}
           {paso===0 && (
             <div>
@@ -1059,7 +1082,7 @@ export default function Inscripcion() {
           })()}
 
           {/* PASO 9 — Resumen y envío */}
-          {paso===9 && (
+          {paso===9 && !loading && (
             <div>
               <h2 style={{fontSize:15,fontWeight:600,marginBottom:20}}>✅ Resumen y envío</h2>
               <div style={{background:'#f9fafb',borderRadius:10,padding:16,marginBottom:20}}>
