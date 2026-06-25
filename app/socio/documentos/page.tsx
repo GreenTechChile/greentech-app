@@ -5,8 +5,8 @@ import { supabase } from '@/lib/supabase'
 import { sendEmail } from '@/lib/email'
 
 const documentosEsperados = [
-  { id:'contrato',       nombre:'Contrato de previsión y delegación de cultivo', tipo:'contrato',    detalle:'Firma electrónica · Ley 19.799',    icon:'📋', storageKey:'contrato' },
-  { id:'declaracion',    nombre:'Declaración jurada especial de ingreso',         tipo:'declaracion', detalle:'Firma electrónica · Ley 19.799',    icon:'✍️', storageKey:'declaracion_jurada' },
+  { id:'contrato',       nombre:'Contrato de previsión y delegación de cultivo', tipo:'contrato',    detalle:'Firma electrónica · Ley 19.799',    icon:'📋', storageKey:'contrato',         firmaKey:'contrato_firmado' },
+  { id:'declaracion',    nombre:'Declaración jurada especial de ingreso',         tipo:'declaracion', detalle:'Firma electrónica · Ley 19.799',    icon:'✍️', storageKey:'declaracion_jurada', firmaKey:'declaracion_jurada_firmada' },
   { id:'reglamento',     nombre:'Reglamento interno — aceptación',                tipo:'reglamento',  detalle:'Aceptado en línea · IP registrada', icon:'📖', storageKey:'reglamento' },
   { id:'cedula_anverso', nombre:'Cédula de identidad — Anverso (frente)',         tipo:'cedula',      detalle:'Verificada por la directiva',       icon:'🪪', storageKey:'cedula_anverso' },
   { id:'cedula_reverso', nombre:'Cédula de identidad — Reverso (dorso)',          tipo:'cedula',      detalle:'Verificada por la directiva',       icon:'🪪', storageKey:'cedula_reverso' },
@@ -127,7 +127,8 @@ export default function MisDocumentos() {
         }
         continue
       }
-      const archivo = archivos?.find(f => f.name.split('.')[0] === doc.storageKey || f.name.split('.')[0] === doc.storageKey + '_nueva')
+      const archivo = archivos?.find(f => (doc as any).firmaKey && f.name.split('.')[0] === (doc as any).firmaKey)
+        || archivos?.find(f => f.name.split('.')[0] === doc.storageKey || f.name.split('.')[0] === doc.storageKey + '_nueva')
       if (archivo) {
         const fecha = archivo.updated_at
           ? new Date(archivo.updated_at).toLocaleDateString('es-CL', { day:'2-digit', month:'short', year:'numeric' })
@@ -160,7 +161,10 @@ export default function MisDocumentos() {
   const verDocumento = async (storageKey: string) => {
     if (!rutSocio) return
     const { data: archivos } = await supabase.storage.from('documentos').list(rutSocio)
-    const archivo = archivos?.find(f => f.name.split('.')[0] === storageKey)
+    const doc = documentosEsperados.find(d => d.storageKey === storageKey)
+    const firmaKey = (doc as any)?.firmaKey
+    const archivo = (firmaKey && archivos?.find(f => f.name.split('.')[0] === firmaKey))
+      || archivos?.find(f => f.name.split('.')[0] === storageKey)
     if (archivo) {
       const { data } = await supabase.storage.from('documentos').createSignedUrl(`${rutSocio}/${archivo.name}`, 120)
       if (data?.signedUrl) { window.open(data.signedUrl, '_blank'); return }
@@ -172,7 +176,10 @@ export default function MisDocumentos() {
   const descargarDocumento = async (storageKey: string, nombre: string) => {
     if (!rutSocio) return
     const { data: archivos } = await supabase.storage.from('documentos').list(rutSocio)
-    const archivo = archivos?.find(f => f.name.split('.')[0] === storageKey)
+    const doc = documentosEsperados.find(d => d.storageKey === storageKey)
+    const firmaKey = (doc as any)?.firmaKey
+    const archivo = (firmaKey && archivos?.find(f => f.name.split('.')[0] === firmaKey))
+      || archivos?.find(f => f.name.split('.')[0] === storageKey)
     if (archivo) {
       const { data } = await supabase.storage.from('documentos').createSignedUrl(`${rutSocio}/${archivo.name}`, 120)
       if (data?.signedUrl) {
