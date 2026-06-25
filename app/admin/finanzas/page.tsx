@@ -386,7 +386,7 @@ export default function Finanzas() {
             <div style={{ border:'1px solid #e5e7eb', borderRadius:12, overflow:'hidden' }}>
               <div style={{ padding:'12px 16px', borderBottom:'1px solid #e5e7eb', display:'flex', justifyContent:'space-between', background:'#f9fafb', fontSize:13, fontWeight:600 }}>
                 <span>Aportes de socios — {MESES_FULL[mesFiltro-1]} {filtroAño}</span>
-                <span style={{ color:'#3B6D11' }}>${ingresosMes.toLocaleString('es-CL')}</span>
+                <span style={{ color:'#3B6D11' }}>${dispensaciones.filter(d=>d.mes===mesFiltro).reduce((a,d)=>a+d.monto,0).toLocaleString('es-CL')}</span>
               </div>
               {loading ? (
                 <div style={{ padding:20, fontSize:13, color:'#9ca3af', textAlign:'center' }}>Cargando...</div>
@@ -413,7 +413,7 @@ export default function Finanzas() {
                     ))}
                     <tr style={{ background:'#f9fafb', borderTop:'1px solid #e5e7eb' }}>
                       <td colSpan={3} style={{ padding:'9px 14px', fontWeight:600 }}>Total {MESES_FULL[mesFiltro-1]}</td>
-                      <td style={{ padding:'9px 14px', fontWeight:700, color:'#3B6D11', fontSize:14 }}>${ingresosMes.toLocaleString('es-CL')}</td>
+                      <td style={{ padding:'9px 14px', fontWeight:700, color:'#3B6D11', fontSize:14 }}>${dispensaciones.filter(d=>d.mes===mesFiltro).reduce((a,d)=>a+d.monto,0).toLocaleString('es-CL')}</td>
                       <td/>
                     </tr>
                   </tbody>
