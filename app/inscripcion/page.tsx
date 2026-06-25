@@ -846,20 +846,14 @@ export default function Inscripcion() {
                     .from('documentos-corporacion')
                     .createSignedUrl(`institucional/${ultimo.name}`, 300)
                   if (urlData?.signedUrl) {
-                    const a = document.createElement('a')
-                    a.href = urlData.signedUrl
-                    a.download = `Reglamento_Interno_GreenTech.${ultimo.name.split('.').pop()}`
-                    a.click()
+                    window.open(urlData.signedUrl, '_blank')
                     return
                   }
                 }
                 // Fallback al archivo legacy
                 const { data } = await sb.storage.from('documentos').createSignedUrl('corporacion/reglamento.pdf', 120)
                 if (data?.signedUrl) {
-                  const a = document.createElement('a')
-                  a.href = data.signedUrl
-                  a.download = 'Reglamento_Interno_GreenTech.pdf'
-                  a.click()
+                  window.open(data.signedUrl, '_blank')
                 }
               }} style={{display:'flex',alignItems:'center',gap:8,background:'transparent',border:'1px solid #3B6D11',borderRadius:8,padding:'7px 14px',fontSize:12,color:'#3B6D11',cursor:'pointer',marginBottom:14}}>
                 📥 Descargar Reglamento Interno completo
