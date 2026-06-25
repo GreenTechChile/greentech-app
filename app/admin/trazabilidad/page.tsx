@@ -589,7 +589,68 @@ export default function Trazabilidad() {
                   <span style={{ fontSize:11, background:'#E6F1FB', color:'#185FA5', padding:'2px 8px', borderRadius:20 }}>
                     {exportSocios.length} socio{exportSocios.length !== 1 ? 's' : ''} seleccionado{exportSocios.length !== 1 ? 's' : ''}
                   </span>
-                  <button disabled={exportSocios.length === 0}
+                  <button disabled={exportSocios.length === 0} onClick={async () => {
+                    const seleccionados = socios.filter(s => exportSocios.includes(s.id))
+                    const filas = await Promise.all(seleccionados.map(async s => {
+                      const { data: disps } = await supabase.from('dispensaciones').select('*').eq('rut_socio', s.rut).order('created_at', { ascending: false })
+                      const ds = disps || []
+                      const totalGr = ds.reduce((a,d) => a + d.gramos, 0)
+                      const totalMonto = ds.reduce((a,d) => a + d.monto, 0)
+                      const filasDisp = ds.map((d,i) => `<tr style="border-bottom:1px solid #f3f4f6;${i%2===0?'':'background:#fafafa'}">
+                        <td style="padding:7px 10px">${new Date(d.created_at).toLocaleDateString('es-CL')}</td>
+                        <td style="padding:7px 10px">Orden #${d.orden_numero||'—'}</td>
+                        <td style="padding:7px 10px">${d.cepa||'—'}</td>
+                        <td style="padding:7px 10px;text-align:right">${d.gramos} gr</td>
+                        <td style="padding:7px 10px;text-align:right">$${d.monto.toLocaleString('es-CL')}</td>
+                        <td style="padding:7px 10px">${d.medio_pago||'—'}</td>
+                        <td style="padding:7px 10px">${d.estado}</td>
+                      </tr>`).join('')
+                      return `<div style="margin-bottom:32px;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden">
+                        <div style="background:#EAF3DE;padding:12px 16px;border-bottom:1px solid #97C459">
+                          <div style="font-size:14px;font-weight:700">${s.nombre}</div>
+                          <div style="font-size:12px;color:#3B6D11">RUT ${s.rut} · ${s.email} · ${s.estado}</div>
+                          <div style="font-size:12px;color:#3B6D11;margin-top:4px">${ds.length} dispensaciones · ${totalGr} gr · $${totalMonto.toLocaleString('es-CL')}</div>
+                        </div>
+                        ${ds.length === 0 ? '<p style="padding:12px 16px;color:#9ca3af;font-size:12px">Sin dispensaciones registradas</p>' : `
+                        <table style="width:100%;border-collapse:collapse;font-size:12px">
+                          <thead><tr style="background:#f9fafb;border-bottom:1px solid #e5e7eb">
+                            <th style="padding:7px 10px;font-size:11px;color:#9ca3af;text-align:left;font-weight:500">Fecha</th>
+                            <th style="padding:7px 10px;font-size:11px;color:#9ca3af;text-align:left;font-weight:500">Orden</th>
+                            <th style="padding:7px 10px;font-size:11px;color:#9ca3af;text-align:left;font-weight:500">Cepa</th>
+                            <th style="padding:7px 10px;font-size:11px;color:#9ca3af;text-align:right;font-weight:500">Gramos</th>
+                            <th style="padding:7px 10px;font-size:11px;color:#9ca3af;text-align:right;font-weight:500">Monto</th>
+                            <th style="padding:7px 10px;font-size:11px;color:#9ca3af;text-align:left;font-weight:500">Medio pago</th>
+                            <th style="padding:7px 10px;font-size:11px;color:#9ca3af;text-align:left;font-weight:500">Estado</th>
+                          </tr></thead>
+                          <tbody>${filasDisp}</tbody>
+                          <tfoot><tr style="font-weight:700;border-top:2px solid #e5e7eb;background:#f9fafb">
+                            <td colspan="3" style="padding:8px 10px">Total</td>
+                            <td style="padding:8px 10px;text-align:right">${totalGr} gr</td>
+                            <td style="padding:8px 10px;text-align:right;color:#185FA5">$${totalMonto.toLocaleString('es-CL')}</td>
+                            <td colspan="2"></td>
+                          </tr></tfoot>
+                        </table>`}
+                      </div>`
+                    }))
+                    const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
+                      <title>Expedientes GreenTech</title>
+                      <style>body{font-family:Arial,sans-serif;padding:32px;color:#111;font-size:13px;max-width:1000px;margin:0 auto}
+                      h1{font-size:20px;color:#185FA5;margin-bottom:4px}.sub{color:#6b7280;font-size:12px;margin-bottom:28px}
+                      .footer{margin-top:32px;padding-top:12px;border-top:1px solid #e5e7eb;font-size:11px;color:#9ca3af;text-align:center}</style>
+                    </head><body>
+                      <h1>Expedientes de dispensaciones</h1>
+                      <div class="sub">Asociación GreenTech · Generado ${new Date().toLocaleDateString('es-CL',{day:'2-digit',month:'long',year:'numeric'})} · ${seleccionados.length} socio${seleccionados.length!==1?'s':''}</div>
+                      ${filas.join('')}
+                      <div class="footer">GreenTech · Reg. 390054 · Registros inmutables · Ley 19.628, Ley 20.000, Ley 21.575</div>
+                    </body></html>`
+                    const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
+                    const url = URL.createObjectURL(blob)
+                    const a = document.createElement('a')
+                    a.href = url
+                    a.download = `Expedientes_GreenTech_${new Date().toISOString().split('T')[0]}.html`
+                    a.click()
+                    URL.revokeObjectURL(url)
+                  }}
                     style={{ padding:'7px 16px', border:'none', borderRadius:8, background:exportSocios.length>0?'#3B6D11':'#9ca3af', color:'#EAF3DE', fontSize:12, fontWeight:600, cursor:exportSocios.length>0?'pointer':'not-allowed' }}>
                     📥 Exportar seleccionados
                   </button>
