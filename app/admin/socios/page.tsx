@@ -115,11 +115,18 @@ export default function AdminSocios() {
   }
 
   // Verifica en storage si los documentos firmados ya fueron subidos
+  // Solo cuenta el archivo como válido si fue subido DESPUÉS del registro del socio (evita falsos positivos de sesiones anteriores)
   const verificarFirmados = async (socio: Socio) => {
     const resultados: Record<string,boolean> = {}
+    const socioFecha = new Date(socio.created_at || 0)
     for (const doc of DOCS_FIRMA) {
       const { data } = await supabase.storage.from('documentos').list(socio.rut, { search: doc.firmaKey })
-      resultados[doc.firmaKey] = !!(data && data.length > 0)
+      if (data && data.length > 0) {
+        const archivoFecha = new Date((data[0] as any).created_at || 0)
+        resultados[doc.firmaKey] = archivoFecha > socioFecha
+      } else {
+        resultados[doc.firmaKey] = false
+      }
     }
     setFirmados(prev => ({ ...prev, [socio.id]: resultados }))
   }
