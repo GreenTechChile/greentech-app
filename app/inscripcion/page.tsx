@@ -71,6 +71,8 @@ export default function Inscripcion() {
   const [mpLoading, setMpLoading] = useState(false)
   const [montoIncorporacion, setMontoIncorporacion] = useState(25000)
   const [retomandoInscripcion, setRetomandoInscripcion] = useState(false)
+  const [coberturaCompleta, setCoberturaCompleta] = useState<Record<string,string[]>>({})
+  const [ciudadExpandida, setCiudadExpandida] = useState<string|null>(null)
 
   // Cargar monto de incorporación desde configuración
   useEffect(() => {
@@ -190,10 +192,17 @@ export default function Inscripcion() {
   // Cargar ciudades con cobertura activa
   useEffect(() => {
     const cargar = async () => {
-      const { data } = await supabase.from('cobertura').select('ciudad').eq('activa', true).order('ciudad')
+      const { data } = await supabase.from('cobertura').select('ciudad,comuna').eq('activa', true).order('ciudad').order('comuna')
       if (data) {
         const ciudades = [...new Set(data.map((c: {ciudad:string}) => c.ciudad))]
         setCiudadesDisponibles(ciudades)
+        // Agrupar comunas por ciudad para el panel de cobertura informativo
+        const agrupado: Record<string,string[]> = {}
+        data.forEach((c: {ciudad:string,comuna:string}) => {
+          if (!agrupado[c.ciudad]) agrupado[c.ciudad] = []
+          agrupado[c.ciudad].push(c.comuna)
+        })
+        setCoberturaCompleta(agrupado)
       }
     }
     cargar()
@@ -525,6 +534,37 @@ export default function Inscripcion() {
                 </div>
               </div>
 
+              {/* Cobertura de despacho */}
+              <div style={{border:'1px solid #e5e7eb',borderRadius:12,padding:16,marginBottom:24}}>
+                <div style={{fontSize:13,fontWeight:600,color:'#111',marginBottom:4}}>📍 Revisa la cobertura de despacho</div>
+                <p style={{fontSize:11,color:'#6b7280',marginBottom:12,lineHeight:1.6}}>GreenTech solo puede despachar a las comunas habilitadas. Verifica que tu domicilio esté dentro de la cobertura antes de iniciar el proceso.</p>
+                {Object.keys(coberturaCompleta).length === 0 ? (
+                  <div style={{fontSize:12,color:'#9ca3af'}}>Cargando comunas disponibles...</div>
+                ) : (
+                  <div style={{display:'flex',flexDirection:'column',gap:6}}>
+                    {Object.keys(coberturaCompleta).sort().map(ciudad => (
+                      <div key={ciudad} style={{border:'1px solid #e5e7eb',borderRadius:8,overflow:'hidden'}}>
+                        <button
+                          onClick={()=>setCiudadExpandida(ciudadExpandida===ciudad?null:ciudad)}
+                          style={{width:'100%',display:'flex',alignItems:'center',justifyContent:'space-between',padding:'10px 14px',background:'#f9fafb',border:'none',cursor:'pointer',fontSize:12,fontWeight:600,color:'#374151',textAlign:'left'}}
+                        >
+                          <span>🏙️ {ciudad} <span style={{fontWeight:400,color:'#9ca3af'}}>({coberturaCompleta[ciudad].length} comuna{coberturaCompleta[ciudad].length!==1?'s':''})</span></span>
+                          <span style={{fontSize:10,color:'#9ca3af'}}>{ciudadExpandida===ciudad?'▲':'▼'}</span>
+                        </button>
+                        {ciudadExpandida===ciudad && (
+                          <div style={{padding:'10px 14px',background:'#fff',display:'flex',flexWrap:'wrap',gap:6}}>
+                            {coberturaCompleta[ciudad].map(comuna => (
+                              <span key={comuna} style={{fontSize:11,padding:'3px 10px',background:'#EAF3DE',color:'#3B6D11',borderRadius:20,border:'1px solid #97C459'}}>{comuna}</span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <p style={{fontSize:11,color:'#6b7280',marginTop:10}}>¿Tu comuna no aparece? Contáctanos a <a href="mailto:contacto@asociaciongreentech.cl" style={{color:'#3B6D11'}}>contacto@asociaciongreentech.cl</a> antes de continuar.</p>
+              </div>
+
               <div style={{display:'flex',justifyContent:'flex-end'}}>
                 <button style={{...s.btnPrimary,padding:'11px 28px',fontSize:14}} onClick={()=>setPaso(1)}>Comenzar solicitud →</button>
               </div>
@@ -781,11 +821,6 @@ export default function Inscripcion() {
           {paso===5 && (
             <div>
               <h2 style={{fontSize:15,fontWeight:600,marginBottom:20}}>📎 Documentos requeridos</h2>
-              <div style={{border:'1px dashed #d1d5db',borderRadius:12,padding:20,textAlign:'center',background:'#f9fafb',marginBottom:16}}>
-                <div style={{fontSize:28,marginBottom:8}}>☁️</div>
-                <div style={{fontSize:13,fontWeight:500,marginBottom:4}}>Arrastra archivos aquí o selecciona</div>
-                <div style={{fontSize:12,color:'#9ca3af'}}>PDF, JPG, PNG · máx. 10 MB por archivo</div>
-              </div>
               {[
                 {key:'cedula_anverso',label:'Cédula de identidad — Anverso (frente)',req:true},
                 {key:'cedula_reverso',label:'Cédula de identidad — Reverso (dorso)',req:true},
