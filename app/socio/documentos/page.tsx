@@ -127,8 +127,11 @@ export default function MisDocumentos() {
         }
         continue
       }
-      const archivo = archivos?.find(f => (doc as any).firmaKey && f.name.split('.')[0] === (doc as any).firmaKey)
-        || archivos?.find(f => f.name.split('.')[0] === doc.storageKey || f.name.split('.')[0] === doc.storageKey + '_nueva')
+      const firmaKeyDoc = (doc as any).firmaKey
+      // Para docs con firmaKey (contrato, declaracion), el socio SOLO ve la versión firmada
+      const archivo = firmaKeyDoc
+        ? archivos?.find(f => f.name.split('.')[0] === firmaKeyDoc)
+        : archivos?.find(f => f.name.split('.')[0] === doc.storageKey || f.name.split('.')[0] === doc.storageKey + '_nueva')
       if (archivo) {
         const fecha = archivo.updated_at
           ? new Date(archivo.updated_at).toLocaleDateString('es-CL', { day:'2-digit', month:'short', year:'numeric' })
@@ -163,14 +166,16 @@ export default function MisDocumentos() {
     const { data: archivos } = await supabase.storage.from('documentos').list(rutSocio)
     const doc = documentosEsperados.find(d => d.storageKey === storageKey)
     const firmaKey = (doc as any)?.firmaKey
-    const archivo = (firmaKey && archivos?.find(f => f.name.split('.')[0] === firmaKey))
-      || archivos?.find(f => f.name.split('.')[0] === storageKey)
+    // Si tiene firmaKey, SOLO buscar la versión firmada
+    const archivo = firmaKey
+      ? archivos?.find(f => f.name.split('.')[0] === firmaKey)
+      : archivos?.find(f => f.name.split('.')[0] === storageKey)
     if (archivo) {
       const { data } = await supabase.storage.from('documentos').createSignedUrl(`${rutSocio}/${archivo.name}`, 120)
       if (data?.signedUrl) { window.open(data.signedUrl, '_blank'); return }
     }
-    setMensaje('❌ Documento no encontrado en Storage.')
-    setTimeout(() => setMensaje(''), 4000)
+    setMensaje('❌ Documento firmado no encontrado. Contacta al administrador.')
+    setTimeout(() => setMensaje(''), 5000)
   }
 
   const descargarDocumento = async (storageKey: string, nombre: string) => {
@@ -178,8 +183,10 @@ export default function MisDocumentos() {
     const { data: archivos } = await supabase.storage.from('documentos').list(rutSocio)
     const doc = documentosEsperados.find(d => d.storageKey === storageKey)
     const firmaKey = (doc as any)?.firmaKey
-    const archivo = (firmaKey && archivos?.find(f => f.name.split('.')[0] === firmaKey))
-      || archivos?.find(f => f.name.split('.')[0] === storageKey)
+    // Si tiene firmaKey, SOLO buscar la versión firmada
+    const archivo = firmaKey
+      ? archivos?.find(f => f.name.split('.')[0] === firmaKey)
+      : archivos?.find(f => f.name.split('.')[0] === storageKey)
     if (archivo) {
       const { data } = await supabase.storage.from('documentos').createSignedUrl(`${rutSocio}/${archivo.name}`, 120)
       if (data?.signedUrl) {
@@ -405,7 +412,9 @@ export default function MisDocumentos() {
                 <div style={{ display:'flex', alignItems:'center', gap:8, flexShrink:0 }}>
                   <span style={{ fontSize:11, color:'#9ca3af' }}>{fecha}</span>
                   {existe ? (
-                    <span style={{ fontSize:10, padding:'2px 8px', borderRadius:20, background:'#EAF3DE', color:'#3B6D11', whiteSpace:'nowrap' }}>✓ Presente</span>
+                    <span style={{ fontSize:10, padding:'2px 8px', borderRadius:20, background:'#EAF3DE', color:'#3B6D11', whiteSpace:'nowrap' }}>✓ Firmado</span>
+                  ) : (doc as any).firmaKey ? (
+                    <span style={{ fontSize:10, padding:'2px 8px', borderRadius:20, background:'#FDF5E6', color:'#BA7517', whiteSpace:'nowrap' }}>⏳ Pendiente firma</span>
                   ) : (
                     <span style={{ fontSize:10, padding:'2px 8px', borderRadius:20, background:'#FCEBEB', color:'#A32D2D', whiteSpace:'nowrap' }}>⏳ Pendiente</span>
                   )}
@@ -421,8 +430,10 @@ export default function MisDocumentos() {
                         📥
                       </button>
                     </>
-                  ) : !existe ? (
+                  ) : !existe && !(doc as any).firmaKey ? (
                     <span style={{ fontSize:11, color:'#9ca3af', fontStyle:'italic' }}>No subido aún</span>
+                  ) : !existe && (doc as any).firmaKey ? (
+                    <span style={{ fontSize:11, color:'#BA7517', fontStyle:'italic' }}>En revisión por directiva</span>
                   ) : null}
                 </div>
               </div>
