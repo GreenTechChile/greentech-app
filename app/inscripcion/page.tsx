@@ -466,9 +466,9 @@ export default function Inscripcion() {
               <div style={{border:'1px solid #97C459',borderRadius:12,padding:16,background:'#EAF3DE',marginBottom:16}}>
                 <div style={{fontSize:13,fontWeight:600,color:'#3B6D11',marginBottom:10}}>📋 Resumen del proceso</div>
                 <div style={{fontSize:12,color:'#374151',lineHeight:1.9}}>
-                  <div style={{display:'flex',alignItems:'flex-start',gap:8,marginBottom:6}}><span>1.</span><span>Completas el formulario con tus datos personales, domicilio e información médica.</span></div>
-                  <div style={{display:'flex',alignItems:'flex-start',gap:8,marginBottom:6}}><span>2.</span><span>Subes los documentos requeridos y aceptas el Reglamento Interno.</span></div>
-                  <div style={{display:'flex',alignItems:'flex-start',gap:8,marginBottom:6}}><span>3.</span><span>Realizas el pago de incorporación de <strong>${montoIncorporacion.toLocaleString('es-CL')}</strong>.</span></div>
+                  <div style={{display:'flex',alignItems:'flex-start',gap:8,marginBottom:6}}><span>1.</span><span>Realizas el pago de incorporación de <strong>${montoIncorporacion.toLocaleString('es-CL')}</strong>.</span></div>
+                  <div style={{display:'flex',alignItems:'flex-start',gap:8,marginBottom:6}}><span>2.</span><span>Completas el formulario con tus datos personales, domicilio e información médica.</span></div>
+                  <div style={{display:'flex',alignItems:'flex-start',gap:8,marginBottom:6}}><span>3.</span><span>Subes los documentos requeridos y aceptas el Reglamento Interno.</span></div>
                   <div style={{display:'flex',alignItems:'flex-start',gap:8,marginBottom:6}}><span>4.</span><span>Lees y aceptas el Contrato de Previsión y la Declaración Jurada de Ingreso.</span></div>
                   <div style={{display:'flex',alignItems:'flex-start',gap:8}}><span>5.</span><span>La directiva revisa tu solicitud en un plazo máximo de <strong>5 días hábiles</strong> y te notifica por correo.</span></div>
                 </div>
