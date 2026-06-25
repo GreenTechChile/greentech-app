@@ -68,12 +68,19 @@ export default function AdminSocios() {
       supabase.from('socios').select('id').eq('estado', 'pendiente'),
       supabase.from('recetas_pendientes').select('id').eq('estado', 'pendiente'),
       supabase.from('socios').select('id').eq('delegacion_estado', 'pendiente_firma'),
-      supabase.from('pagos_incorporacion').select('id').eq('estado', 'aprobado'),
+      supabase.from('pagos_incorporacion').select('rut').eq('estado', 'aprobado'),
     ])
     const pendientes = dPendientes?.length || 0
     const renovaciones = dRenovaciones?.length || 0
     const delegaciones = dDelegaciones?.length || 0
-    const pagosInc = dPagosInc?.length || 0
+    // Solo contar pagos donde el socio NO completó la inscripción
+    const rutsRegistrados = new Set((dPendientes || []).map((s: any) => s.rut).concat(
+      // También incluir socios activos/rechazados para no mostrar sus pagos como incompletos
+    ))
+    // Forma más directa: contar pagos cuyo rut no tiene socio en ningún estado
+    const { data: todosLosSocios } = await supabase.from('socios').select('rut')
+    const rutsConSocioSet = new Set((todosLosSocios || []).map((s: any) => s.rut))
+    const pagosInc = (dPagosInc || []).filter((p: any) => !rutsConSocioSet.has(p.rut)).length
     const totalPendiente = pendientes + renovaciones + delegaciones + pagosInc
     setTabCounts({ pendientes, renovaciones, delegaciones, pagos_incompletos: pagosInc, total_pendiente: totalPendiente })
   }
@@ -747,7 +754,7 @@ export default function AdminSocios() {
 
             {loading ? (
               <div style={{ fontSize: 13, color: '#9ca3af', padding: 40, textAlign: 'center' }}>Cargando...</div>
-            ) : pagosIncompletos.length === 0 ? (
+            ) : pagosIncompletos.filter((p: any) => filtroPI !== 'pendientes' || !rutsConSocio.has(p.rut)).length === 0 ? (
               <div style={{ fontSize: 13, color: '#9ca3af', padding: 40, textAlign: 'center', border: '1px dashed #e5e7eb', borderRadius: 12 }}>
                 {filtroPI === 'pendientes' ? '✅ No hay pagos incompletos pendientes' : '📭 Sin registros'}
               </div>
@@ -761,7 +768,10 @@ export default function AdminSocios() {
                   ).map(h => <span key={h}>{h}</span>)}
                 </div>
 
-                {pagosIncompletos.map((p: any) => (
+                {pagosIncompletos.filter((p: any) =>
+                  // En vista "pendientes" solo mostrar los que NO completaron la inscripción
+                  filtroPI !== 'pendientes' || !rutsConSocio.has(p.rut)
+                ).map((p: any) => (
                   <div key={p.id} style={{ display: 'grid', gridTemplateColumns: filtroPI === 'historial' ? '2fr 1fr 1fr 1fr 1fr 1.5fr auto' : '2fr 1fr 1fr 1fr 1fr auto', padding: '12px 16px', borderBottom: '1px solid #f3f4f6', fontSize: 13, alignItems: 'center', gap: 8 }}>
                     <div>
                       <div style={{ fontWeight: 500 }}>{p.nombre || '—'}</div>
