@@ -754,9 +754,13 @@ export default function AdminSocios() {
 
             {loading ? (
               <div style={{ fontSize: 13, color: '#9ca3af', padding: 40, textAlign: 'center' }}>Cargando...</div>
-            ) : pagosIncompletos.filter((p: any) => filtroPI !== 'pendientes' || !rutsConSocio.has(p.rut)).length === 0 ? (
+            ) : pagosIncompletos.filter((p: any) =>
+                filtroPI === 'pendientes'
+                  ? !rutsConSocio.has(p.rut)
+                  : (p.link_enviado_por && rutsConSocio.has(p.rut))
+              ).length === 0 ? (
               <div style={{ fontSize: 13, color: '#9ca3af', padding: 40, textAlign: 'center', border: '1px dashed #e5e7eb', borderRadius: 12 }}>
-                {filtroPI === 'pendientes' ? '✅ No hay pagos incompletos pendientes' : '📭 Sin registros'}
+                {filtroPI === 'pendientes' ? '✅ No hay pagos incompletos pendientes' : '📭 Sin inscripciones completadas vía link'}
               </div>
             ) : (
               <div style={{ border: '1px solid #e5e7eb', borderRadius: 12, overflow: 'hidden' }}>
@@ -769,8 +773,9 @@ export default function AdminSocios() {
                 </div>
 
                 {pagosIncompletos.filter((p: any) =>
-                  // En vista "pendientes" solo mostrar los que NO completaron la inscripción
-                  filtroPI !== 'pendientes' || !rutsConSocio.has(p.rut)
+                  filtroPI === 'pendientes'
+                    ? !rutsConSocio.has(p.rut)
+                    : (p.link_enviado_por && rutsConSocio.has(p.rut))
                 ).map((p: any) => (
                   <div key={p.id} style={{ display: 'grid', gridTemplateColumns: filtroPI === 'historial' ? '2fr 1fr 1fr 1fr 1fr 1.5fr auto' : '2fr 1fr 1fr 1fr 1fr auto', padding: '12px 16px', borderBottom: '1px solid #f3f4f6', fontSize: 13, alignItems: 'center', gap: 8 }}>
                     <div>
