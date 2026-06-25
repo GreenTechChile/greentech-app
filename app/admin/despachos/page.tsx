@@ -625,15 +625,15 @@ export default function Despachos() {
             <div style={{ fontSize:18, fontWeight:700, color:'#185FA5', marginBottom:4 }}>✅ Confirmar entrega</div>
             <div style={{ fontSize:13, color:'#6b7280', marginBottom:20 }}>Orden #{modalFotoEntrega.ordenBase} · {modalFotoEntrega.socio_nombre}</div>
 
-            <div style={{ background:'#f9fafb', border:'2px dashed #d1d5db', borderRadius:12, padding:20, textAlign:'center', marginBottom:16, cursor:'pointer' }}
+            <div style={{ background:'#f9fafb', border:`2px dashed ${fotoPreview ? '#97C459' : '#EF9F27'}`, borderRadius:12, padding:20, textAlign:'center', marginBottom:16, cursor:'pointer' }}
               onClick={() => document.getElementById('input-foto-entrega')?.click()}>
               {fotoPreview ? (
                 <img src={fotoPreview} alt="preview" style={{ maxHeight:200, maxWidth:'100%', borderRadius:8, objectFit:'contain' }} />
               ) : (
                 <>
                   <div style={{ fontSize:32, marginBottom:8 }}>📷</div>
-                  <div style={{ fontSize:13, color:'#374151', fontWeight:600 }}>Agregar foto como respaldo</div>
-                  <div style={{ fontSize:11, color:'#9ca3af', marginTop:4 }}>Toca para seleccionar o capturar foto (opcional)</div>
+                  <div style={{ fontSize:13, color:'#374151', fontWeight:600 }}>Foto de confirmación de entrega</div>
+                  <div style={{ fontSize:11, color:'#EF9F27', marginTop:4, fontWeight:500 }}>⚠️ Requerida para confirmar la entrega</div>
                 </>
               )}
             </div>
@@ -660,9 +660,9 @@ export default function Despachos() {
                 style={{ flex:1, padding:'10px', border:'1px solid #d1d5db', borderRadius:10, background:'#fff', color:'#374151', fontSize:13, cursor:'pointer' }}>
                 Cancelar
               </button>
-              <button onClick={confirmarEntregaConFoto} disabled={subiendoFoto}
-                style={{ flex:2, padding:'10px', border:'none', borderRadius:10, background: subiendoFoto ? '#9ca3af' : '#185FA5', color:'#fff', fontSize:13, fontWeight:700, cursor: subiendoFoto ? 'not-allowed' : 'pointer' }}>
-                {subiendoFoto ? 'Guardando...' : fotoEntrega ? '✅ Confirmar entrega con foto' : '✅ Confirmar entrega'}
+              <button onClick={confirmarEntregaConFoto} disabled={subiendoFoto || !fotoEntrega}
+                style={{ flex:2, padding:'10px', border:'none', borderRadius:10, background: subiendoFoto || !fotoEntrega ? '#9ca3af' : '#185FA5', color:'#fff', fontSize:13, fontWeight:700, cursor: subiendoFoto || !fotoEntrega ? 'not-allowed' : 'pointer' }}>
+                {subiendoFoto ? 'Guardando...' : '✅ Confirmar entrega con foto'}
               </button>
             </div>
           </div>
