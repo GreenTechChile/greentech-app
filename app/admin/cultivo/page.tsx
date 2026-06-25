@@ -93,12 +93,15 @@ export default function Cultivo() {
 
   const cargarResponsables = async () => {
     // Solo muestra al usuario logueado si tiene rol_cultivador activo
+    // Busca por RUT (guardado en metadata al login) — más confiable que email (ya no es único)
     const { data: { session } } = await supabase.auth.getSession()
-    if (!session?.user?.email) return
+    if (!session?.user) return
+    const rut = session.user.user_metadata?.rut
+    if (!rut) return
     const { data: socio } = await supabase
       .from('socios')
       .select('nombre, rol_cultivador')
-      .eq('email', session.user.email)
+      .eq('rut', rut)
       .single()
     if (socio?.rol_cultivador) {
       setResponsables([socio.nombre])
