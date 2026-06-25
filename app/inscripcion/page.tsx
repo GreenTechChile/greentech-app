@@ -589,7 +589,7 @@ export default function Inscripcion() {
                 <strong>¿Qué incluye este pago?</strong><br/>
                 ✓ Revisión de tu solicitud por la directiva<br/>
                 ✓ Generación de contratos personalizados con tus datos<br/>
-                ✓ Firma manual de contrato y declaración jurada<br/>
+                ✓ Firma electrónica avanzada de contrato y declaración jurada<br/>
                 ✓ Alta en el sistema GreenTech
               </div>
               {error && <div style={{background:'#FCEBEB',border:'1px solid #F5C5C5',borderRadius:8,padding:'10px 12px',fontSize:12,color:'#A32D2D',marginBottom:14}}>⚠️ {error}</div>}
