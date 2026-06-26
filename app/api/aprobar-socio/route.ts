@@ -25,27 +25,29 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Socio no encontrado' }, { status: 404 })
     }
 
-    // 2. Generar contraseña temporal
+    // 2. Generar email sintético basado en RUT (identificador único, independiente del email real)
+    //    Esto evita conflictos cuando dos socios usan el mismo email personal.
     const rutLimpio = socio.rut.replace(/\./g, '').replace('-', '')
+    const authEmail = `${rutLimpio}@greentech.cl`
     const tempPassword = `GT${rutLimpio.slice(-6)}!`
 
-    // 3. Crear usuario en Supabase Auth (o actualizarlo si ya existe)
+    // 3. Crear usuario en Supabase Auth usando el email sintético por RUT
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-      email: socio.email,
+      email: authEmail,
       password: tempPassword,
-      email_confirm: true, // No necesita confirmar email
+      email_confirm: true,
       user_metadata: { rut: socio.rut, nombre: socio.nombre },
     })
 
-    // Si ya existe el usuario en auth, NO resetear contraseña (podría haber cambiado la suya)
-    // Solo nos aseguramos de que el email esté confirmado
+    // Si ya existe (re-aprobación), no tocar la contraseña — el socio puede haberla cambiado
     if (authError && authError.message?.includes('already been registered')) {
       const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers()
-      const existing = existingUsers?.users?.find(u => u.email === socio.email)
+      const existing = existingUsers?.users?.find(u => u.email === authEmail)
       if (existing) {
         await supabaseAdmin.auth.admin.updateUserById(existing.id, {
           email_confirm: true,
-          // No se toca la contraseña para no pisar cambios que el socio haya hecho
+          user_metadata: { rut: socio.rut, nombre: socio.nombre },
+          // NO se resetea la contraseña
         })
       }
     } else if (authError) {

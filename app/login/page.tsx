@@ -77,9 +77,12 @@ export default function Login() {
         return
       }
 
-      // Login con Supabase Auth
+      // Login con Supabase Auth usando email sintético por RUT (no el email personal)
+      // Esto evita conflictos cuando dos socios comparten el mismo email personal
+      const rutLimpio = rut.trim().replace(/\./g, '').replace('-', '')
+      const authEmail = `${rutLimpio}@greentech.cl`
       const { error: authError } = await supabase.auth.signInWithPassword({
-        email: socio.email,
+        email: authEmail,
         password,
       })
 
