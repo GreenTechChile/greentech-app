@@ -37,14 +37,15 @@ export async function POST(req: NextRequest) {
       user_metadata: { rut: socio.rut, nombre: socio.nombre },
     })
 
-    // Si ya existe el usuario en auth, solo actualizar la contraseña
+    // Si ya existe el usuario en auth, NO resetear contraseña (podría haber cambiado la suya)
+    // Solo nos aseguramos de que el email esté confirmado
     if (authError && authError.message?.includes('already been registered')) {
       const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers()
       const existing = existingUsers?.users?.find(u => u.email === socio.email)
       if (existing) {
         await supabaseAdmin.auth.admin.updateUserById(existing.id, {
-          password: tempPassword,
           email_confirm: true,
+          // No se toca la contraseña para no pisar cambios que el socio haya hecho
         })
       }
     } else if (authError) {
