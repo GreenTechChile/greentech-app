@@ -1048,7 +1048,7 @@ export default function AdminSocios() {
                   {/* Footer acciones */}
                   {filtroSocios === 'pendiente' && (
                     <div style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10, background: '#fff' }}>
-                      <input type="text" placeholder="Notas internas (opcional, solo visibles para la directiva)..."
+                      <input type="text" placeholder="Motivo / notas (opcional) — si se rechaza, este texto se envía al solicitante por correo"
                         value={notas[socio.id] || ''} onChange={e => setNotas(prev => ({...prev,[socio.id]:e.target.value}))}
                         onClick={e => e.stopPropagation()}
                         style={{ flex: 1, padding: '7px 10px', border: '1px solid #e5e7eb', borderRadius: 8, fontSize: 12, outline: 'none' }}/>
