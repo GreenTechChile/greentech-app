@@ -30,32 +30,28 @@ export async function POST(req: NextRequest) {
     // Usuarios legacy (aprobados antes del cambio) → email real
     const rutLimpio = socio.rut.replace(/\./g, '').replace('-', '')
     const syntheticEmail = `${rutLimpio}@greentech.cl`
+    const redirectTo = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://asociaciongreentech.cl'}/login`
 
-    let authEmail = syntheticEmail
-    const { data: { user: userSynthetic } } = await supabaseAdmin.auth.admin.getUserByEmail(syntheticEmail)
-    if (!userSynthetic) {
-      // Fallback: intentar con el email real (usuario legacy)
-      const { data: { user: userReal } } = await supabaseAdmin.auth.admin.getUserByEmail(socio.email)
-      if (!userReal) {
-        // No existe en Auth — responder ok igual (no revelar si el RUT existe)
-        console.warn('[reset-password] No se encontró usuario Auth para RUT:', rut)
-        return NextResponse.json({ ok: true })
-      }
-      authEmail = socio.email
-    }
-
-    // Generar link de recuperación usando Supabase Admin
-    const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+    // Intentar con email sintético; si falla, fallback al email real (usuario legacy)
+    let { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
       type: 'recovery',
-      email: authEmail,
-      options: {
-        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://asociaciongreentech.cl'}/login`,
-      },
+      email: syntheticEmail,
+      options: { redirectTo },
     })
 
     if (linkError || !linkData?.properties?.action_link) {
-      console.error('[reset-password] Error generando link:', linkError)
-      return NextResponse.json({ error: 'No se pudo generar el link de recuperación' }, { status: 500 })
+      const { data: fallbackData, error: fallbackError } = await supabaseAdmin.auth.admin.generateLink({
+        type: 'recovery',
+        email: socio.email,
+        options: { redirectTo },
+      })
+
+      if (fallbackError || !fallbackData?.properties?.action_link) {
+        console.warn('[reset-password] No se encontró usuario Auth para RUT:', rut)
+        return NextResponse.json({ ok: true })
+      }
+
+      linkData = fallbackData
     }
 
     const resetLink = linkData.properties.action_link

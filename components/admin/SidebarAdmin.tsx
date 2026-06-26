@@ -56,6 +56,15 @@ export default function SidebarAdmin() {
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) return
+
+      // Superusuario: detectado por app_metadata, no existe en socios
+      if (user.app_metadata?.superadmin === true) {
+        setNombre('Superadmin')
+        setRut(user.user_metadata?.rut || '99999999-9')
+        setRoles({ rol_socio: true, rol_admin: true, rol_cultivador: true, rol_despachador: true })
+        return
+      }
+
       const rutUsuario = user.user_metadata?.rut
       if (!rutUsuario) return
       supabase.from('socios')
