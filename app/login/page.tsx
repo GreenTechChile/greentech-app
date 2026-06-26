@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 
 // Formatea RUT mientras el usuario escribe: strip todo, agrega guion antes del dígito verificador
@@ -31,7 +31,6 @@ function validarRut(rut: string): boolean {
 
 export default function Login() {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const [rut, setRut] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -42,7 +41,12 @@ export default function Login() {
   const [recoveryRut, setRecoveryRut] = useState('')
   const [recoveryLoading, setRecoveryLoading] = useState(false)
   const [recoveryMsg, setRecoveryMsg] = useState('')
-  const sessionTimeout = searchParams.get('timeout') === '1'
+  const [sessionTimeout, setSessionTimeout] = useState(false)
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    setSessionTimeout(params.get('timeout') === '1')
+  }, [])
 
   const handleRutChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = formatRut(e.target.value)
