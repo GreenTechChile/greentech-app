@@ -141,7 +141,7 @@ export default function AdminSocios() {
   const toggleExpandido = async (socio: Socio) => {
     const abierto = expandido === socio.id
     setExpandido(abierto ? null : socio.id)
-    if (!abierto && filtroSocios === 'pendiente') {
+    if (!abierto) {
       await verificarFirmados(socio)
     }
   }
