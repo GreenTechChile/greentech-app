@@ -25,9 +25,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true })
     }
 
-    // Email sintético usado en Auth
+    // Determinar qué email tiene en Auth:
+    // Usuarios nuevos → email sintético {rutLimpio}@greentech.cl
+    // Usuarios legacy (aprobados antes del cambio) → email real
     const rutLimpio = socio.rut.replace(/\./g, '').replace('-', '')
-    const authEmail = `${rutLimpio}@greentech.cl`
+    const syntheticEmail = `${rutLimpio}@greentech.cl`
+
+    let authEmail = syntheticEmail
+    const { data: { user: userSynthetic } } = await supabaseAdmin.auth.admin.getUserByEmail(syntheticEmail)
+    if (!userSynthetic) {
+      // Fallback: intentar con el email real (usuario legacy)
+      const { data: { user: userReal } } = await supabaseAdmin.auth.admin.getUserByEmail(socio.email)
+      if (!userReal) {
+        // No existe en Auth — responder ok igual (no revelar si el RUT existe)
+        console.warn('[reset-password] No se encontró usuario Auth para RUT:', rut)
+        return NextResponse.json({ ok: true })
+      }
+      authEmail = socio.email
+    }
 
     // Generar link de recuperación usando Supabase Admin
     const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
