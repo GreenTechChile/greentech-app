@@ -37,6 +37,10 @@ export default function Login() {
   const [error, setError] = useState('')
   const [showPass, setShowPass] = useState(false)
   const [rutInvalido, setRutInvalido] = useState(false)
+  const [showRecovery, setShowRecovery] = useState(false)
+  const [recoveryRut, setRecoveryRut] = useState('')
+  const [recoveryLoading, setRecoveryLoading] = useState(false)
+  const [recoveryMsg, setRecoveryMsg] = useState('')
 
   const handleRutChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = formatRut(e.target.value)
@@ -185,7 +189,10 @@ export default function Login() {
         </form>
 
         <div style={{ textAlign: 'center', fontSize: 12, color: '#9ca3af' }}>
-          <Link href="#" style={{ color: '#3B6D11' }}>¿Olvidaste tu contraseña?</Link>
+          <button onClick={() => { setShowRecovery(true); setRecoveryMsg(''); setRecoveryRut('') }}
+            style={{ background: 'none', border: 'none', color: '#3B6D11', cursor: 'pointer', fontSize: 12, padding: 0 }}>
+            ¿Olvidaste tu contraseña?
+          </button>
           <div style={{ margin: '12px 0', borderTop: '1px solid #e5e7eb', paddingTop: 12 }}>
             ¿Aún no eres socio?{' '}
             <Link href="/inscripcion" style={{ color: '#3B6D11', fontWeight: 500 }}>Solicita tu incorporación</Link>
@@ -193,6 +200,50 @@ export default function Login() {
         </div>
 
       </div>
+
+      {/* Modal recuperación de contraseña */}
+      {showRecovery && (
+        <div onClick={() => setShowRecovery(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 14, padding: 28, width: 340, boxShadow: '0 8px 32px rgba(0,0,0,0.18)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <span style={{ fontWeight: 700, fontSize: 15 }}>Recuperar contraseña</span>
+              <button onClick={() => setShowRecovery(false)} style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', color: '#9ca3af' }}>×</button>
+            </div>
+            {recoveryMsg ? (
+              <p style={{ fontSize: 13, color: '#3B6D11', background: '#EAF3DE', border: '1px solid #97C459', borderRadius: 8, padding: '10px 14px', margin: 0 }}>{recoveryMsg}</p>
+            ) : (
+              <>
+                <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 16 }}>Ingresa tu RUT y te enviaremos un link de recuperación a tu correo registrado.</p>
+                <input
+                  value={recoveryRut}
+                  onChange={e => setRecoveryRut(formatRut(e.target.value))}
+                  placeholder="12345678-9"
+                  maxLength={12}
+                  style={{ width: '100%', padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: 8, fontSize: 14, outline: 'none', boxSizing: 'border-box', marginBottom: 12 }}
+                />
+                <button
+                  disabled={recoveryLoading || !validarRut(recoveryRut)}
+                  onClick={async () => {
+                    setRecoveryLoading(true)
+                    try {
+                      await fetch('/api/reset-password', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ rut: recoveryRut }),
+                      })
+                    } catch {}
+                    setRecoveryLoading(false)
+                    setRecoveryMsg('Si tu RUT está registrado, recibirás un correo con las instrucciones para restablecer tu contraseña.')
+                  }}
+                  style={{ width: '100%', background: recoveryLoading || !validarRut(recoveryRut) ? '#9ca3af' : '#3B6D11', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 0', fontSize: 14, fontWeight: 600, cursor: recoveryLoading || !validarRut(recoveryRut) ? 'not-allowed' : 'pointer' }}
+                >
+                  {recoveryLoading ? 'Enviando...' : 'Enviar link de recuperación'}
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -346,6 +346,19 @@ function template(evento: string, datos: Datos): { subject: string; html: string
       return { subject: 'Completa tu inscripción en GreenTech', html }
     }
 
+    case 'reset_password': {
+      const nombre = String(datos.nombre || 'Socio/a')
+      const link = String(datos.link || `${APP_URL}/login`)
+      const html = layout('Recuperación de contraseña — GreenTech', `
+        ${h1('Recupera tu contraseña 🔑')}
+        ${p(`Hola <strong>${nombre}</strong>, recibimos una solicitud para restablecer la contraseña de tu cuenta en el portal GreenTech.`)}
+        ${warningBox('Este link es válido por 1 hora y solo puede usarse una vez. Si no solicitaste este cambio, ignora este correo.')}
+        ${btn('Restablecer mi contraseña →', link)}
+        ${p('Si tienes problemas para ingresar, contacta a la directiva.')}
+      `)
+      return { subject: 'Recuperación de contraseña — GreenTech', html }
+    }
+
     default:
       return null
   }
