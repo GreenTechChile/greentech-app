@@ -100,6 +100,9 @@ export default function Login() {
       await supabase.auth.updateUser({
         data: { rut: rut.trim() }
       })
+      // Refrescar el JWT para que incluya el rut en user_metadata desde ya
+      // (sin esto, el token viejo no pasa las policies RLS del sidebar)
+      await supabase.auth.refreshSession()
 
       // Establecer cookie de sesión para el middleware de protección de rutas
       document.cookie = 'gt_auth=1; path=/; max-age=86400; SameSite=Lax'
