@@ -14,6 +14,7 @@ interface Socio {
   notas_admin: string; created_at: string
   aprobado_por?: string; aprobado_at?: string
   delegacion_nueva_cuota?: number; delegacion_pdf_url?: string; delegacion_estado?: string
+  numero_intentos?: number
 }
 
 // Qué documentos firmados se requieren antes de poder aprobar
@@ -48,6 +49,7 @@ export default function AdminSocios() {
   const [rutsConSocio, setRutsConSocio] = useState<Set<string>>(new Set())
   const [recetasExpandidas, setRecetasExpandidas] = useState<Set<string>>(new Set())
   const [nombresPorEmail, setNombresPorEmail] = useState<Record<string,string>>({})
+  const [historial, setHistorial] = useState<Record<string, any[]>>({})
 
   useEffect(() => {
     cargarConteos()
@@ -143,6 +145,15 @@ export default function AdminSocios() {
     setExpandido(abierto ? null : socio.id)
     if (!abierto) {
       await verificarFirmados(socio)
+      // Cargar historial de postulaciones anteriores si hay más de un intento
+      if ((socio.numero_intentos || 1) > 1 && !historial[socio.id]) {
+        const { data } = await supabase
+          .from('historial_postulaciones')
+          .select('*')
+          .eq('rut', socio.rut)
+          .order('intento_numero', { ascending: false })
+        if (data) setHistorial(prev => ({ ...prev, [socio.id]: data }))
+      }
     }
   }
 
@@ -227,26 +238,28 @@ export default function AdminSocios() {
 
   const rechazar = async (socio: Socio) => {
     setProcesando(socio.id)
-    const { data: { user } } = await supabase.auth.getUser()
-    const nombreAdmin = user?.user_metadata?.nombre || user?.email || user?.user_metadata?.rut || 'Admin'
-    await supabase.from('socios').update({
-      estado: 'rechazado',
-      notas_admin: notas[socio.id] || null,
-      aprobado_por: nombreAdmin,
-      aprobado_at: new Date().toISOString(),
-    }).eq('id', socio.id)
-    await logAudit('rechazar_socio', 'socio', socio.id, nombreAdmin, { socio_nombre: socio.nombre, rut: socio.rut, motivo: notas[socio.id] || null })
-    setMensaje(`Solicitud de ${socio.nombre} rechazada.`)
-    setSocios(prev => prev.filter(s => s.id !== socio.id))
-    setProcesando(null)
-    setTimeout(() => setMensaje(''), 4000)
-    // El pago ya fue registrado en movimientos_financieros al completar la inscripción.
-    // No se crea un segundo movimiento al rechazar.
+    setMensaje('⏳ Archivando documentos...')
     try {
-      const motivo = notas[socio.id] || 'No se especificó motivo.'
-      await sendEmail('rechazo_solicitud', socio.email, { nombre: socio.nombre, motivo })
-    } catch (emailErr) {
-      console.error('[rechazar] email error:', emailErr)
+      const { data: { user } } = await supabase.auth.getUser()
+      const nombreAdmin = user?.user_metadata?.nombre || user?.email || user?.user_metadata?.rut || 'Admin'
+      const res = await fetch('/api/rechazar-socio', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          socioId: socio.id,
+          motivo: notas[socio.id] || null,
+          rechazadoPor: nombreAdmin,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Error al rechazar')
+      setMensaje(`Solicitud de ${socio.nombre} rechazada. Documentos archivados en historial.`)
+      setSocios(prev => prev.filter(s => s.id !== socio.id))
+    } catch (err) {
+      setMensaje(`❌ Error al rechazar: ${err instanceof Error ? err.message : 'Intenta nuevamente.'}`)
+    } finally {
+      setProcesando(null)
+      setTimeout(() => setMensaje(''), 5000)
     }
   }
 
@@ -890,7 +903,14 @@ export default function AdminSocios() {
                   {socio.nombre.split(' ').map((n:string) => n[0]).join('').slice(0,2).toUpperCase()}
                 </div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 14, fontWeight: 600 }}>{socio.nombre}</div>
+                  <div style={{ fontSize: 14, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
+                    {socio.nombre}
+                    {(socio.numero_intentos || 1) > 1 && (
+                      <span style={{ fontSize: 10, background: '#EDE9FE', color: '#6D28D9', padding: '2px 8px', borderRadius: 20, fontWeight: 700, whiteSpace: 'nowrap' }}>
+                        🔄 Re-postulación #{socio.numero_intentos}
+                      </span>
+                    )}
+                  </div>
                   <div style={{ fontSize: 11, color: '#6b7280' }}>RUT {socio.rut} · {socio.email} · {socio.telefono}</div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
@@ -1115,6 +1135,55 @@ export default function AdminSocios() {
                         </div>
                       )}
                       {socio.notas_admin && <div>📝 Nota: {socio.notas_admin}</div>}
+                    </div>
+                  )}
+
+                  {/* ── Postulaciones anteriores (re-postulaciones) ── */}
+                  {(socio.numero_intentos || 1) > 1 && historial[socio.id] && historial[socio.id].length > 0 && (
+                    <div style={{ borderTop: '1px solid #e5e7eb', padding: '14px 16px', background: '#fafafa' }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: '#6D28D9', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 10 }}>
+                        🔄 Postulaciones anteriores
+                      </div>
+                      {historial[socio.id].map((h: any) => (
+                        <div key={h.id} style={{ border: '1px solid #EDE9FE', borderRadius: 8, marginBottom: 8, overflow: 'hidden' }}>
+                          <div style={{ padding: '8px 12px', background: '#EDE9FE', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: 12, fontWeight: 600, color: '#6D28D9' }}>Intento #{h.intento_numero}</span>
+                            <span style={{ fontSize: 11, color: '#7C3AED' }}>
+                              {h.rechazado_at ? new Date(h.rechazado_at).toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: 'numeric' }) : ''}
+                              {h.rechazado_por ? ` · por ${nombresPorEmail[h.rechazado_por] || h.rechazado_por}` : ''}
+                            </span>
+                          </div>
+                          <div style={{ padding: '10px 12px' }}>
+                            {h.motivo_rechazo && (
+                              <div style={{ fontSize: 12, color: '#A32D2D', marginBottom: 6 }}>
+                                <strong>Motivo de rechazo:</strong> {h.motivo_rechazo}
+                              </div>
+                            )}
+                            {h.datos_snapshot && (
+                              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4, fontSize: 11, color: '#6b7280' }}>
+                                {h.datos_snapshot.diagnostico && <span><strong>Diagnóstico:</strong> {h.datos_snapshot.diagnostico}</span>}
+                                {h.datos_snapshot.medico_nombre && <span><strong>Médico:</strong> {h.datos_snapshot.medico_nombre}</span>}
+                                {h.datos_snapshot.cuota_mensual && <span><strong>Cuota:</strong> {h.datos_snapshot.cuota_mensual} gr/mes</span>}
+                                {h.datos_snapshot.folio_receta && <span><strong>Folio receta:</strong> {h.datos_snapshot.folio_receta}</span>}
+                              </div>
+                            )}
+                            {h.documentos_paths && Object.keys(h.documentos_paths).length > 0 && (
+                              <div style={{ marginTop: 6, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                                {Object.entries(h.documentos_paths).map(([key, path]: [string, any]) => (
+                                  <button key={key} onClick={async (e) => {
+                                    e.stopPropagation()
+                                    const { data } = await supabase.storage.from('documentos').createSignedUrl(path, 120)
+                                    if (data?.signedUrl) window.open(data.signedUrl, '_blank', 'noopener,noreferrer,width=1000,height=800')
+                                    else alert('Documento no disponible.')
+                                  }} style={{ fontSize: 10, padding: '3px 8px', background: '#EDE9FE', color: '#6D28D9', border: '1px solid #C4B5FD', borderRadius: 20, cursor: 'pointer' }}>
+                                    📄 {key.replace(/_/g, ' ')}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>

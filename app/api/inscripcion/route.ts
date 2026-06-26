@@ -30,18 +30,60 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Faltan datos obligatorios' }, { status: 400 })
     }
 
-    // Verificar que el RUT no esté ya registrado
+    // Verificar si el RUT ya existe
     const { data: existing } = await supabaseAdmin
       .from('socios')
-      .select('rut')
+      .select('rut, estado')
       .eq('rut', rut)
       .single()
 
-    if (existing) {
+    // Bloquear si ya existe y NO está rechazado
+    if (existing && existing.estado !== 'rechazado') {
       return NextResponse.json({ error: 'El RUT ya está registrado en el sistema.' }, { status: 409 })
     }
 
-    const { error: insertError } = await supabaseAdmin.from('socios').insert({
+    // Si existe pero está rechazado → re-postulación: actualizar en vez de insertar
+    if (existing && existing.estado === 'rechazado') {
+      const { error: updateError } = await supabaseAdmin.from('socios').update({
+        nombre: nombre.trim(),
+        email: email.trim().toLowerCase(),
+        telefono: telefono?.trim() || null,
+        direccion: direccion?.trim() || null,
+        casa_depto: casa_depto?.trim() || null,
+        comuna: comuna?.trim() || null,
+        ciudad: ciudad?.trim() || null,
+        estado_civil: estado_civil || null,
+        profesion: profesion?.trim() || null,
+        diagnostico: diagnostico?.trim() || null,
+        diagnostico_secundario: diagnostico_secundario?.trim() || null,
+        medico_nombre: medico_nombre?.trim() || null,
+        medico_rut: medico_rut?.trim() || null,
+        folio_receta: folio_receta?.trim() || null,
+        cuota_mensual: parseInt(cuota_mensual) || null,
+        gramos_delegados: parseInt(gramos_delegados) || null,
+        vencimiento_receta: vencimiento_receta || null,
+        observaciones: observaciones?.trim() || null,
+        estado: 'pendiente',
+        notas_admin: null,
+        aprobado_por: null,
+        aprobado_at: null,
+        reglamento_aceptado_at: new Date().toISOString(),
+        reglamento_ip: req.headers.get('x-forwarded-for')?.split(',')[0].trim()
+                    || req.headers.get('x-real-ip')
+                    || 'desconocida',
+      }).eq('rut', rut)
+
+      if (updateError) {
+        console.error('[api/inscripcion] re-postulacion update error:', updateError)
+        return NextResponse.json({ error: updateError.message }, { status: 500 })
+      }
+      // Continuar con el resto del flujo (pago, documentos, etc.)
+      // fall-through intencional al bloque de pagos más abajo
+    }
+
+    const { error: insertError } = existing?.estado === 'rechazado'
+      ? { error: null } // ya se hizo el update arriba
+      : await supabaseAdmin.from('socios').insert({
       rut,
       nombre: nombre.trim(),
       email: email.trim().toLowerCase(),
