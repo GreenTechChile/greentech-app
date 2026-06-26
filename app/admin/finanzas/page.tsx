@@ -20,6 +20,15 @@ interface Dispensacion {
   monto: number
   mes: number
   año: number
+  socio_id?: string
+  cepa?: string
+  gramos?: number
+  orden_numero?: string
+  estado?: string
+  medio_pago?: string
+  rut_socio?: string
+  created_at?: string
+  socio?: { nombre: string }
 }
 
 interface PagoContrato {
@@ -47,6 +56,7 @@ export default function Finanzas() {
   const [nuevoAporteFile, setNuevoAporteFile] = useState<File|null>(null)
   const [guardandoAporte, setGuardandoAporte] = useState(false)
   const [dispensaciones, setDispensaciones] = useState<Dispensacion[]>([])
+  const [dispModal, setDispModal] = useState<Dispensacion|null>(null)
   const [ingresosIncorporacion, setIngresosIncorporacion] = useState<Movimiento[]>([])
   const [costos, setCostos] = useState<Movimiento[]>([])
   const [pagosContratos, setPagosContratos] = useState<PagoContrato[]>([])
@@ -88,7 +98,7 @@ export default function Finanzas() {
   const cargarDatos = async () => {
     setLoading(true)
     const [dispRes, movEgresoRes, movIngresoRes, pagContRes] = await Promise.all([
-      supabase.from('dispensaciones').select('id,monto,mes,año').eq('año', filtroAño),
+      supabase.from('dispensaciones').select('id,monto,mes,año,socio_id,cepa,gramos,orden_numero,estado,medio_pago,rut_socio,created_at,socio:socios(nombre)').eq('año', filtroAño),
       supabase.from('movimientos_financieros').select('*').eq('año', filtroAño).eq('tipo','egreso').order('created_at', { ascending: false }),
       supabase.from('movimientos_financieros').select('*').eq('año', filtroAño).eq('tipo','ingreso').order('created_at', { ascending: false }),
       supabase.from('pagos_contratos').select('*, contrato:contratos(nombre,tipo,rol_funcion)').eq('año', filtroAño).eq('estado','pagado').order('mes', { ascending: true }),
@@ -408,7 +418,7 @@ export default function Finanzas() {
                         <td style={{ padding:'9px 14px' }}>Dispensación</td>
                         <td style={{ padding:'9px 14px' }}><span style={{ fontSize:10, background:'#EAF3DE', color:'#3B6D11', padding:'2px 8px', borderRadius:20 }}>Ordinario</span></td>
                         <td style={{ padding:'9px 14px', fontWeight:600, color:'#3B6D11' }}>${d.monto.toLocaleString('es-CL')}</td>
-                        <td style={{ padding:'9px 14px' }}><button style={{ fontSize:11, padding:'3px 8px', border:'1px solid #e5e7eb', borderRadius:6, background:'#fff', cursor:'pointer', color:'#6b7280' }}>Ver</button></td>
+                        <td style={{ padding:'9px 14px' }}><button onClick={() => setDispModal(d)} style={{ fontSize:11, padding:'3px 8px', border:'1px solid #e5e7eb', borderRadius:6, background:'#fff', cursor:'pointer', color:'#6b7280' }}>Ver</button></td>
                       </tr>
                     ))}
                     <tr style={{ background:'#f9fafb', borderTop:'1px solid #e5e7eb' }}>
@@ -684,6 +694,34 @@ export default function Finanzas() {
           </>
         )}
       </main>
+
+      {/* Modal detalle dispensación */}
+      {dispModal && (
+        <div onClick={() => setDispModal(null)} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.4)', zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center' }}>
+          <div onClick={e => e.stopPropagation()} style={{ background:'#fff', borderRadius:14, padding:28, width:360, boxShadow:'0 8px 32px rgba(0,0,0,0.18)' }}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:18 }}>
+              <span style={{ fontWeight:700, fontSize:15 }}>Detalle dispensación</span>
+              <button onClick={() => setDispModal(null)} style={{ background:'none', border:'none', fontSize:18, cursor:'pointer', color:'#9ca3af' }}>×</button>
+            </div>
+            {[
+              ['Socio', (dispModal.socio as any)?.nombre || dispModal.rut_socio || '—'],
+              ['RUT', dispModal.rut_socio || '—'],
+              ['Cepa', dispModal.cepa || '—'],
+              ['Gramos', dispModal.gramos ? `${dispModal.gramos} g` : '—'],
+              ['Monto', `$${dispModal.monto.toLocaleString('es-CL')}`],
+              ['Medio de pago', dispModal.medio_pago || '—'],
+              ['N° orden', dispModal.orden_numero || '—'],
+              ['Estado', dispModal.estado || '—'],
+              ['Fecha', dispModal.created_at ? new Date(dispModal.created_at).toLocaleString('es-CL') : '—'],
+            ].map(([label, value]) => (
+              <div key={label} style={{ display:'flex', justifyContent:'space-between', padding:'7px 0', borderBottom:'1px solid #f3f4f6', fontSize:13 }}>
+                <span style={{ color:'#6b7280' }}>{label}</span>
+                <span style={{ fontWeight:500 }}>{value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
