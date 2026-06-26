@@ -33,6 +33,7 @@ export default function Trazabilidad() {
   const [auditFiltroAdmin, setAuditFiltroAdmin] = useState('')
   const [auditDesde, setAuditDesde] = useState('2026-01-01')
   const [auditHasta, setAuditHasta] = useState(new Date().toISOString().split('T')[0])
+  const [dispModal, setDispModal] = useState<Dispensacion|null>(null)
 
   useEffect(() => { cargarDatos() }, [])
 
@@ -178,7 +179,7 @@ export default function Trazabilidad() {
                       <td style={{ padding:'9px 12px', fontWeight:500 }}>{item.evento}</td>
                       <td style={{ padding:'9px 12px', color:'#6b7280', fontSize:11 }}>{item.detalle}</td>
                       <td style={{ padding:'9px 12px' }}>
-                        <button style={{ fontSize:11, padding:'3px 8px', border:'1px solid #e5e7eb', borderRadius:6, background:'#fff', cursor:'pointer', color:'#6b7280' }}>Ver</button>
+                        <button onClick={() => setDispModal(dispensaciones.find(d => d.id === item.id) || null)} style={{ fontSize:11, padding:'3px 8px', border:'1px solid #e5e7eb', borderRadius:6, background:'#fff', cursor:'pointer', color:'#6b7280' }}>Ver</button>
                       </td>
                     </tr>
                   ))}
@@ -1010,6 +1011,33 @@ export default function Trazabilidad() {
           </div>
         )}
       </main>
+
+      {/* Modal detalle dispensación */}
+      {dispModal && (
+        <div onClick={() => setDispModal(null)} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.4)', zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center' }}>
+          <div onClick={e => e.stopPropagation()} style={{ background:'#fff', borderRadius:14, padding:28, width:380, boxShadow:'0 8px 32px rgba(0,0,0,0.18)' }}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:18 }}>
+              <span style={{ fontWeight:700, fontSize:15 }}>Detalle dispensación</span>
+              <button onClick={() => setDispModal(null)} style={{ background:'none', border:'none', fontSize:18, cursor:'pointer', color:'#9ca3af' }}>×</button>
+            </div>
+            {[
+              ['N° orden', dispModal.orden_numero || '—'],
+              ['RUT socio', dispModal.rut_socio || '—'],
+              ['Cepa', dispModal.cepa || '—'],
+              ['Gramos', dispModal.gramos ? `${dispModal.gramos} g` : '—'],
+              ['Monto', `$${dispModal.monto.toLocaleString('es-CL')}`],
+              ['Medio de pago', dispModal.medio_pago || '—'],
+              ['Estado', dispModal.estado || '—'],
+              ['Fecha', dispModal.created_at ? new Date(dispModal.created_at).toLocaleString('es-CL') : '—'],
+            ].map(([label, value]) => (
+              <div key={label} style={{ display:'flex', justifyContent:'space-between', padding:'7px 0', borderBottom:'1px solid #f3f4f6', fontSize:13 }}>
+                <span style={{ color:'#6b7280' }}>{label}</span>
+                <span style={{ fontWeight:500 }}>{value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
