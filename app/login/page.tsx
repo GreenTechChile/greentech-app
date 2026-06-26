@@ -1,7 +1,7 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 
 // Formatea RUT mientras el usuario escribe: strip todo, agrega guion antes del dígito verificador
@@ -31,6 +31,7 @@ function validarRut(rut: string): boolean {
 
 export default function Login() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [rut, setRut] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -41,6 +42,7 @@ export default function Login() {
   const [recoveryRut, setRecoveryRut] = useState('')
   const [recoveryLoading, setRecoveryLoading] = useState(false)
   const [recoveryMsg, setRecoveryMsg] = useState('')
+  const sessionTimeout = searchParams.get('timeout') === '1'
 
   const handleRutChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = formatRut(e.target.value)
@@ -132,9 +134,16 @@ export default function Login() {
         </div>
 
         <h1 style={{ fontSize: 20, fontWeight: 600, marginBottom: 6 }}>Ingresar al portal</h1>
-        <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 24, lineHeight: 1.6 }}>
+        <p style={{ fontSize: 13, color: '#6b7280', marginBottom: sessionTimeout ? 12 : 24, lineHeight: 1.6 }}>
           Ingresa tu RUT y contraseña para acceder al sistema.
         </p>
+
+        {sessionTimeout && (
+          <div style={{ background: '#FFF7ED', border: '1px solid #FED7AA', borderRadius: 8, padding: '10px 14px', fontSize: 12, color: '#92400E', marginBottom: 20, display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+            <span style={{ fontSize: 16, flexShrink: 0 }}>⏱️</span>
+            <span>Tu sesión se cerró automáticamente por <strong>10 minutos de inactividad</strong>. Por seguridad, debes ingresar nuevamente.</span>
+          </div>
+        )}
 
         <form onSubmit={handleLogin}>
           {/* RUT */}

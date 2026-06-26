@@ -28,6 +28,31 @@ export default function SidebarAdmin() {
     return () => window.removeEventListener('resize', check)
   }, [])
 
+  // ── Cierre de sesión automático por inactividad (10 minutos) ──
+  useEffect(() => {
+    const IDLE_MS = 10 * 60 * 1000
+    let timer: ReturnType<typeof setTimeout>
+
+    const resetTimer = () => {
+      clearTimeout(timer)
+      timer = setTimeout(async () => {
+        await supabase.auth.signOut()
+        Object.keys(localStorage).filter(k => k.startsWith('sb-')).forEach(k => localStorage.removeItem(k))
+        document.cookie = 'gt_auth=; path=/; max-age=0'
+        window.location.href = '/login?timeout=1'
+      }, IDLE_MS)
+    }
+
+    const eventos = ['mousemove', 'mousedown', 'keydown', 'scroll', 'touchstart', 'click']
+    eventos.forEach(e => window.addEventListener(e, resetTimer, { passive: true }))
+    resetTimer()
+
+    return () => {
+      clearTimeout(timer)
+      eventos.forEach(e => window.removeEventListener(e, resetTimer))
+    }
+  }, [])
+
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) return
