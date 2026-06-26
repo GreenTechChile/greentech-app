@@ -145,8 +145,8 @@ export default function AdminSocios() {
     setExpandido(abierto ? null : socio.id)
     if (!abierto) {
       await verificarFirmados(socio)
-      // Cargar historial de postulaciones anteriores si hay más de un intento
-      if ((socio.numero_intentos || 1) > 1 && !historial[socio.id]) {
+      // Siempre cargar historial al expandir — puede haber registros aunque numero_intentos sea 1
+      if (!historial[socio.id]) {
         const { data } = await supabase
           .from('historial_postulaciones')
           .select('*')
@@ -905,9 +905,9 @@ export default function AdminSocios() {
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 14, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
                     {socio.nombre}
-                    {(socio.numero_intentos || 1) > 1 && (
+                    {historial[socio.id]?.length > 0 && (
                       <span style={{ fontSize: 10, background: '#EDE9FE', color: '#6D28D9', padding: '2px 8px', borderRadius: 20, fontWeight: 700, whiteSpace: 'nowrap' }}>
-                        🔄 Re-postulación #{socio.numero_intentos}
+                        🔄 Re-postulación
                       </span>
                     )}
                   </div>
@@ -1139,7 +1139,7 @@ export default function AdminSocios() {
                   )}
 
                   {/* ── Postulaciones anteriores (re-postulaciones) ── */}
-                  {(socio.numero_intentos || 1) > 1 && historial[socio.id] && historial[socio.id].length > 0 && (
+                  {historial[socio.id] && historial[socio.id].length > 0 && (
                     <div style={{ borderTop: '1px solid #e5e7eb', padding: '14px 16px', background: '#fafafa' }}>
                       <div style={{ fontSize: 11, fontWeight: 700, color: '#6D28D9', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 10 }}>
                         🔄 Postulaciones anteriores
