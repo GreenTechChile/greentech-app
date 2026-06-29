@@ -840,8 +840,9 @@ export default function AdminSocios() {
                                 const nombreAdmin = user?.user_metadata?.nombre || user?.email || user?.user_metadata?.rut || 'Admin'
                                 const link = `${window.location.origin}/inscripcion?retomar=${p.id}&nombre=${encodeURIComponent(p.nombre || '')}&rut=${encodeURIComponent(p.rut || '')}&email=${encodeURIComponent(p.email || '')}`
                                 await sendEmail('retorno_inscripcion', p.email, { nombre: p.nombre || 'Estimado/a', link })
+                                // NO cambiar estado — debe seguir como 'aprobado' para aparecer en Pendientes
+                                // hasta que el usuario complete la inscripción (se crea registro en socios)
                                 await supabase.from('pagos_incorporacion').update({
-                                  estado: 'link_enviado',
                                   link_enviado_por: nombreAdmin,
                                   link_enviado_at: new Date().toISOString(),
                                 }).eq('id', p.id)
