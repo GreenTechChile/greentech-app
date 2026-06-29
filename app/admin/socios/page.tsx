@@ -736,6 +736,16 @@ export default function AdminSocios() {
                     <span style={{ background: '#FCEBEB', color: '#A32D2D', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 10 }}>{tabCounts.pagos_incompletos}</span>
                   </button>
                 )}
+                {tabCounts.bajas > 0 && (
+                  <button onClick={() => setTab('bajas')} style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '12px 16px', background: '#FFF8F8', border: '1px solid #F5C5C5', borderRadius: 10, cursor: 'pointer', textAlign: 'left' as const }}>
+                    <span style={{ fontSize: 22 }}>🚪</span>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: '#111' }}>{tabCounts.bajas} solicitud{tabCounts.bajas > 1 ? 'es' : ''} de baja pendiente{tabCounts.bajas > 1 ? 's' : ''}</div>
+                      <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>Clic para revisar en el tab Bajas →</div>
+                    </div>
+                    <span style={{ background: '#FCEBEB', color: '#A32D2D', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 10 }}>{tabCounts.bajas}</span>
+                  </button>
+                )}
               </div>
             )}
           </div>
