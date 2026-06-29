@@ -87,11 +87,10 @@ export default function MiPerfil() {
     if (!socio) return
     setEnviandoBaja(true)
     try {
-      const { data: { user } } = await supabase.auth.getUser()
       const res = await fetch('/api/solicitar-baja', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ socioId: user?.id, rut: socio.rut, nombre: socio.nombre, motivo: motivoBaja }),
+        body: JSON.stringify({ rut: socio.rut, nombre: socio.nombre, motivo: motivoBaja }),
       })
       const json = await res.json()
       if (!res.ok) {

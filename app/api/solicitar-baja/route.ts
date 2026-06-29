@@ -9,16 +9,16 @@ const supabaseAdmin = createClient(
 
 export async function POST(req: NextRequest) {
   try {
-    const { socioId, rut, nombre, motivo } = await req.json()
-    if (!socioId || !rut || !nombre) {
+    const { rut, nombre, motivo } = await req.json()
+    if (!rut || !nombre) {
       return NextResponse.json({ error: 'Faltan datos requeridos' }, { status: 400 })
     }
 
-    // Verificar que el socio existe y está activo
+    // Buscar socio por RUT (no por auth user id, que es distinto al id en tabla socios)
     const { data: socio, error: fetchError } = await supabaseAdmin
       .from('socios')
       .select('id, estado')
-      .eq('id', socioId)
+      .eq('rut', rut)
       .single()
 
     if (fetchError || !socio) {
@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
     const { data: pendiente } = await supabaseAdmin
       .from('solicitudes_baja')
       .select('id')
-      .eq('socio_id', socioId)
+      .eq('socio_id', socio.id)
       .eq('estado', 'pendiente')
       .single()
 
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
     // Crear la solicitud
     const { error: insertError } = await supabaseAdmin
       .from('solicitudes_baja')
-      .insert({ socio_id: socioId, rut, nombre, motivo: motivo?.trim() || null })
+      .insert({ socio_id: socio.id, rut, nombre, motivo: motivo?.trim() || null })
 
     if (insertError) {
       console.error('[solicitar-baja] Error:', insertError)
