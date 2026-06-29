@@ -793,12 +793,19 @@ export default function Inscripcion() {
                     src={reglamentoPdfUrl}
                     style={{width:'100%',height:420,border:'1px solid #e5e7eb',borderRadius:10}}
                     onLoad={() => {
-                      // Para PDF en iframe no podemos detectar scroll fácilmente
-                      // Se habilita tras 8 segundos de visualización
-                      setTimeout(() => setReglamentoLeido(true), 8000)
+                      // No podemos detectar scroll dentro del iframe, se activa tras 3 segundos
+                      setTimeout(() => setReglamentoLeido(true), 3000)
                     }}
                   />
-                  {!reglamentoLeido && <div style={{fontSize:11,color:'#9ca3af',marginTop:6,textAlign:'center'}}>Lee el documento completo (se habilitará la casilla automáticamente)</div>}
+                  {!reglamentoLeido && (
+                    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginTop:8}}>
+                      <span style={{fontSize:11,color:'#9ca3af'}}>Lee el documento y haz clic en el botón cuando llegues al final</span>
+                      <button onClick={() => setReglamentoLeido(true)}
+                        style={{fontSize:11,padding:'4px 12px',background:'#f3f4f6',border:'1px solid #d1d5db',borderRadius:6,cursor:'pointer',color:'#374151',whiteSpace:'nowrap'}}>
+                        Ya llegué al final ↓
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
 
