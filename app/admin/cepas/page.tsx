@@ -256,6 +256,12 @@ export default function Cepas() {
         ${cepa.cbd_pct ? `<span class="sep">·</span><span class="dato">CBD <span>${cepa.cbd_pct}%</span></span>` : ''}
         ${cepa.efecto ? `<span class="sep">·</span><span class="dato" style="font-weight:400;color:#6b7280;">${cepa.efecto}</span>` : ''}
       </div>
+      ${(cepa.pct_sativa || cepa.pct_indica) ? `
+      <div class="fila" style="margin-top:3px;">
+        ${cepa.pct_sativa ? `<span class="dato">Sativa <span>${cepa.pct_sativa}%</span></span>` : ''}
+        ${cepa.pct_sativa && cepa.pct_indica ? `<span class="sep">·</span>` : ''}
+        ${cepa.pct_indica ? `<span class="dato">Indica <span>${cepa.pct_indica}%</span></span>` : ''}
+      </div>` : ''}
     </div>
     <div class="footer">
       ${cepa.horario ? `<span class="horario">⏰ ${cepa.horario}</span>` : '<span></span>'}
