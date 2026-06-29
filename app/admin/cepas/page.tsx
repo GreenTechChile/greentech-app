@@ -198,6 +198,78 @@ export default function Cepas() {
     if (!error) { setMensaje(`🗑️ Cepa "${cepa.nombre}" eliminada`); setConfirmEliminar(null); cargarCepas(); setTimeout(() => setMensaje(''), 3000) }
   }
 
+  const imprimirEtiqueta = (cepa: Cepa) => {
+    const colores: Record<string, { bg: string; color: string }> = {
+      sativa:  { bg: '#EAF3DE', color: '#3B6D11' },
+      indica:  { bg: '#EEEDFE', color: '#534AB7' },
+      hibrida: { bg: '#E6F1FB', color: '#185FA5' },
+      cbd:     { bg: '#FDF5E6', color: '#BA7517' },
+    }
+    const col = colores[cepa.tipo] || { bg: '#F3F4F6', color: '#374151' }
+    const tipoLabel = cepa.tipo === 'hibrida' ? 'Híbrida' : cepa.tipo.charAt(0).toUpperCase() + cepa.tipo.slice(1)
+
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Etiqueta — ${cepa.nombre}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+    @page { size: 8cm 5cm; margin: 0; }
+    @media print {
+      body { min-height: unset; }
+      .etiqueta { border-radius: 0; border: none; }
+    }
+    .etiqueta {
+      width: 8cm; height: 5cm;
+      border: 1.5px solid #d1d5db; border-radius: 8px;
+      padding: 10px 14px;
+      display: flex; flex-direction: column; justify-content: space-between;
+    }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .logo { font-size: 9px; color: #3B6D11; font-weight: 700; letter-spacing: 0.3px; }
+    .badge {
+      font-size: 8px; font-weight: 700; padding: 2px 7px; border-radius: 20px;
+      background: ${col.bg}; color: ${col.color}; text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .nombre { font-size: 17px; font-weight: 800; color: #111; line-height: 1.15; margin-bottom: 5px; }
+    .fila { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .dato { font-size: 10px; font-weight: 600; color: #374151; }
+    .dato span { font-weight: 400; color: #6b7280; }
+    .sep { color: #d1d5db; font-size: 10px; }
+    .footer { display: flex; justify-content: space-between; align-items: flex-end; }
+    .horario { font-size: 9px; color: #6b7280; }
+    .org { font-size: 7.5px; color: #9ca3af; text-align: right; }
+  </style>
+</head>
+<body>
+  <div class="etiqueta">
+    <div>
+      <div class="header">
+        <span class="logo">🌿 GreenTech</span>
+        <span class="badge">${tipoLabel}</span>
+      </div>
+      <div class="nombre">${cepa.nombre}</div>
+      <div class="fila">
+        <span class="dato">THC <span>${cepa.thc_pct || 0}%</span></span>
+        ${cepa.cbd_pct ? `<span class="sep">·</span><span class="dato">CBD <span>${cepa.cbd_pct}%</span></span>` : ''}
+        ${cepa.efecto ? `<span class="sep">·</span><span class="dato" style="font-weight:400;color:#6b7280;">${cepa.efecto}</span>` : ''}
+      </div>
+    </div>
+    <div class="footer">
+      ${cepa.horario ? `<span class="horario">⏰ ${cepa.horario}</span>` : '<span></span>'}
+      <span class="org">Asoc. de Usuarios de Plantas Medicinales</span>
+    </div>
+  </div>
+  <script>window.onload = () => { window.print() }</script>
+</body>
+</html>`
+
+    const win = window.open('', '_blank', 'width=450,height=320')
+    if (win) { win.document.write(html); win.document.close() }
+  }
+
   const f = (field: keyof Cepa, value: unknown) => setForm(prev => ({ ...prev, [field]: value }))
 
   const cepasFiltradas = cepas.filter(c => {
@@ -343,6 +415,10 @@ export default function Cepas() {
                       ${(cepa.precio_gramo || 0).toLocaleString('es-CL')}
                     </div>
                     <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                      <button onClick={() => imprimirEtiqueta(cepa)} title="Imprimir etiqueta"
+                        style={{ padding: '6px 10px', border: '1px solid #e5e7eb', borderRadius: 8, background: '#fff', color: '#374151', fontSize: 13, cursor: 'pointer' }}>
+                        🏷️
+                      </button>
                       <button onClick={() => toggleVisibilidad(cepa)} title={cepa.visible ? 'Ocultar' : 'Mostrar'}
                         style={{ padding: '6px 10px', border: `1px solid ${cepa.visible ? '#97C459' : '#d1d5db'}`, borderRadius: 8, background: cepa.visible ? '#EAF3DE' : '#f9fafb', color: cepa.visible ? '#3B6D11' : '#6b7280', fontSize: 13, cursor: 'pointer' }}>
                         {cepa.visible ? '👁️' : '🙈'}
