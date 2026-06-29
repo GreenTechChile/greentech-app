@@ -19,6 +19,8 @@ type Evento =
   | 'alerta_plazo_aprobacion'
   | 'retorno_inscripcion'
   | 'reset_password'
+  | 'baja_aprobada'
+  | 'baja_rechazada'
 
 type Datos = Record<string, string | number | undefined>
 

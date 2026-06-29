@@ -346,6 +346,30 @@ function template(evento: string, datos: Datos): { subject: string; html: string
       return { subject: 'Completa tu inscripción en GreenTech', html }
     }
 
+    case 'baja_aprobada': {
+      const nombre = String(datos.nombre || 'Socio/a')
+      const html = layout('Baja de socio aprobada — GreenTech', `
+        ${h1('Tu solicitud de baja fue aprobada')}
+        ${p(`Hola <strong>${nombre}</strong>, la directiva ha procesado tu solicitud de baja como socio/a de la Asociación GreenTech.`)}
+        ${infoBox(`Tu cuenta ha sido desactivada. Si en el futuro deseas reincorporarte, puedes enviar una nueva solicitud de ingreso a través de nuestro sitio web.`)}
+        ${p(`Ha sido un placer tenerte como parte de nuestra comunidad. Si tienes alguna consulta, puedes contactarnos a <a href="mailto:contacto@asociaciongreentech.cl" style="color:${C.verde};">contacto@asociaciongreentech.cl</a>.`)}
+        ${btn('Sitio web GreenTech', WEBSITE_URL)}
+      `)
+      return { subject: 'Tu baja como socio ha sido procesada — GreenTech', html }
+    }
+
+    case 'baja_rechazada': {
+      const nombre = String(datos.nombre || 'Socio/a')
+      const html = layout('Solicitud de baja — GreenTech', `
+        ${h1('Solicitud de baja revisada')}
+        ${p(`Hola <strong>${nombre}</strong>, hemos recibido y revisado tu solicitud de baja como socio/a de la Asociación GreenTech.`)}
+        ${warningBox(`La directiva no ha podido procesar tu baja en este momento. Por favor contáctanos para coordinar el proceso o si tienes alguna consulta al respecto.`)}
+        ${p(`Puedes comunicarte con nosotros a <a href="mailto:contacto@asociaciongreentech.cl" style="color:${C.verde};">contacto@asociaciongreentech.cl</a>.`)}
+        ${btn('Ir al portal', `${APP_URL}/socio/perfil`)}
+      `)
+      return { subject: 'Resolución de solicitud de baja — GreenTech', html }
+    }
+
     case 'reset_password': {
       const nombre = String(datos.nombre || 'Socio/a')
       const link = String(datos.link || `${APP_URL}/login`)

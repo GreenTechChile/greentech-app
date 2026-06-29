@@ -24,7 +24,7 @@ const DOCS_FIRMA = [
 ]
 
 export default function AdminSocios() {
-  const [tab, setTab] = useState<'pendientes'|'socios'|'delegaciones'|'renovaciones'|'pagos_incompletos'>('pendientes')
+  const [tab, setTab] = useState<'pendientes'|'socios'|'delegaciones'|'renovaciones'|'pagos_incompletos'|'bajas'>('pendientes')
   const [pagosIncompletos, setPagosIncompletos] = useState<any[]>([])
   const [filtroSocios, setFiltroSocios] = useState<'pendiente'|'activo'|'rechazado'>('pendiente')
   const [filtroDelegaciones, setFiltroDelegaciones] = useState<'pendiente_firma'|'todas'>('pendiente_firma')
@@ -50,6 +50,8 @@ export default function AdminSocios() {
   const [recetasExpandidas, setRecetasExpandidas] = useState<Set<string>>(new Set())
   const [nombresPorEmail, setNombresPorEmail] = useState<Record<string,string>>({})
   const [historial, setHistorial] = useState<Record<string, any[]>>({})
+  const [solicitudesBaja, setSolicitudesBaja] = useState<any[]>([])
+  const [procesandoBaja, setProcesandoBaja] = useState<string|null>(null)
 
   useEffect(() => {
     cargarConteos()
@@ -66,11 +68,13 @@ export default function AdminSocios() {
       { data: dRenovaciones },
       { data: dDelegaciones },
       { data: dPagosInc },
+      { data: dBajas },
     ] = await Promise.all([
       supabase.from('socios').select('id').eq('estado', 'pendiente'),
       supabase.from('recetas_pendientes').select('id').eq('estado', 'pendiente'),
       supabase.from('socios').select('id').eq('delegacion_estado', 'pendiente_firma'),
       supabase.from('pagos_incorporacion').select('rut').eq('estado', 'aprobado'),
+      supabase.from('solicitudes_baja').select('id').eq('estado', 'pendiente'),
     ])
     const pendientes = dPendientes?.length || 0
     const renovaciones = dRenovaciones?.length || 0
@@ -83,13 +87,19 @@ export default function AdminSocios() {
     const { data: todosLosSocios } = await supabase.from('socios').select('rut')
     const rutsConSocioSet = new Set((todosLosSocios || []).map((s: any) => s.rut))
     const pagosInc = (dPagosInc || []).filter((p: any) => !rutsConSocioSet.has(p.rut)).length
-    const totalPendiente = pendientes + renovaciones + delegaciones + pagosInc
-    setTabCounts({ pendientes, renovaciones, delegaciones, pagos_incompletos: pagosInc, total_pendiente: totalPendiente })
+    const bajas = dBajas?.length || 0
+    const totalPendiente = pendientes + renovaciones + delegaciones + pagosInc + bajas
+    setTabCounts({ pendientes, renovaciones, delegaciones, pagos_incompletos: pagosInc, bajas, total_pendiente: totalPendiente })
   }
 
   const cargarSocios = async () => {
     setLoading(true)
-    if (tab === 'pagos_incompletos') {
+    if (tab === 'bajas') {
+      const { data } = await supabase.from('solicitudes_baja').select('*').order('created_at', { ascending: false })
+      setSolicitudesBaja(data || [])
+      setLoading(false)
+      return
+    } else if (tab === 'pagos_incompletos') {
       let query = supabase.from('pagos_incorporacion').select('*').order('created_at', { ascending: false })
       if (filtroPI === 'pendientes') query = query.eq('estado', 'aprobado')
       const [{ data }, { data: sociosData }] = await Promise.all([
@@ -409,6 +419,7 @@ export default function AdminSocios() {
             { key: 'delegaciones', label: '📋 Delegaciones', countKey: 'delegaciones', badgeColor: '#92400E', badgeBg: '#FEF3C7' },
             { key: 'renovaciones', label: '🩺 Renovaciones', countKey: 'renovaciones', badgeColor: '#92400E', badgeBg: '#FEF3C7' },
             { key: 'pagos_incompletos', label: '💳 Pagos incompletos', countKey: 'pagos_incompletos', badgeColor: '#A32D2D', badgeBg: '#FCEBEB' },
+            { key: 'bajas', label: '🚪 Bajas', countKey: 'bajas', badgeColor: '#A32D2D', badgeBg: '#FCEBEB' },
           ].map(t => {
             const count = t.countKey ? tabCounts[t.countKey] : 0
             return (
@@ -864,6 +875,95 @@ export default function AdminSocios() {
                 </div>
               </div>
             )}
+          </>
+        )}
+
+        {/* ── Panel de bajas ── */}
+        {tab === 'bajas' && (
+          <>
+          {loading ? (
+            <div style={{ fontSize: 13, color: '#9ca3af', padding: 40, textAlign: 'center' }}>Cargando...</div>
+          ) : solicitudesBaja.length === 0 ? (
+            <div style={{ fontSize: 13, color: '#9ca3af', padding: 40, textAlign: 'center' }}>No hay solicitudes de baja</div>
+          ) : (
+            <div style={{ border: '1px solid #e5e7eb', borderRadius: 12, overflow: 'hidden' }}>
+              {solicitudesBaja.map((s: any, i: number) => (
+                <div key={s.id} style={{ padding: '14px 16px', borderBottom: i < solicitudesBaja.length - 1 ? '1px solid #f3f4f6' : 'none', display: 'flex', alignItems: 'flex-start', gap: 12, background: s.estado === 'pendiente' ? '#fff' : '#f9fafb' }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+                      <span style={{ fontSize: 14, fontWeight: 600 }}>{s.nombre}</span>
+                      <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, fontWeight: 600,
+                        background: s.estado === 'pendiente' ? '#FAEEDA' : s.estado === 'aprobada' ? '#EAF3DE' : '#f3f4f6',
+                        color: s.estado === 'pendiente' ? '#633806' : s.estado === 'aprobada' ? '#3B6D11' : '#6b7280' }}>
+                        {s.estado === 'pendiente' ? 'Pendiente' : s.estado === 'aprobada' ? 'Aprobada' : 'Rechazada'}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: 11, color: '#6b7280', marginBottom: s.motivo ? 6 : 0 }}>
+                      RUT {s.rut} · Solicitada {new Date(s.created_at).toLocaleDateString('es-CL')}
+                      {s.resuelta_at && ` · Resuelta ${new Date(s.resuelta_at).toLocaleDateString('es-CL')}`}
+                    </div>
+                    {s.motivo && (
+                      <div style={{ fontSize: 12, color: '#374151', background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 6, padding: '6px 10px', marginTop: 4 }}>
+                        <span style={{ color: '#6b7280' }}>Motivo: </span>{s.motivo}
+                      </div>
+                    )}
+                  </div>
+                  {s.estado === 'pendiente' && (
+                    <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                      <button
+                        disabled={procesandoBaja === s.id}
+                        onClick={async () => {
+                          setProcesandoBaja(s.id)
+                          const { data: { user: adminUser } } = await supabase.auth.getUser()
+                          const res = await fetch('/api/aprobar-baja', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ solicitudId: s.id, decision: 'aprobada', resueltaPor: adminUser?.email }),
+                          })
+                          setProcesandoBaja(null)
+                          if (res.ok) {
+                            setMensaje('✅ Baja aprobada. La cuenta del socio ha sido desactivada.')
+                            cargarSocios()
+                            cargarConteos()
+                          } else {
+                            const j = await res.json()
+                            setMensaje('❌ ' + (j.error || 'Error al procesar'))
+                          }
+                          setTimeout(() => setMensaje(''), 4000)
+                        }}
+                        style={{ padding: '5px 12px', fontSize: 12, background: '#A32D2D', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontWeight: 600 }}>
+                        {procesandoBaja === s.id ? '...' : 'Aprobar'}
+                      </button>
+                      <button
+                        disabled={procesandoBaja === s.id}
+                        onClick={async () => {
+                          setProcesandoBaja(s.id)
+                          const { data: { user: adminUser } } = await supabase.auth.getUser()
+                          const res = await fetch('/api/aprobar-baja', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ solicitudId: s.id, decision: 'rechazada', resueltaPor: adminUser?.email }),
+                          })
+                          setProcesandoBaja(null)
+                          if (res.ok) {
+                            setMensaje('✅ Solicitud de baja rechazada. Se notificó al socio.')
+                            cargarSocios()
+                            cargarConteos()
+                          } else {
+                            const j = await res.json()
+                            setMensaje('❌ ' + (j.error || 'Error al procesar'))
+                          }
+                          setTimeout(() => setMensaje(''), 4000)
+                        }}
+                        style={{ padding: '5px 12px', fontSize: 12, background: '#fff', color: '#374151', border: '1px solid #d1d5db', borderRadius: 6, cursor: 'pointer' }}>
+                        {procesandoBaja === s.id ? '...' : 'Rechazar'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
           </>
         )}
 

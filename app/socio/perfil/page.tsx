@@ -37,6 +37,11 @@ export default function MiPerfil() {
   const [notifReceta, setNotifReceta] = useState(true)
   const [notifBoletin, setNotifBoletin] = useState(true)
 
+  const [modalBaja, setModalBaja] = useState(false)
+  const [motivoBaja, setMotivoBaja] = useState('')
+  const [enviandoBaja, setEnviandoBaja] = useState(false)
+  const [bajaEnviada, setBajaEnviada] = useState(false)
+
   useEffect(() => {
     const cargar = async () => {
       setLoading(true)
@@ -76,6 +81,32 @@ export default function MiPerfil() {
     }
     setGuardando(false)
     setTimeout(() => setMensaje(''), 3000)
+  }
+
+  const solicitarBaja = async () => {
+    if (!socio) return
+    setEnviandoBaja(true)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      const res = await fetch('/api/solicitar-baja', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ socioId: user?.id, rut: socio.rut, nombre: socio.nombre, motivo: motivoBaja }),
+      })
+      const json = await res.json()
+      if (!res.ok) {
+        setMensaje('❌ ' + (json.error || 'Error al enviar la solicitud'))
+      } else {
+        setBajaEnviada(true)
+        setMensaje('✅ Solicitud de baja enviada. La directiva la revisará y te notificará por correo.')
+      }
+      setModalBaja(false)
+      setMotivoBaja('')
+    } catch {
+      setMensaje('❌ Error al enviar la solicitud')
+    }
+    setEnviandoBaja(false)
+    setTimeout(() => setMensaje(''), 5000)
   }
 
   const cambiarPassword = async () => {
@@ -268,10 +299,49 @@ export default function MiPerfil() {
           <p style={{ fontSize: 12, color: '#6b7280', marginBottom: 14, lineHeight: 1.6 }}>
             Estas acciones son irreversibles o requieren aprobación de la directiva.
           </p>
-          <button style={{ padding: '7px 16px', border: '1px solid #A32D2D', borderRadius: 8, background: 'transparent', color: '#A32D2D', fontSize: 13, cursor: 'pointer' }}>
-            Solicitar baja como socio
-          </button>
+          {bajaEnviada ? (
+            <div style={{ fontSize: 12, color: '#92400E', background: '#FEF3C7', border: '1px solid #FCD34D', borderRadius: 8, padding: '8px 12px' }}>
+              ⏳ Tienes una solicitud de baja pendiente de revisión por la directiva.
+            </div>
+          ) : (
+            <button onClick={() => setModalBaja(true)}
+              style={{ padding: '7px 16px', border: '1px solid #A32D2D', borderRadius: 8, background: 'transparent', color: '#A32D2D', fontSize: 13, cursor: 'pointer' }}>
+              Solicitar baja como socio
+            </button>
+          )}
         </div>
+
+        {/* Modal de baja */}
+        {modalBaja && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+            <div style={{ background: '#fff', borderRadius: 16, padding: 28, width: 420, maxWidth: '90vw', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>
+              <div style={{ fontSize: 16, fontWeight: 700, color: '#A32D2D', marginBottom: 8 }}>⚠️ Solicitar baja como socio</div>
+              <p style={{ fontSize: 13, color: '#374151', marginBottom: 16, lineHeight: 1.6 }}>
+                Al confirmar, se enviará una solicitud de baja a la directiva. Si es aprobada, tu cuenta quedará desactivada y no podrás acceder al portal.
+              </p>
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ fontSize: 11, color: '#6b7280', display: 'block', marginBottom: 4 }}>Motivo (opcional)</label>
+                <textarea
+                  value={motivoBaja}
+                  onChange={e => setMotivoBaja(e.target.value)}
+                  placeholder="Puedes indicar el motivo de tu baja..."
+                  rows={3}
+                  style={{ width: '100%', padding: '8px 10px', border: '1px solid #d1d5db', borderRadius: 8, fontSize: 13, resize: 'vertical', outline: 'none', boxSizing: 'border-box' }}
+                />
+              </div>
+              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                <button onClick={() => { setModalBaja(false); setMotivoBaja('') }}
+                  style={{ padding: '7px 16px', background: '#f3f4f6', border: 'none', borderRadius: 8, fontSize: 13, cursor: 'pointer' }}>
+                  Cancelar
+                </button>
+                <button onClick={solicitarBaja} disabled={enviandoBaja}
+                  style={{ padding: '7px 16px', background: enviandoBaja ? '#9ca3af' : '#A32D2D', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+                  {enviandoBaja ? 'Enviando...' : 'Confirmar solicitud de baja'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
       </main>
     </div>

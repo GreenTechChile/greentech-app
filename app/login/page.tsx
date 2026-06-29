@@ -81,6 +81,12 @@ export default function Login() {
         return
       }
 
+      if (socio.estado === 'inactivo') {
+        setError('Tu cuenta ha sido desactivada. Si crees que es un error, contacta a la directiva en contacto@asociaciongreentech.cl.')
+        setLoading(false)
+        return
+      }
+
       if (socio.estado !== 'activo') {
         setError('Tu cuenta aún no ha sido activada. Espera la aprobación de la directiva.')
         setLoading(false)
