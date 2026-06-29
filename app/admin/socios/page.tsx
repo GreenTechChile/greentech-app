@@ -52,6 +52,7 @@ export default function AdminSocios() {
   const [historial, setHistorial] = useState<Record<string, any[]>>({})
   const [solicitudesBaja, setSolicitudesBaja] = useState<any[]>([])
   const [procesandoBaja, setProcesandoBaja] = useState<string|null>(null)
+  const [filtroBajas, setFiltroBajas] = useState<'pendiente'|'todas'>('pendiente')
 
   useEffect(() => {
     cargarConteos()
@@ -60,7 +61,7 @@ export default function AdminSocios() {
       if (data) setNombresPorEmail(Object.fromEntries(data.map((s: any) => [s.email, s.nombre])))
     })
   }, [])
-  useEffect(() => { cargarSocios() }, [tab, filtroRecetas, filtroSocios, filtroDelegaciones, filtroPI])
+  useEffect(() => { cargarSocios() }, [tab, filtroRecetas, filtroSocios, filtroDelegaciones, filtroPI, filtroBajas])
 
   const cargarConteos = async () => {
     const [
@@ -95,7 +96,9 @@ export default function AdminSocios() {
   const cargarSocios = async () => {
     setLoading(true)
     if (tab === 'bajas') {
-      const { data } = await supabase.from('solicitudes_baja').select('*').order('created_at', { ascending: false })
+      let query = supabase.from('solicitudes_baja').select('*').order('created_at', { ascending: false })
+      if (filtroBajas === 'pendiente') query = query.eq('estado', 'pendiente')
+      const { data } = await query
       setSolicitudesBaja(data || [])
       setLoading(false)
       return
@@ -892,10 +895,23 @@ export default function AdminSocios() {
         {/* ── Panel de bajas ── */}
         {tab === 'bajas' && (
           <>
+          <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
+            {([['pendiente', 'Pendientes'], ['todas', 'Historial completo']] as const).map(([val, label]) => (
+              <button key={val} onClick={() => setFiltroBajas(val)}
+                style={{ padding: '5px 14px', fontSize: 12, borderRadius: 20, border: '1px solid', cursor: 'pointer',
+                  background: filtroBajas === val ? '#185FA5' : '#fff',
+                  color: filtroBajas === val ? '#fff' : '#6b7280',
+                  borderColor: filtroBajas === val ? '#185FA5' : '#d1d5db' }}>
+                {label}
+              </button>
+            ))}
+          </div>
           {loading ? (
             <div style={{ fontSize: 13, color: '#9ca3af', padding: 40, textAlign: 'center' }}>Cargando...</div>
           ) : solicitudesBaja.length === 0 ? (
-            <div style={{ fontSize: 13, color: '#9ca3af', padding: 40, textAlign: 'center' }}>No hay solicitudes de baja</div>
+            <div style={{ fontSize: 13, color: '#9ca3af', padding: 40, textAlign: 'center', border: '1px dashed #e5e7eb', borderRadius: 12 }}>
+              {filtroBajas === 'pendiente' ? '✅ No hay solicitudes de baja pendientes' : '📭 Sin solicitudes de baja registradas'}
+            </div>
           ) : (
             <div style={{ border: '1px solid #e5e7eb', borderRadius: 12, overflow: 'hidden' }}>
               {solicitudesBaja.map((s: any, i: number) => (
