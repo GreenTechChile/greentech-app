@@ -88,28 +88,43 @@ export default function Inscripcion() {
       .then(({ data }) => { if (data?.datos?.monto) setMontoIncorporacion(data.datos.monto) })
   }, [])
 
-  // Detectar link de retorno enviado por administrador (?retomar=UUID)
+  // Detectar link de retorno enviado por administrador (?retomar=UUID&nombre=...&rut=...&email=...)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const tokenRetorno = params.get('retomar')
     if (!tokenRetorno) return
-    supabase.from('pagos_incorporacion').select('*').eq('id', tokenRetorno).single()
-      .then(({ data }) => {
-        if (!data) return // token inválido, no hacer nada
-        // Pre-llenar nombre, RUT y email con los datos guardados
-        setForm(prev => ({
-          ...prev,
-          nombre: data.nombre || prev.nombre,
-          rut: data.rut || prev.rut,
-          email: data.email || prev.email,
-        }))
-        // Bloquear campos de identidad — ya fueron verificados en el pago
-        setRetomandoInscripcion(true)
-        // Saltar al paso 2 (datos personales) — el pago ya fue realizado
-        setPaso(2)
-        // Limpiar el token de la URL sin recargar la página
-        window.history.replaceState({}, '', '/inscripcion')
-      })
+
+    const nombre = decodeURIComponent(params.get('nombre') || '')
+    const rut    = decodeURIComponent(params.get('rut')    || '')
+    const email  = decodeURIComponent(params.get('email')  || '')
+
+    if (nombre || rut || email) {
+      // Datos vienen en la URL — no necesitamos consultar Supabase (evita bloqueo por RLS anon)
+      setForm(prev => ({
+        ...prev,
+        nombre: nombre || prev.nombre,
+        rut:    rut    || prev.rut,
+        email:  email  || prev.email,
+      }))
+      setRetomandoInscripcion(true)
+      setPaso(2)
+      window.history.replaceState({}, '', '/inscripcion')
+    } else {
+      // Fallback: link antiguo sin params → intentar query (puede fallar por RLS)
+      supabase.from('pagos_incorporacion').select('*').eq('id', tokenRetorno).single()
+        .then(({ data }) => {
+          if (!data) return
+          setForm(prev => ({
+            ...prev,
+            nombre: data.nombre || prev.nombre,
+            rut:    data.rut    || prev.rut,
+            email:  data.email  || prev.email,
+          }))
+          setRetomandoInscripcion(true)
+          setPaso(2)
+          window.history.replaceState({}, '', '/inscripcion')
+        })
+    }
   }, [])
 
   // 🚧 BYPASS TEMPORAL — cambiar a false para activar MP en producción

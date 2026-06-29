@@ -838,7 +838,7 @@ export default function AdminSocios() {
                               try {
                                 const { data: { user } } = await supabase.auth.getUser()
                                 const nombreAdmin = user?.user_metadata?.nombre || user?.email || user?.user_metadata?.rut || 'Admin'
-                                const link = `${window.location.origin}/inscripcion?retomar=${p.id}`
+                                const link = `${window.location.origin}/inscripcion?retomar=${p.id}&nombre=${encodeURIComponent(p.nombre || '')}&rut=${encodeURIComponent(p.rut || '')}&email=${encodeURIComponent(p.email || '')}`
                                 await sendEmail('retorno_inscripcion', p.email, { nombre: p.nombre || 'Estimado/a', link })
                                 await supabase.from('pagos_incorporacion').update({
                                   estado: 'link_enviado',
