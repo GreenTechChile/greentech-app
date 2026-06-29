@@ -10,6 +10,7 @@ export default function AdminDashboard() {
     despachosPendientes: 0, stockTotal: 0, cepasConStock: 0,
     ingresosMes: 0, dispensacionesMes: 0,
     renovacionesPendientes: 0, pagosIncompletos: 0, delegacionesPendientes: 0,
+    bajasPendientes: 0,
   })
   const [despachosPendientes, setDespachosPendientes] = useState<any[]>([])
   const [stockCepas, setStockCepas] = useState<any[]>([])
@@ -31,6 +32,7 @@ export default function AdminDashboard() {
       { count: renovacionesPendientes },
       { data: pagosAprobados },
       { data: delegacionesData },
+      { data: bajasData },
     ] = await Promise.all([
       supabase.from('socios').select('*', { count: 'exact', head: true }).eq('estado', 'activo'),
       supabase.from('socios').select('*', { count: 'exact', head: true }).eq('estado', 'pendiente'),
@@ -40,6 +42,7 @@ export default function AdminDashboard() {
       supabase.from('recetas_pendientes').select('*', { count: 'exact', head: true }).eq('estado', 'pendiente'),
       supabase.from('pagos_incorporacion').select('rut').eq('estado', 'aprobado'),
       supabase.from('socios').select('id').eq('delegacion_estado', 'pendiente_firma'),
+      supabase.from('solicitudes_baja').select('id').eq('estado', 'pendiente'),
     ])
 
     // Calcular pagos sin inscripción completada
@@ -65,6 +68,7 @@ export default function AdminDashboard() {
       renovacionesPendientes: renovacionesPendientes || 0,
       delegacionesPendientes: delegacionesData?.length || 0,
       pagosIncompletos,
+      bajasPendientes: bajasData?.length || 0,
     })
     setDespachosPendientes(despachos || [])
     setStockCepas(cepas || [])
@@ -157,6 +161,16 @@ export default function AdminDashboard() {
                   <span style={{ color:'#9ca3af' }}>→</span>
                 </Link>
               )}
+              {stats.bajasPendientes > 0 && (
+                <Link href="/admin/socios" style={{ display:'flex', alignItems:'center', gap:12, padding:'10px 14px', background:'#FFF8F8', border:'1px solid #F5C5C5', borderRadius:8, marginBottom:8, textDecoration:'none', color:'#111' }}>
+                  <span style={{ fontSize:20 }}>🚪</span>
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontSize:13, fontWeight:500 }}>{stats.bajasPendientes} solicitud{stats.bajasPendientes>1?'es':''} de baja pendiente{stats.bajasPendientes>1?'s':''} de resolución</div>
+                    <div style={{ fontSize:11, color:'#9ca3af' }}>Revisar en Nuevos socios → Bajas</div>
+                  </div>
+                  <span style={{ color:'#9ca3af' }}>→</span>
+                </Link>
+              )}
               {stats.stockTotal === 0 && (
                 <Link href="/admin/inventario" style={{ display:'flex', alignItems:'center', gap:12, padding:'10px 14px', background:'#FCEBEB', border:'1px solid #F5C5C5', borderRadius:8, marginBottom:8, textDecoration:'none', color:'#111' }}>
                   <span style={{ fontSize:20 }}>📦</span>
@@ -167,7 +181,7 @@ export default function AdminDashboard() {
                   <span style={{ color:'#9ca3af' }}>→</span>
                 </Link>
               )}
-              {stats.solicitudesPendientes === 0 && stats.despachosPendientes === 0 && stats.renovacionesPendientes === 0 && stats.delegacionesPendientes === 0 && stats.pagosIncompletos === 0 && stats.stockTotal > 0 && (
+              {stats.solicitudesPendientes === 0 && stats.despachosPendientes === 0 && stats.renovacionesPendientes === 0 && stats.delegacionesPendientes === 0 && stats.pagosIncompletos === 0 && stats.bajasPendientes === 0 && stats.stockTotal > 0 && (
                 <div style={{ fontSize:13, color:'#3B6D11', padding:'10px 14px', background:'#EAF3DE', borderRadius:8 }}>
                   ✅ Todo al día — sin tareas pendientes
                 </div>
