@@ -85,7 +85,7 @@ export default function Inscripcion() {
   // Cargar monto de incorporación desde configuración
   useEffect(() => {
     supabase.from('configuracion').select('datos').eq('id', 'pago_incorporacion').single()
-      .then(({ data }) => { if (data?.datos?.monto) setMontoIncorporacion(data.datos.monto) })
+      .then(({ data }) => { if (data?.datos != null && data.datos.monto !== undefined) setMontoIncorporacion(data.datos.monto) })
   }, [])
 
   // Detectar link de retorno enviado por administrador (?retomar=UUID&nombre=...&rut=...&email=...)
