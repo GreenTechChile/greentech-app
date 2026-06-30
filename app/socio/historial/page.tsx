@@ -51,6 +51,30 @@ const colorTipo: Record<string, {bg: string, color: string}> = {
   autoflowering: { bg: '#F3F4F6', color: '#374151' },
 }
 
+function StarDisplay({ promedio, total }: { promedio: number, total: number }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div style={{ display: 'flex', gap: 1 }}>
+        {[1,2,3,4,5].map(star => {
+          const fill = Math.min(1, Math.max(0, promedio - (star - 1)))
+          const pct = Math.round(fill * 100)
+          return (
+            <div key={star} style={{ position: 'relative', display: 'inline-block', fontSize: 18, color: '#d1d5db', lineHeight: 1 }}>
+              ★
+              <div style={{ position: 'absolute', top: 0, left: 0, overflow: 'hidden', width: pct + '%', color: '#F59E0B', whiteSpace: 'nowrap' }}>★</div>
+            </div>
+          )
+        })}
+      </div>
+      <span style={{ fontSize: 12, color: '#6b7280' }}>
+        {total > 0
+          ? `${promedio.toFixed(1)} — ${total} ${total === 1 ? 'calificación' : 'calificaciones'}`
+          : 'Sin calificaciones aún'}
+      </span>
+    </div>
+  )
+}
+
 function StarRating({ value, hovered, onHover, onClick, readonly = false }: {
   value: number
   hovered?: number
@@ -287,16 +311,9 @@ export default function Historial() {
                   )}
 
                   {/* Promedio */}
-                  {modalCepa.total > 0 && (
-                    <div style={{ marginTop: 12, padding: '8px 12px', background: '#f9fafb', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ color: '#F59E0B', fontSize: 16 }}>★</span>
-                      <span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>{modalCepa.promedio.toFixed(1)}</span>
-                      <span style={{ fontSize: 12, color: '#9ca3af' }}>promedio de {modalCepa.total} {modalCepa.total === 1 ? 'calificación' : 'calificaciones'}</span>
-                    </div>
-                  )}
-                  {modalCepa.total === 0 && (
-                    <div style={{ marginTop: 10, fontSize: 12, color: '#9ca3af' }}>Sé el primero en calificar esta cepa.</div>
-                  )}
+                  <div style={{ marginTop: 12, padding: '8px 12px', background: '#f9fafb', borderRadius: 8 }}>
+                    <StarDisplay promedio={modalCepa.promedio} total={modalCepa.total} />
+                  </div>
                 </div>
               </>
             )}

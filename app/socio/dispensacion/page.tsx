@@ -317,6 +317,29 @@ export default function Dispensacion() {
     autoflowering: { bg: '#F3F4F6', color: '#374151' },
   }
 
+  // Componente estrellas con relleno parcial (half-star)
+  const StarDisplay = ({ promedio, total }: { promedio: number, total: number }) => (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div style={{ display: 'flex', gap: 1 }}>
+        {[1,2,3,4,5].map(star => {
+          const fill = Math.min(1, Math.max(0, promedio - (star - 1)))
+          const pct = Math.round(fill * 100)
+          return (
+            <div key={star} style={{ position: 'relative', display: 'inline-block', fontSize: 18, color: '#d1d5db', lineHeight: 1 }}>
+              ★
+              <div style={{ position: 'absolute', top: 0, left: 0, overflow: 'hidden', width: pct + '%', color: '#F59E0B', whiteSpace: 'nowrap' }}>★</div>
+            </div>
+          )
+        })}
+      </div>
+      <span style={{ fontSize: 11, color: '#9ca3af' }}>
+        {total > 0
+          ? `${promedio.toFixed(1)} — ${total} ${total === 1 ? 'calificación' : 'calificaciones'}`
+          : 'Sin calificaciones aún'}
+      </span>
+    </div>
+  )
+
   const carritoResumen = carrito.reduce<Record<string, number>>((acc, item) => {
     acc[item.cepa.id] = (acc[item.cepa.id] || 0) + item.gramos
     return acc
@@ -470,18 +493,13 @@ export default function Dispensacion() {
                             </div>
                           )}
 
-                          {/* Promedio calificaciones socios */}
-                          {promediosCalif[cepa.nombre] && (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12, padding: '6px 10px', background: '#fffbeb', borderRadius: 8, border: '1px solid #fde68a' }}>
-                              <span style={{ color: '#F59E0B', fontSize: 15 }}>★</span>
-                              <span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>
-                                {promediosCalif[cepa.nombre].promedio.toFixed(1)}
-                              </span>
-                              <span style={{ fontSize: 11, color: '#9ca3af' }}>
-                                — {promediosCalif[cepa.nombre].total} {promediosCalif[cepa.nombre].total === 1 ? 'calificación' : 'calificaciones'} de socios
-                              </span>
-                            </div>
-                          )}
+                          {/* Promedio calificaciones socios — siempre visible */}
+                          <div style={{ marginBottom: 12, padding: '8px 10px', background: '#fffbeb', borderRadius: 8, border: '1px solid #fde68a' }}>
+                            <StarDisplay
+                              promedio={promediosCalif[cepa.nombre]?.promedio ?? 0}
+                              total={promediosCalif[cepa.nombre]?.total ?? 0}
+                            />
+                          </div>
 
                           <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: 12 }}>
                             <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 8, fontWeight: 500, textTransform: 'uppercase' as const, letterSpacing: '0.04em' }}>
