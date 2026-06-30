@@ -2,53 +2,50 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json()
-    const { items, pagador, external_reference, back_urls } = body
+    const { items, pagador, external_reference, back_urls } = await req.json()
 
-    const payload = {
-      items,
-      payer: pagador,
-      external_reference,
-      back_urls: {
-        success: back_urls?.success || `${process.env.NEXT_PUBLIC_BASE_URL}/inscripcion/pago-exitoso`,
-        failure: back_urls?.failure || `${process.env.NEXT_PUBLIC_BASE_URL}/inscripcion/pago-fallido`,
-        pending: back_urls?.pending || `${process.env.NEXT_PUBLIC_BASE_URL}/inscripcion/pago-pendiente`,
-      },
-      auto_return: 'approved',
-      statement_descriptor: 'GreenTech Asociacion',
-      notification_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/mercadopago/webhook`,
+    const accessToken = process.env.MP_ACCESS_TOKEN
+    if (!accessToken) {
+      return NextResponse.json({ error: 'MP_ACCESS_TOKEN no configurado' }, { status: 500 })
     }
 
-    // LOG TEMPORAL para debug
-    console.log('=== MP PAYLOAD ===', JSON.stringify(payload, null, 2))
-    console.log('=== MP TOKEN (primeros 20 chars) ===', process.env.MERCADOPAGO_ACCESS_TOKEN?.slice(0, 20))
+    // Derivar origen para la URL del webhook
+    const origin = new URL(back_urls.success).origin
 
-    const response = await fetch('https://api.mercadopago.com/checkout/preferences', {
+    const res = await fetch('https://api.mercadopago.com/checkout/preferences', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.MERCADOPAGO_ACCESS_TOKEN}`,
+        'Authorization': `Bearer ${accessToken}`,
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        items,
+        payer: {
+          name: pagador.name,
+          email: pagador.email,
+        },
+        external_reference,
+        back_urls,
+        auto_return: 'approved',
+        notification_url: `${origin}/api/webhook-mp`,
+        statement_descriptor: 'GreenTech Asociacion',
+      }),
     })
 
-    const data = await response.json()
-
-    // LOG TEMPORAL respuesta MP
-    console.log('=== MP RESPONSE STATUS ===', response.status)
-    console.log('=== MP RESPONSE DATA ===', JSON.stringify(data, null, 2))
-
-    if (!response.ok) {
-      return NextResponse.json({ error: data }, { status: 400 })
+    if (!res.ok) {
+      const err = await res.json()
+      console.error('Error MP preference:', JSON.stringify(err))
+      return NextResponse.json({ error: 'Error al crear preferencia en MercadoPago' }, { status: 500 })
     }
 
+    const data = await res.json()
     return NextResponse.json({
-      id: data.id,
       init_point: data.init_point,
       sandbox_init_point: data.sandbox_init_point,
+      preference_id: data.id,
     })
   } catch (e) {
-    console.error('=== MP ERROR ===', e)
-    return NextResponse.json({ error: 'Error interno' }, { status: 500 })
+    console.error('Error en preferencia MP:', e)
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
   }
 }

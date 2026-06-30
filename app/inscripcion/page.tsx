@@ -127,8 +127,8 @@ export default function Inscripcion() {
     }
   }, [])
 
-  // 🚧 BYPASS TEMPORAL — cambiar a false para activar MP en producción
-  const BYPASS_PAGO = true
+  // Cambiar a true para simular pago sin MP (solo para desarrollo)
+  const BYPASS_PAGO = false
 
   const handlePagoMP = async () => {
     // Validar datos básicos antes de pagar
@@ -163,18 +163,25 @@ export default function Inscripcion() {
     }
 
     // ── MODO PRODUCCIÓN: flujo real MercadoPago ──
-    // Guardar pre-registro antes de redirigir a MP
-    await supabase.from('pagos_incorporacion').upsert({
-      rut: form.rut,
-      nombre: form.nombre.trim(),
-      email: form.email.trim().toLowerCase(),
-      mp_payment_id: 'PENDING-' + Date.now(),
-      monto: montoIncorporacion,
-      estado: 'pendiente',
-      fecha: new Date().toISOString(),
-    }, { onConflict: 'rut' })
-
+    // Guardar pre-registro server-side antes de redirigir a MP (evita fallo por RLS)
     setMpLoading(true)
+    const preRes = await fetch('/api/registrar-pago', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        rut: form.rut,
+        nombre: form.nombre.trim(),
+        email: form.email.trim().toLowerCase(),
+        monto: montoIncorporacion,
+        mp_payment_id: 'PENDING-' + Date.now(),
+        estado: 'pendiente',
+      }),
+    })
+    if (!preRes.ok) {
+      setError('Error al registrar el pago. Intenta nuevamente.')
+      setMpLoading(false)
+      return
+    }
     setError('')
     try {
       const res = await fetch('/api/mercadopago/preferencia', {
