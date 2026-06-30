@@ -21,8 +21,8 @@ const estadoConfig: Record<string, {label:string,bg:string,color:string,border:s
 // Estado siguiente permitido para cada estado actual
 const siguienteEstado: Record<string, {value:string, label:string}> = {
   crecimiento: { value:'cosechado', label:'Cosecha (registrar gramaje húmedo)' },
-  cosechado:   { value:'secado',    label:'Inicio de curado' },
-  secado:      { value:'procesado', label:'Secado completo → ingresar a stock' },
+  cosechado:   { value:'secado',    label:'Fin secado / inicio curado (registrar gramaje seco)' },
+  secado:      { value:'procesado', label:'Curado completo → ingresar a stock' },
 }
 
 const tipoCultivoIcon: Record<string, string> = {
@@ -128,7 +128,7 @@ export default function Cultivo() {
     if (responsables.length === 0) return false
     if (!proximoRegistro) return false
     if (proximoRegistro.value === 'cosechado' && !gramHumedo) return false
-    if (proximoRegistro.value === 'procesado' && !gramSeco) return false
+    if (proximoRegistro.value === 'secado' && !gramSeco) return false
     return true
   })()
 
@@ -207,7 +207,7 @@ export default function Cultivo() {
     if (gramHumedo) updates.gramaje_humedo = parseInt(gramHumedo)
     if (gramSeco) updates.gramaje_seco = parseInt(gramSeco)
     const { error } = await supabase.from('lotes_cultivo').update(updates).eq('id', loteSeleccionado)
-    if (!error && nuevoEstado === 'procesado' && gramSeco) {
+    if (!error && nuevoEstado === 'secado' && gramSeco) {
       const lote = lotes.find(l => l.id === loteSeleccionado)
       if (lote) {
         const gramosSecoNum = parseInt(gramSeco)
@@ -222,7 +222,7 @@ export default function Cultivo() {
             gramos: gramosSecoNum,
             stock_antes: cepa.stock_gramos,
             stock_despues: nuevoStock,
-            motivo: `Cosecha seca — lote ${lote.codigo}`,
+            motivo: `Secado completo / inicio curado — lote ${lote.codigo}`,
             registrado_por: responsableRegistro || lote.responsable || 'Cultivador',
             lote_codigo: lote.codigo,
           })
@@ -453,8 +453,8 @@ export default function Cultivo() {
                 </div>
               )}
 
-              {/* Secado: mostrar gramaje húmedo guardado + pedir gramaje seco */}
-              {loteSeleccionado && proximoRegistro?.value === 'procesado' && (
+              {/* Fin de secado / inicio curado: mostrar gramaje húmedo + pedir gramaje seco */}
+              {loteSeleccionado && proximoRegistro?.value === 'secado' && (
                 <>
                   <div style={s.field}>
                     <label style={s.label}>Gramaje húmedo registrado en cosecha</label>
@@ -464,10 +464,21 @@ export default function Cultivo() {
                     }
                   </div>
                   <div style={s.field}>
-                    <label style={s.label}>Gramaje seco final (gr) *</label>
+                    <label style={s.label}>Gramaje seco (gr) *</label>
                     <input style={s.input} type="number" value={gramSeco} onChange={e=>setGramSeco(e.target.value)} placeholder="Ej: 120"/>
                   </div>
                 </>
+              )}
+
+              {/* Curado completo → procesado: mostrar gramaje seco ya registrado */}
+              {loteSeleccionado && proximoRegistro?.value === 'procesado' && (
+                <div style={s.field}>
+                  <label style={s.label}>Gramaje seco registrado al inicio del curado</label>
+                  {loteActual?.gramaje_seco
+                    ? <div style={s.inputReadonly}>{loteActual.gramaje_seco} gr → se agregará al stock</div>
+                    : <div style={{ ...s.inputReadonly, color:'#9ca3af', fontWeight:400 }}>No registrado aún</div>
+                  }
+                </div>
               )}
 
               {/* Responsable */}
@@ -483,10 +494,10 @@ export default function Cultivo() {
               </div>
             </div>
 
-            {/* Ratio H/S */}
-            {proximoRegistro?.value === 'procesado' && gramHumedoGuardado && gramSeco && (
+            {/* Ratio H/S — al registrar gramaje seco */}
+            {proximoRegistro?.value === 'secado' && gramHumedoGuardado && gramSeco && (
               <div style={{ background:'#EAF3DE', border:'1px solid #97C459', borderRadius:8, padding:'8px 12px', fontSize:12, color:'#3B6D11', marginBottom:12 }}>
-                🧮 Ratio H/S: <strong>{((parseInt(gramSeco)/gramHumedoGuardado)*100).toFixed(1)}%</strong> · Se agregarán <strong>{gramSeco} gr</strong> al stock de {loteActual?.cepa||'—'}
+                🧮 Ratio H/S: <strong>{((parseInt(gramSeco)/gramHumedoGuardado)*100).toFixed(1)}%</strong> · Se registrarán <strong>{gramSeco} gr secos</strong> para {loteActual?.cepa||'—'}
               </div>
             )}
 
@@ -496,7 +507,7 @@ export default function Cultivo() {
                 ⚠️ Completa todos los campos obligatorios para guardar:
                 {responsables.length === 0 && <span> · Sin rol de cultivador asignado</span>}
                 {proximoRegistro?.value === 'cosechado' && !gramHumedo && <span> · Gramaje húmedo</span>}
-                {proximoRegistro?.value === 'procesado' && !gramSeco && <span> · Gramaje seco</span>}
+                {proximoRegistro?.value === 'secado' && !gramSeco && <span> · Gramaje seco</span>}
               </div>
             )}
 
