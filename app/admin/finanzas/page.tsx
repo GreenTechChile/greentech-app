@@ -334,7 +334,7 @@ export default function Finanzas() {
                       <span style={{ fontWeight: 600, color: r.color }}>${Math.max(0, r.value).toLocaleString('es-CL')}</span>
                     </div>
                     <div style={{ height: 9, background: '#f3f4f6', borderRadius: 20, overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: `${Math.max(0, Math.min(100, (Math.abs(r.value) / maxRef) * 100))}%`, background: r.color, borderRadius: 20, opacity: i === 3 ? 0.8 : 1 }} />
+                      <div style={{ height: '100%', width: `${Math.max(0, Math.min(100, (Math.max(0, r.value) / maxRef) * 100))}%`, background: r.color, borderRadius: 20, opacity: i === 3 ? 0.8 : 1 }} />
                     </div>
                   </div>
                 ))
