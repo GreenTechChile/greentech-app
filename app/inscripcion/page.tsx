@@ -136,8 +136,8 @@ export default function Inscripcion() {
     if (!form.rut.trim() || !validarRut(form.rut)) { setError('Ingresa un RUT válido para continuar.'); return }
     if (!form.email.trim() || !validarEmail(form.email)) { setError('Ingresa un email válido para continuar.'); return }
 
-    if (BYPASS_PAGO) {
-      // ── MODO BYPASS: registrar pago vía API server-side (evita RLS) ──
+    if (BYPASS_PAGO || montoIncorporacion === 0) {
+      // ── MODO BYPASS o incorporación sin costo: registrar vía API server-side ──
       setMpLoading(true)
       try {
         const res = await fetch('/api/registrar-pago', {
@@ -148,14 +148,14 @@ export default function Inscripcion() {
             nombre: form.nombre.trim(),
             email: form.email.trim().toLowerCase(),
             monto: montoIncorporacion,
-            mp_payment_id: 'BYPASS-' + Date.now(),
+            mp_payment_id: montoIncorporacion === 0 ? 'GRATUITO-' + Date.now() : 'BYPASS-' + Date.now(),
             estado: 'aprobado',
           }),
         })
         if (!res.ok) throw new Error('Error al registrar el pago')
         setPaso(2)
       } catch {
-        setError('Error al registrar el pago.')
+        setError('Error al registrar la solicitud.')
       } finally {
         setMpLoading(false)
       }
@@ -416,23 +416,35 @@ export default function Inscripcion() {
               <div style={{border:'1px solid #97C459',borderRadius:12,padding:16,background:'#EAF3DE',marginBottom:16}}>
                 <div style={{fontSize:13,fontWeight:600,color:'#3B6D11',marginBottom:10}}>📋 Resumen del proceso</div>
                 <div style={{fontSize:12,color:'#374151',lineHeight:1.9}}>
-                  <div style={{display:'flex',alignItems:'flex-start',gap:8,marginBottom:6}}><span>1.</span><span>Realizas el pago de incorporación de <strong>${montoIncorporacion.toLocaleString('es-CL')}</strong>.</span></div>
-                  <div style={{display:'flex',alignItems:'flex-start',gap:8,marginBottom:6}}><span>2.</span><span>Completas el formulario con tus datos personales, domicilio e información médica.</span></div>
-                  <div style={{display:'flex',alignItems:'flex-start',gap:8,marginBottom:6}}><span>3.</span><span>Subes los documentos requeridos y aceptas el Reglamento Interno.</span></div>
-                  <div style={{display:'flex',alignItems:'flex-start',gap:8,marginBottom:6}}><span>4.</span><span>Lees y aceptas el Contrato de Previsión y la Declaración Jurada de Ingreso.</span></div>
-                  <div style={{display:'flex',alignItems:'flex-start',gap:8}}><span>5.</span><span>La directiva revisa tu solicitud en un plazo máximo de <strong>5 días hábiles</strong> y te notifica por correo.</span></div>
+                  {montoIncorporacion > 0 && (
+                    <div style={{display:'flex',alignItems:'flex-start',gap:8,marginBottom:6}}><span>1.</span><span>Realizas el pago de incorporación de <strong>${montoIncorporacion.toLocaleString('es-CL')}</strong>.</span></div>
+                  )}
+                  <div style={{display:'flex',alignItems:'flex-start',gap:8,marginBottom:6}}><span>{montoIncorporacion > 0 ? '2' : '1'}.</span><span>Completas el formulario con tus datos personales, domicilio e información médica.</span></div>
+                  <div style={{display:'flex',alignItems:'flex-start',gap:8,marginBottom:6}}><span>{montoIncorporacion > 0 ? '3' : '2'}.</span><span>Subes los documentos requeridos y aceptas el Reglamento Interno.</span></div>
+                  <div style={{display:'flex',alignItems:'flex-start',gap:8,marginBottom:6}}><span>{montoIncorporacion > 0 ? '4' : '3'}.</span><span>Lees y aceptas el Contrato de Previsión y la Declaración Jurada de Ingreso.</span></div>
+                  <div style={{display:'flex',alignItems:'flex-start',gap:8}}><span>{montoIncorporacion > 0 ? '5' : '4'}.</span><span>La directiva revisa tu solicitud en un plazo máximo de <strong>5 días hábiles</strong> y te notifica por correo.</span></div>
                 </div>
               </div>
 
-              {/* Costo */}
-              <div style={{border:'1px solid #7dd3fc',borderRadius:12,padding:16,background:'#f0f9ff',marginBottom:16,display:'flex',alignItems:'center',gap:14}}>
-                <div style={{fontSize:32}}>💳</div>
-                <div>
-                  <div style={{fontSize:13,fontWeight:600,color:'#0369a1',marginBottom:2}}>Costo del proceso de incorporación</div>
-                  <div style={{fontSize:22,fontWeight:700,color:'#0369a1'}}>${montoIncorporacion.toLocaleString('es-CL')} CLP</div>
-                  <div style={{fontSize:11,color:'#6b7280',marginTop:2}}>Pago único · Mercado Pago</div>
+              {/* Costo — solo si hay monto */}
+              {montoIncorporacion > 0 ? (
+                <div style={{border:'1px solid #7dd3fc',borderRadius:12,padding:16,background:'#f0f9ff',marginBottom:16,display:'flex',alignItems:'center',gap:14}}>
+                  <div style={{fontSize:32}}>💳</div>
+                  <div>
+                    <div style={{fontSize:13,fontWeight:600,color:'#0369a1',marginBottom:2}}>Costo del proceso de incorporación</div>
+                    <div style={{fontSize:22,fontWeight:700,color:'#0369a1'}}>${montoIncorporacion.toLocaleString('es-CL')} CLP</div>
+                    <div style={{fontSize:11,color:'#6b7280',marginTop:2}}>Pago único · Mercado Pago</div>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div style={{border:'1px solid #97C459',borderRadius:12,padding:16,background:'#EAF3DE',marginBottom:16,display:'flex',alignItems:'center',gap:14}}>
+                  <div style={{fontSize:32}}>🎉</div>
+                  <div>
+                    <div style={{fontSize:13,fontWeight:600,color:'#3B6D11',marginBottom:2}}>Incorporación sin costo</div>
+                    <div style={{fontSize:12,color:'#374151'}}>El proceso de incorporación es actualmente gratuito.</div>
+                  </div>
+                </div>
+              )}
 
               {/* Documentos a tener a mano */}
               <div style={{border:'1px solid #e5e7eb',borderRadius:12,padding:16,marginBottom:16}}>
@@ -512,11 +524,17 @@ export default function Inscripcion() {
             </div>
           )}
 
-          {/* PASO 1 — Pago de incorporación */}
+          {/* PASO 1 — Pago de incorporación (o identificación si monto=0) */}
           {paso===1 && (
             <div>
-              <h2 style={{fontSize:15,fontWeight:600,marginBottom:6}}>💳 Pago de incorporación</h2>
-              <p style={{fontSize:12,color:'#6b7280',marginBottom:20}}>Para continuar con el proceso de incorporación, realiza primero el pago.</p>
+              <h2 style={{fontSize:15,fontWeight:600,marginBottom:6}}>
+                {montoIncorporacion > 0 ? '💳 Pago de incorporación' : '👤 Identificación'}
+              </h2>
+              <p style={{fontSize:12,color:'#6b7280',marginBottom:20}}>
+                {montoIncorporacion > 0
+                  ? 'Para continuar con el proceso de incorporación, realiza primero el pago.'
+                  : 'Ingresa tus datos para comenzar el proceso de incorporación.'}
+              </p>
 
               {/* Identificación previa al pago */}
               <div style={{border:'1px solid #e5e7eb',borderRadius:12,padding:16,marginBottom:20,background:'#f9fafb'}}>
@@ -548,39 +566,53 @@ export default function Inscripcion() {
                   </div>
                 </div>
               </div>
-              <div style={{background:'#f0f9ff',border:'1px solid #7dd3fc',borderRadius:10,padding:'10px 14px',fontSize:12,color:'#0369a1',marginBottom:20,display:'flex',alignItems:'center',gap:8}}>
-                🔵 <span><strong>Pago seguro con Mercado Pago</strong> — Acepta tarjetas de débito, crédito y transferencia bancaria.</span>
-              </div>
-              <div style={{border:'1px solid #e5e7eb',borderRadius:12,overflow:'hidden',marginBottom:20}}>
-                <div style={{background:'#f9fafb',padding:'12px 16px',borderBottom:'1px solid #e5e7eb'}}>
-                  <div style={{fontSize:11,fontWeight:600,color:'#9ca3af',textTransform:'uppercase',letterSpacing:'0.05em'}}>Detalle del cobro</div>
-                </div>
-                <div style={{padding:'14px 16px'}}>
-                  <div style={{display:'flex',justifyContent:'space-between',fontSize:13,padding:'7px 0',borderBottom:'1px solid #f3f4f6'}}>
-                    <span style={{color:'#374151'}}>Proceso de incorporación como socio GreenTech</span>
-                    <span style={{fontWeight:500}}>${montoIncorporacion.toLocaleString('es-CL')}</span>
+              {montoIncorporacion > 0 ? (
+                <>
+                  <div style={{background:'#f0f9ff',border:'1px solid #7dd3fc',borderRadius:10,padding:'10px 14px',fontSize:12,color:'#0369a1',marginBottom:20,display:'flex',alignItems:'center',gap:8}}>
+                    🔵 <span><strong>Pago seguro con Mercado Pago</strong> — Acepta tarjetas de débito, crédito y transferencia bancaria.</span>
                   </div>
-                  <div style={{display:'flex',justifyContent:'space-between',fontSize:15,fontWeight:700,padding:'10px 0 4px',marginTop:4,borderTop:'2px solid #e5e7eb'}}>
-                    <span>Total a pagar</span>
-                    <span style={{color:'#3B6D11'}}>${montoIncorporacion.toLocaleString('es-CL')}</span>
+                  <div style={{border:'1px solid #e5e7eb',borderRadius:12,overflow:'hidden',marginBottom:20}}>
+                    <div style={{background:'#f9fafb',padding:'12px 16px',borderBottom:'1px solid #e5e7eb'}}>
+                      <div style={{fontSize:11,fontWeight:600,color:'#9ca3af',textTransform:'uppercase',letterSpacing:'0.05em'}}>Detalle del cobro</div>
+                    </div>
+                    <div style={{padding:'14px 16px'}}>
+                      <div style={{display:'flex',justifyContent:'space-between',fontSize:13,padding:'7px 0',borderBottom:'1px solid #f3f4f6'}}>
+                        <span style={{color:'#374151'}}>Proceso de incorporación como socio GreenTech</span>
+                        <span style={{fontWeight:500}}>${montoIncorporacion.toLocaleString('es-CL')}</span>
+                      </div>
+                      <div style={{display:'flex',justifyContent:'space-between',fontSize:15,fontWeight:700,padding:'10px 0 4px',marginTop:4,borderTop:'2px solid #e5e7eb'}}>
+                        <span>Total a pagar</span>
+                        <span style={{color:'#3B6D11'}}>${montoIncorporacion.toLocaleString('es-CL')}</span>
+                      </div>
+                    </div>
                   </div>
+                  <div style={{background:'#EAF3DE',border:'1px solid #97C459',borderRadius:10,padding:'12px 14px',fontSize:12,color:'#3B6D11',marginBottom:24,lineHeight:1.7}}>
+                    <strong>¿Qué incluye este pago?</strong><br/>
+                    ✓ Revisión de tu solicitud por la directiva<br/>
+                    ✓ Generación de contratos personalizados con tus datos<br/>
+                    ✓ Firma electrónica avanzada de contrato y declaración jurada<br/>
+                    ✓ Alta en el sistema GreenTech
+                  </div>
+                </>
+              ) : (
+                <div style={{background:'#EAF3DE',border:'1px solid #97C459',borderRadius:10,padding:'12px 14px',fontSize:12,color:'#3B6D11',marginBottom:24,lineHeight:1.7}}>
+                  🎉 <strong>Incorporación gratuita</strong> — No se requiere pago. Completa tus datos para continuar con el proceso.
                 </div>
-              </div>
-              <div style={{background:'#EAF3DE',border:'1px solid #97C459',borderRadius:10,padding:'12px 14px',fontSize:12,color:'#3B6D11',marginBottom:24,lineHeight:1.7}}>
-                <strong>¿Qué incluye este pago?</strong><br/>
-                ✓ Revisión de tu solicitud por la directiva<br/>
-                ✓ Generación de contratos personalizados con tus datos<br/>
-                ✓ Firma electrónica avanzada de contrato y declaración jurada<br/>
-                ✓ Alta en el sistema GreenTech
-              </div>
+              )}
               {error && <div style={{background:'#FCEBEB',border:'1px solid #F5C5C5',borderRadius:8,padding:'10px 12px',fontSize:12,color:'#A32D2D',marginBottom:14}}>⚠️ {error}</div>}
               <button onClick={handlePagoMP} disabled={mpLoading}
-                style={{width:'100%',padding:'14px',border:'none',borderRadius:12,background:mpLoading?'#9ca3af':'#009ee3',color:'#fff',fontSize:15,fontWeight:700,cursor:mpLoading?'not-allowed':'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:10,marginBottom:10}}>
-                {mpLoading ? '⏳ Procesando pago...' : `💳 Pagar $${montoIncorporacion.toLocaleString('es-CL')} con Mercado Pago →`}
+                style={{width:'100%',padding:'14px',border:'none',borderRadius:12,background:mpLoading?'#9ca3af':montoIncorporacion>0?'#009ee3':'#3B6D11',color:'#fff',fontSize:15,fontWeight:700,cursor:mpLoading?'not-allowed':'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:10,marginBottom:10}}>
+                {mpLoading
+                  ? '⏳ Procesando...'
+                  : montoIncorporacion > 0
+                    ? `💳 Pagar $${montoIncorporacion.toLocaleString('es-CL')} con Mercado Pago →`
+                    : 'Continuar →'}
               </button>
-              <div style={{textAlign:'center',fontSize:11,color:'#9ca3af',marginBottom:16}}>
-                🔒 Pago seguro · Mercado Pago · SSL
-              </div>
+              {montoIncorporacion > 0 && (
+                <div style={{textAlign:'center',fontSize:11,color:'#9ca3af',marginBottom:16}}>
+                  🔒 Pago seguro · Mercado Pago · SSL
+                </div>
+              )}
               <div style={{display:'flex',justifyContent:'flex-start'}}>
                 <button style={s.btnOutline} onClick={()=>setPaso(0)}>← Anterior</button>
               </div>
