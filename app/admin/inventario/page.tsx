@@ -40,6 +40,7 @@ export default function Inventario() {
 
   const aplicarAjuste = async () => {
     if (!ajusteCepa || !ajusteGramos) { setMensaje('❌ Selecciona la cepa y los gramos'); return }
+    if (!ajusteMotivo.trim()) { setMensaje('❌ El motivo es obligatorio para el registro de trazabilidad'); return }
     setGuardando(true)
     const cepa = cepas.find(c => c.id === ajusteCepa)
     if (!cepa) return
@@ -53,26 +54,58 @@ export default function Inventario() {
     if (error) {
       setMensaje('❌ Error: ' + error.message)
     } else {
-      // Registrar en audit trail de movimientos de stock
+      // Identificar al admin autenticado
       const { data: { user: adminUser } } = await supabase.auth.getUser()
-      const adminNombre = adminUser?.user_metadata?.nombre || adminUser?.email || 'Admin'
-      const deltaGramos = ajusteTipo === 'agregar' ? gramosNum : ajusteTipo === 'restar' ? -gramosNum : nuevoStock - cepa.stock_gramos
+      const adminRut = adminUser?.user_metadata?.rut || ''
+      let adminNombre = adminUser?.user_metadata?.nombre || ''
+      // Si no tiene nombre en metadata, buscarlo en socios por RUT
+      if (!adminNombre && adminRut) {
+        const { data: adminSocio } = await supabase.from('socios').select('nombre').eq('rut', adminRut).single()
+        adminNombre = adminSocio?.nombre || adminRut
+      }
+      if (!adminNombre) adminNombre = 'Admin'
+
+      const deltaGramos = ajusteTipo === 'agregar' ? gramosNum
+        : ajusteTipo === 'restar' ? -gramosNum
+        : nuevoStock - cepa.stock_gramos
+      const adminLabel = adminNombre + (adminRut ? ` (${adminRut})` : '')
+
+      // 1. Registrar en movimientos_stock (historial de stock)
       await supabase.from('movimientos_stock').insert({
         cepa_nombre: cepa.nombre,
         tipo: 'ajuste_manual',
         gramos: deltaGramos,
         stock_antes: cepa.stock_gramos,
         stock_despues: nuevoStock,
-        motivo: ajusteMotivo || `Ajuste manual (${ajusteTipo})`,
-        registrado_por: adminNombre,
+        motivo: ajusteMotivo,
+        registrado_por: adminLabel,
       })
-      setMensaje(`✅ Stock de ${cepa.nombre} actualizado a ${nuevoStock} gr`)
+
+      // 2. Registrar en audit_log (trazabilidad)
+      await supabase.from('audit_log').insert({
+        accion: 'ajuste_stock_manual',
+        entidad: 'cepas',
+        entidad_id: ajusteCepa,
+        realizado_por: adminLabel,
+        detalles: {
+          cepa_nombre: cepa.nombre,
+          tipo_ajuste: ajusteTipo,
+          gramos_ajustados: gramosNum,
+          delta: deltaGramos,
+          stock_antes: cepa.stock_gramos,
+          stock_despues: nuevoStock,
+          motivo: ajusteMotivo,
+          admin_rut: adminRut,
+        },
+      })
+
+      setMensaje(`✅ Stock de ${cepa.nombre} actualizado a ${nuevoStock} gr — registrado en trazabilidad`)
       setMostrarAjuste(false)
       setAjusteCepa(''); setAjusteGramos(''); setAjusteMotivo('')
       cargarCepas()
     }
     setGuardando(false)
-    setTimeout(() => setMensaje(''), 4000)
+    setTimeout(() => setMensaje(''), 5000)
   }
 
   const toggleVisible = async (cepa: Cepa) => {
@@ -159,8 +192,8 @@ export default function Inventario() {
                 <input style={s.input} type="number" value={ajusteGramos} onChange={e=>setAjusteGramos(e.target.value)} placeholder="Ej: 50"/>
               </div>
               <div style={s.field}>
-                <label style={s.label}>Motivo</label>
-                <input style={s.input} value={ajusteMotivo} onChange={e=>setAjusteMotivo(e.target.value)} placeholder="Ej: Merma por secado, corrección inventario..."/>
+                <label style={s.label}>Motivo * <span style={{ color:'#9ca3af', fontStyle:'italic' }}>(obligatorio para trazabilidad)</span></label>
+                <input style={{ ...s.input, borderColor: ajusteMotivo.trim() ? '#d1d5db' : '#fca5a5' }} value={ajusteMotivo} onChange={e=>setAjusteMotivo(e.target.value)} placeholder="Ej: Merma por secado, corrección de inventario, cosecha..."/>
               </div>
             </div>
             {ajusteCepa && ajusteGramos && (
