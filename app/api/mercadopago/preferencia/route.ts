@@ -4,9 +4,9 @@ export async function POST(req: NextRequest) {
   try {
     const { items, pagador, external_reference, back_urls } = await req.json()
 
-    const accessToken = process.env.MP_ACCESS_TOKEN
+    const accessToken = process.env.MERCADOPAGO_ACCESS_TOKEN
     if (!accessToken) {
-      return NextResponse.json({ error: 'MP_ACCESS_TOKEN no configurado' }, { status: 500 })
+      return NextResponse.json({ error: 'MERCADOPAGO_ACCESS_TOKEN no configurado' }, { status: 500 })
     }
 
     // Derivar origen para la URL del webhook
