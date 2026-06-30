@@ -28,14 +28,17 @@ export async function POST(req: NextRequest) {
         back_urls,
         auto_return: 'approved',
         notification_url: `${origin}/api/webhook-mp`,
-        statement_descriptor: 'GreenTech Asociacion',
       }),
     })
 
     if (!res.ok) {
       const err = await res.json()
       console.error('Error MP preference:', JSON.stringify(err))
-      return NextResponse.json({ error: 'Error al crear preferencia en MercadoPago' }, { status: 500 })
+      return NextResponse.json({ 
+        error: 'Error al crear preferencia en MercadoPago',
+        mp_error: err,
+        mp_status: res.status,
+      }, { status: 500 })
     }
 
     const data = await res.json()

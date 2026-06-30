@@ -209,7 +209,8 @@ export default function Inscripcion() {
       if (url) {
         window.location.href = url
       } else {
-        setError('No se pudo iniciar el pago. Intenta nuevamente.')
+        const mpErr = data.mp_error ? JSON.stringify(data.mp_error) : (data.error || 'Sin detalle')
+        setError('No se pudo iniciar el pago: ' + mpErr)
       }
     } catch {
       setError('Error al conectar con Mercado Pago.')
