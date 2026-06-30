@@ -25,15 +25,21 @@ export async function POST(req: NextRequest) {
 
     // Verificar la sesión del usuario con el token
     const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(access_token)
-    if (authError || !user?.email) {
+    if (authError || !user) {
       return NextResponse.json({ error: 'Token inválido' }, { status: 401 })
+    }
+
+    // Buscar socio por RUT (del user_metadata) — no por email sintético
+    const rut = user.user_metadata?.rut
+    if (!rut) {
+      return NextResponse.json({ error: 'Token inválido: sin RUT' }, { status: 401 })
     }
 
     // Obtener datos del socio incluyendo límites y vencimiento
     const { data: socio, error: socioError } = await supabaseAdmin
       .from('socios')
-      .select('rut, nombre, gramos_delegados, cuota_mensual, vencimiento_receta')
-      .eq('email', user.email)
+      .select('rut, nombre, email, gramos_delegados, cuota_mensual, vencimiento_receta')
+      .eq('rut', rut)
       .eq('estado', 'activo')
       .single()
 
@@ -140,8 +146,8 @@ export async function POST(req: NextRequest) {
     try {
       const cepasResumen = items.map(i => `${i.cepa} ${i.gramos}gr`).join(', ')
       const gramosTotal = items.reduce((a, i) => a + i.gramos, 0)
-      await sendEmail('dispensacion_confirmada', user.email, {
-        nombre: socio.nombre || user.email,
+      await sendEmail('dispensacion_confirmada', socio.email, {
+        nombre: socio.nombre,
         cepa: cepasResumen,
         gramos: String(gramosTotal),
         orden,
