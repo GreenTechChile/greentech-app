@@ -204,8 +204,8 @@ export default function Dispensacion() {
 
   const quitarDelCarrito = (id: string) => setCarrito(prev => prev.filter(item => item.id !== id))
 
-  // 🚧 BYPASS TEMPORAL — cambiar a false para activar MP en producción
-  const BYPASS_PAGO = true
+  // Cambiar a true para simular pago sin MP (solo para desarrollo)
+  const BYPASS_PAGO = false
 
   const confirmarPago = async () => {
     setProcesando(true)
