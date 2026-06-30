@@ -50,6 +50,8 @@ export default function Dispensacion() {
   const [medioPago, setMedioPago] = useState<'oneclick'|'webpay'|'khipu'>('webpay')
   const [recetaVencida, setRecetaVencida] = useState<boolean>(false)
   const [vencimientoReceta, setVencimientoReceta] = useState<string | null>(null)
+  const [promediosCalif, setPromediosCalif] = useState<Record<string, {promedio: number, total: number}>>({})
+
 
   useEffect(() => {
     // Manejar retorno desde MercadoPago
@@ -162,8 +164,23 @@ export default function Dispensacion() {
 
   const cargarCepas = async () => {
     setLoading(true)
-    const { data } = await supabase.from('cepas').select('*').eq('visible', true).order('nombre')
+    const [{ data }, { data: califs }] = await Promise.all([
+      supabase.from('cepas').select('*').eq('visible', true).order('nombre'),
+      supabase.from('calificaciones_cepas').select('cepa_nombre, estrellas'),
+    ])
     if (data) setCepas(data)
+    if (califs) {
+      const promedios: Record<string, {promedio: number, total: number}> = {}
+      califs.forEach(c => {
+        if (!promedios[c.cepa_nombre]) promedios[c.cepa_nombre] = { promedio: 0, total: 0 }
+        promedios[c.cepa_nombre].total++
+        promedios[c.cepa_nombre].promedio += c.estrellas
+      })
+      Object.keys(promedios).forEach(k => {
+        promedios[k].promedio = promedios[k].promedio / promedios[k].total
+      })
+      setPromediosCalif(promedios)
+    }
     setLoading(false)
   }
 
@@ -450,6 +467,19 @@ export default function Dispensacion() {
                               <div style={{ height: 6, background: '#f3f4f6', borderRadius: 20, overflow: 'hidden' }}>
                                 <div style={{ height: '100%', width: cepa.pct_indica + '%', background: 'linear-gradient(90deg, #534AB7, #7C75E0)', borderRadius: 20 }} />
                               </div>
+                            </div>
+                          )}
+
+                          {/* Promedio calificaciones socios */}
+                          {promediosCalif[cepa.nombre] && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12, padding: '6px 10px', background: '#fffbeb', borderRadius: 8, border: '1px solid #fde68a' }}>
+                              <span style={{ color: '#F59E0B', fontSize: 15 }}>★</span>
+                              <span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>
+                                {promediosCalif[cepa.nombre].promedio.toFixed(1)}
+                              </span>
+                              <span style={{ fontSize: 11, color: '#9ca3af' }}>
+                                — {promediosCalif[cepa.nombre].total} {promediosCalif[cepa.nombre].total === 1 ? 'calificación' : 'calificaciones'} de socios
+                              </span>
                             </div>
                           )}
 
