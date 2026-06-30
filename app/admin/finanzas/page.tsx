@@ -60,6 +60,7 @@ export default function Finanzas() {
   const [ingresosIncorporacion, setIngresosIncorporacion] = useState<Movimiento[]>([])
   const [costos, setCostos] = useState<Movimiento[]>([])
   const [pagosContratos, setPagosContratos] = useState<PagoContrato[]>([])
+  const [ingresoFuturoPotencial, setIngresoFuturoPotencial] = useState(0)
   const [loading, setLoading] = useState(true)
   const [guardando, setGuardando] = useState(false)
   const [mensaje, setMensaje] = useState('')
@@ -97,15 +98,20 @@ export default function Finanzas() {
 
   const cargarDatos = async () => {
     setLoading(true)
-    const [dispRes, movEgresoRes, movIngresoRes, pagContRes] = await Promise.all([
+    const [dispRes, movEgresoRes, movIngresoRes, pagContRes, cepasRes] = await Promise.all([
       supabase.from('dispensaciones').select('id,monto,mes,año,socio_id,cepa,gramos,orden_numero,estado,medio_pago,rut_socio,created_at,socio:socios(nombre)').eq('año', filtroAño),
       supabase.from('movimientos_financieros').select('*').eq('año', filtroAño).eq('tipo','egreso').order('created_at', { ascending: false }),
       supabase.from('movimientos_financieros').select('*').eq('año', filtroAño).eq('tipo','ingreso').order('created_at', { ascending: false }),
       supabase.from('pagos_contratos').select('*, contrato:contratos(nombre,tipo,rol_funcion)').eq('año', filtroAño).eq('estado','pagado').order('mes', { ascending: true }),
+      supabase.from('cepas').select('stock_gramos,precio_gramo'),
     ])
     if (dispRes.data) setDispensaciones(dispRes.data as unknown as Dispensacion[])
     if (movEgresoRes.data) setCostos(movEgresoRes.data as unknown as Movimiento[])
     if (movIngresoRes.data) setIngresosIncorporacion(movIngresoRes.data as unknown as Movimiento[])
+    if (cepasRes.data) {
+      const potencial = cepasRes.data.reduce((acc: number, c: any) => acc + (c.stock_gramos || 0) * (c.precio_gramo || 0), 0)
+      setIngresoFuturoPotencial(Math.round(potencial))
+    }
     const { data: ae } = await supabase.from('aportes_extraordinarios').select('*').eq('año', filtroAño).order('created_at', { ascending: false })
     if (ae) setAportesExt(ae)
     if (pagContRes.data) setPagosContratos(pagContRes.data as any[])
@@ -310,21 +316,29 @@ export default function Finanzas() {
             {/* Balance acumulado */}
             <div style={{ border:'1px solid #e5e7eb', borderRadius:12, padding:16 }}>
               <div style={{ fontSize:13, fontWeight:600, marginBottom:14 }}>Balance acumulado {filtroAño}</div>
-              {[
-                { label:'Total ingresos', value:totalIngresos, color:'#3B6D11', pct:totalIngresos>0||totalCostos>0?(totalIngresos/Math.max(totalIngresos,totalCostos))*100:0 },
-                { label:'Total costos', value:totalCostos, color:'#A32D2D', pct:totalIngresos>0||totalCostos>0?(totalCostos/Math.max(totalIngresos,totalCostos))*100:0 },
-                { label:'Fondo de reserva', value:superavit, color: superavit>=0?'#185FA5':'#A32D2D', pct:totalIngresos>0||totalCostos>0?(Math.abs(superavit)/Math.max(totalIngresos,totalCostos))*100:0 },
-              ].map((r,i) => (
-                <div key={i} style={{ marginBottom:12 }}>
-                  <div style={{ display:'flex', justifyContent:'space-between', fontSize:12, marginBottom:5 }}>
-                    <span style={{ color:'#6b7280' }}>{r.label}</span>
-                    <span style={{ fontWeight:600, color:r.color }}>${Math.max(0,r.value).toLocaleString('es-CL')}</span>
+              {(() => {
+                const maxRef = Math.max(totalIngresos, totalCostos, ingresoFuturoPotencial, 1)
+                const filas: { label: string; value: number; color: string; sub?: string }[] = [
+                  { label: 'Total ingresos', value: totalIngresos, color: '#3B6D11' },
+                  { label: 'Total costos', value: totalCostos, color: '#A32D2D' },
+                  { label: 'Fondo de reserva', value: superavit, color: superavit >= 0 ? '#185FA5' : '#A32D2D' },
+                  { label: 'Ingreso potencial stock', value: ingresoFuturoPotencial, color: '#B45309', sub: 'Stock actual × precio/gramo' },
+                ]
+                return filas.map((r, i) => (
+                  <div key={i} style={{ marginBottom: 12 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 5 }}>
+                      <span style={{ color: '#6b7280' }}>
+                        {r.label}
+                        {r.sub && <span style={{ fontSize: 10, color: '#9ca3af', marginLeft: 6 }}>{r.sub}</span>}
+                      </span>
+                      <span style={{ fontWeight: 600, color: r.color }}>${Math.max(0, r.value).toLocaleString('es-CL')}</span>
+                    </div>
+                    <div style={{ height: 9, background: '#f3f4f6', borderRadius: 20, overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${Math.max(0, Math.min(100, (Math.abs(r.value) / maxRef) * 100))}%`, background: r.color, borderRadius: 20, opacity: i === 3 ? 0.8 : 1 }} />
+                    </div>
                   </div>
-                  <div style={{ height:9, background:'#f3f4f6', borderRadius:20, overflow:'hidden' }}>
-                    <div style={{ height:'100%', width:`${totalIngresos > 0 ? Math.max(0,Math.min(100,r.pct)) : 0}%`, background:r.color, borderRadius:20 }}/>
-                  </div>
-                </div>
-              ))}
+                ))
+              })()}
             </div>
 
             {/* Datos bancarios */}
