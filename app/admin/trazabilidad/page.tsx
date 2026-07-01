@@ -34,6 +34,7 @@ export default function Trazabilidad() {
   const [auditDesde, setAuditDesde] = useState('2026-01-01')
   const [auditHasta, setAuditHasta] = useState(new Date().toISOString().split('T')[0])
   const [dispModal, setDispModal] = useState<Dispensacion|null>(null)
+  const [busquedaSocios, setBusquedaSocios] = useState('')
 
   useEffect(() => { cargarDatos() }, [])
 
@@ -194,15 +195,45 @@ export default function Trazabilidad() {
           <div style={{ display:'grid', gridTemplateColumns:'220px 1fr', gap:20 }}>
             {/* Lista socios */}
             <div>
-              <div style={{ fontSize:12, fontWeight:600, color:'#6b7280', textTransform:'uppercase', letterSpacing:'0.04em', marginBottom:10 }}>Socios</div>
-              {socios.map(s => (
-                <div key={s.id} onClick={() => cargarExpediente(s)}
-                  style={{ padding:'10px 12px', borderRadius:8, marginBottom:4, cursor:'pointer', background:socioSeleccionado?.id===s.id?'#E6F1FB':'#f9fafb', border:`1px solid ${socioSeleccionado?.id===s.id?'#A8CBF0':'#e5e7eb'}` }}>
-                  <div style={{ fontSize:12, fontWeight:600, color:socioSeleccionado?.id===s.id?'#185FA5':'#111' }}>{s.nombre.split(' ').slice(0,2).join(' ')}</div>
-                  <div style={{ fontSize:10, color:'#9ca3af' }}>{s.rut}</div>
-                  <span style={{ fontSize:9, background:s.estado==='activo'?'#EAF3DE':'#f3f4f6', color:s.estado==='activo'?'#3B6D11':'#9ca3af', padding:'1px 6px', borderRadius:20 }}>
-                    {s.estado}
-                  </span>
+              <div style={{ fontSize:12, fontWeight:600, color:'#6b7280', textTransform:'uppercase', letterSpacing:'0.04em', marginBottom:8 }}>Socios</div>
+              <input
+                type="text"
+                placeholder="Buscar por nombre o RUT..."
+                value={busquedaSocios}
+                onChange={e => setBusquedaSocios(e.target.value)}
+                style={{ width:'100%', padding:'6px 10px', border:'1px solid #e5e7eb', borderRadius:8, fontSize:12, outline:'none', marginBottom:8, boxSizing:'border-box' as const }}
+              />
+              <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:8, padding:'4px 6px', background:'#f9fafb', borderRadius:6, border:'1px solid #e5e7eb' }}>
+                <input type="checkbox"
+                  checked={socios.length > 0 && exportSocios.length === socios.length}
+                  onChange={toggleTodos}
+                  style={{ accentColor:'#185FA5', width:13, height:13, cursor:'pointer' }}
+                />
+                <span style={{ fontSize:11, color:'#6b7280', cursor:'pointer' }} onClick={toggleTodos}>
+                  Seleccionar todos ({socios.length})
+                </span>
+              </div>
+              {socios
+                .filter(s => {
+                  const q = busquedaSocios.toLowerCase()
+                  return !q || s.nombre.toLowerCase().includes(q) || s.rut.toLowerCase().includes(q)
+                })
+                .map(s => (
+                <div key={s.id}
+                  style={{ padding:'8px 10px', borderRadius:8, marginBottom:4, cursor:'pointer', background:socioSeleccionado?.id===s.id?'#E6F1FB':'#f9fafb', border:`1px solid ${socioSeleccionado?.id===s.id?'#A8CBF0':'#e5e7eb'}`, display:'flex', alignItems:'flex-start', gap:8 }}>
+                  <input type="checkbox"
+                    checked={exportSocios.includes(s.id)}
+                    onChange={e => { e.stopPropagation(); toggleExportSocio(s.id) }}
+                    onClick={e => e.stopPropagation()}
+                    style={{ accentColor:'#185FA5', width:13, height:13, marginTop:2, flexShrink:0, cursor:'pointer' }}
+                  />
+                  <div onClick={() => cargarExpediente(s)} style={{ flex:1, minWidth:0 }}>
+                    <div style={{ fontSize:12, fontWeight:600, color:socioSeleccionado?.id===s.id?'#185FA5':'#111' }}>{s.nombre.split(' ').slice(0,2).join(' ')}</div>
+                    <div style={{ fontSize:10, color:'#9ca3af' }}>{s.rut}</div>
+                    <span style={{ fontSize:9, background:s.estado==='activo'?'#EAF3DE':'#f3f4f6', color:s.estado==='activo'?'#3B6D11':'#9ca3af', padding:'1px 6px', borderRadius:20 }}>
+                      {s.estado}
+                    </span>
+                  </div>
                 </div>
               ))}
             </div>
@@ -223,176 +254,45 @@ export default function Trazabilidad() {
                       <div style={{ fontSize:14, fontWeight:600 }}>{socioSeleccionado.nombre}</div>
                       <div style={{ fontSize:11, color:'#6b7280' }}>RUT {socioSeleccionado.rut} · {socioSeleccionado.email}</div>
                     </div>
-                    <button onClick={async () => {
-                      // Obtener URLs firmadas de documentos del socio
-                      const DOCS = [
-                        { key: 'cedula_anverso', label: 'Cédula de identidad — Anverso' },
-                        { key: 'cedula_reverso', label: 'Cédula de identidad — Reverso' },
-                        { key: 'receta', label: 'Receta médica vigente (última aprobada)' },
-                        { key: 'antecedentes', label: 'Certificado de antecedentes' },
-                        { key: 'declaracion_jurada_firmada', label: 'Declaración jurada de ingreso (firmada)' },
-                        { key: 'contrato_firmado', label: 'Contrato de delegación de cultivo (firmado)' },
-                      ]
-                      const docsHtml: string[] = []
-                      for (const doc of DOCS) {
-                        let found = false
-                        for (const ext of ['pdf','jpg','jpeg','png']) {
-                          const { data: urlData } = await supabase.storage.from('documentos')
-                            .createSignedUrl(`${socioSeleccionado.rut}/${doc.key}.${ext}`, 3600)
-                          if (urlData?.signedUrl) {
-                            try {
-                              const resp = await fetch(urlData.signedUrl)
-                              const blob = await resp.blob()
-                              const b64 = await new Promise<string>(res => {
-                                const r = new FileReader()
-                                r.onload = () => res(r.result as string)
-                                r.readAsDataURL(blob)
-                              })
-                              const esImagen = ['jpg','jpeg','png'].includes(ext)
-                              const mediaType = esImagen ? `image/${ext==='jpg'?'jpeg':ext}` : 'application/pdf'
-                              docsHtml.push(`
-                                <tr style="border-bottom:1px solid #e5e7eb">
-                                  <td style="padding:8px 12px;vertical-align:top">📄 ${doc.label}</td>
-                                  <td style="padding:8px 12px">
-                                    ${esImagen
-                                      ? `<img src="${b64}" style="max-width:480px;max-height:300px;border-radius:4px;border:1px solid #e5e7eb;display:block" />`
-                                      : `<object data="${b64}" type="application/pdf" width="100%" height="400px" style="border:1px solid #e5e7eb;border-radius:4px">
-                                           <p style="color:#9ca3af">PDF no puede mostrarse en este navegador. <a href="${b64}" download="${doc.key}.pdf" style="color:#185FA5">Descargar PDF</a></p>
-                                         </object>`
-                                    }
-                                  </td>
-                                </tr>`)
-                              found = true; break
-                            } catch {
-                              // Si falla el fetch, mostrar link
-                              docsHtml.push(`<tr style="border-bottom:1px solid #e5e7eb"><td style="padding:8px 12px">📄 ${doc.label}</td><td style="padding:8px 12px"><a href="${urlData.signedUrl}" target="_blank" style="color:#185FA5">Ver documento</a></td></tr>`)
-                              found = true; break
-                            }
-                          }
-                        }
-                        if (!found) {
-                          docsHtml.push(`<tr style="border-bottom:1px solid #e5e7eb"><td style="padding:8px 12px;color:#9ca3af">📄 ${doc.label}</td><td style="padding:8px 12px;color:#9ca3af;font-style:italic">No subido</td></tr>`)
-                        }
-                      }
-
+                    <button onClick={() => {
                       const totalGr = socioDispensaciones.reduce((a,d) => a + d.gramos, 0)
                       const totalMonto = socioDispensaciones.reduce((a,d) => a + d.monto, 0)
                       const filas = socioDispensaciones.map((d,i) => `
-                        <tr style="border-bottom:1px solid #e5e7eb">
-                          <td style="padding:8px 12px;color:#6b7280">${i+1}</td>
-                          <td style="padding:8px 12px">${new Date(d.created_at).toLocaleDateString('es-CL')}</td>
-                          <td style="padding:8px 12px">Orden #${d.orden_numero||'—'}</td>
-                          <td style="padding:8px 12px">${d.cepa||'—'}</td>
-                          <td style="padding:8px 12px;text-align:right">${d.gramos} gr</td>
-                          <td style="padding:8px 12px;text-align:right">$${d.monto.toLocaleString('es-CL')}</td>
-                          <td style="padding:8px 12px">${d.medio_pago||'—'}</td>
-                          <td style="padding:8px 12px">
-                            <span style="background:${d.estado==='entregado'||d.estado==='pagado'?'#EAF3DE':'#FAEEDA'};color:${d.estado==='entregado'||d.estado==='pagado'?'#3B6D11':'#633806'};padding:2px 8px;border-radius:20px;font-size:10px">${d.estado}</span>
-                          </td>
+                        <tr style="border-bottom:1px solid #e5e7eb;${i%2===0?'':'background:#fafafa'}">
+                          <td style="padding:7px 12px;color:#6b7280">${i+1}</td>
+                          <td style="padding:7px 12px">${new Date(d.created_at).toLocaleDateString('es-CL')}</td>
+                          <td style="padding:7px 12px">Orden #${d.orden_numero||'—'}</td>
+                          <td style="padding:7px 12px">${d.cepa||'—'}</td>
+                          <td style="padding:7px 12px;text-align:right">${d.gramos} gr</td>
+                          <td style="padding:7px 12px;text-align:right">$${d.monto.toLocaleString('es-CL')}</td>
+                          <td style="padding:7px 12px">${d.medio_pago||'—'}</td>
+                          <td style="padding:7px 12px"><span style="background:${d.estado==='entregado'||d.estado==='pagado'?'#EAF3DE':'#FAEEDA'};color:${d.estado==='entregado'||d.estado==='pagado'?'#3B6D11':'#633806'};padding:2px 8px;border-radius:20px;font-size:10px">${d.estado}</span></td>
                         </tr>`).join('')
                       const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
-                        <title>Expediente ${socioSeleccionado.nombre}</title>
-                        <style>
-                          body{font-family:Arial,sans-serif;padding:32px;color:#111;font-size:13px}
-                          h1{font-size:20px;margin-bottom:4px}
-                          .sub{color:#6b7280;font-size:12px;margin-bottom:24px}
-                          .badge{background:#EAF3DE;color:#3B6D11;padding:3px 10px;border-radius:20px;font-size:11px}
-                          table{width:100%;border-collapse:collapse;margin-top:16px}
-                          th{text-align:left;padding:8px 12px;font-size:11px;color:#9ca3af;border-bottom:2px solid #e5e7eb}
-                          .total{font-weight:700;background:#f9fafb}
-                          .footer{margin-top:32px;padding-top:16px;border-top:1px solid #e5e7eb;font-size:11px;color:#9ca3af}
-                        </style>
+                        <title>Dispensaciones ${socioSeleccionado.nombre}</title>
+                        <style>body{font-family:Arial,sans-serif;padding:32px;color:#111;font-size:13px}h1{font-size:18px;margin-bottom:4px}.sub{color:#6b7280;font-size:12px;margin-bottom:20px}table{width:100%;border-collapse:collapse}th{text-align:left;padding:8px 12px;font-size:11px;color:#9ca3af;border-bottom:2px solid #e5e7eb}.total{font-weight:700;background:#f9fafb;border-top:2px solid #e5e7eb}.footer{margin-top:28px;padding-top:12px;border-top:1px solid #e5e7eb;font-size:11px;color:#9ca3af}</style>
                       </head><body>
-                        <div style="display:flex;justify-content:space-between;align-items:flex-start">
-                          <div>
-                            <h1>Expediente de Dispensaciones</h1>
-                            <div class="sub">Asociación de Usuarios de Plantas Medicinales GreenTech</div>
-                          </div>
-                          <div style="text-align:right;font-size:11px;color:#6b7280">
-                            Generado: ${new Date().toLocaleDateString('es-CL',{day:'2-digit',month:'long',year:'numeric'})}<br>
-                            Folio: EXP-${socioSeleccionado.rut.replace('-','')}-${Date.now().toString().slice(-6)}
-                          </div>
+                        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
+                          <div><h1>Historial de Dispensaciones</h1><div class="sub">Asociación GreenTech · ${socioSeleccionado.nombre} · RUT ${socioSeleccionado.rut}</div></div>
+                          <div style="text-align:right;font-size:11px;color:#6b7280">Generado: ${new Date().toLocaleDateString('es-CL',{day:'2-digit',month:'long',year:'numeric'})}<br>Total: ${totalGr} gr · $${totalMonto.toLocaleString('es-CL')}</div>
                         </div>
-                        <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:14px 16px;margin-bottom:20px">
-                          <div style="font-size:15px;font-weight:700;margin-bottom:4px">${socioSeleccionado.nombre}</div>
-                          <div style="font-size:12px;color:#6b7280">RUT ${socioSeleccionado.rut} &nbsp;·&nbsp; ${socioSeleccionado.email}</div>
-                          <div style="margin-top:8px;display:flex;gap:16px;font-size:12px">
-                            <span>Total dispensado: <strong>${totalGr} gr</strong></span>
-                            <span>Total aportado: <strong>$${totalMonto.toLocaleString('es-CL')}</strong></span>
-                            <span>Dispensaciones: <strong>${socioDispensaciones.length}</strong></span>
-                          </div>
-                        </div>
-                        <h2 style="font-size:14px;font-weight:700;margin:24px 0 10px;border-bottom:2px solid #e5e7eb;padding-bottom:6px">Datos de incorporación</h2>
-                        <table style="width:100%;border-collapse:collapse;margin-bottom:24px">
-                          <tr style="border-bottom:1px solid #e5e7eb">
-                            <td style="padding:8px 12px;color:#6b7280;width:200px">Teléfono</td>
-                            <td style="padding:8px 12px">${socioSeleccionado.telefono||'—'}</td>
-                            <td style="padding:8px 12px;color:#6b7280;width:200px">Dirección</td>
-                            <td style="padding:8px 12px">${socioSeleccionado.direccion||'—'}, ${socioSeleccionado.comuna||''}, ${socioSeleccionado.ciudad||''}</td>
-                          </tr>
-                          <tr style="border-bottom:1px solid #e5e7eb">
-                            <td style="padding:8px 12px;color:#6b7280">Diagnóstico</td>
-                            <td style="padding:8px 12px">${socioSeleccionado.diagnostico||'—'}</td>
-                            <td style="padding:8px 12px;color:#6b7280">Médico tratante</td>
-                            <td style="padding:8px 12px">${socioSeleccionado.medico_nombre||'—'} · RUT ${socioSeleccionado.medico_rut||'—'}</td>
-                          </tr>
-                          <tr style="border-bottom:1px solid #e5e7eb">
-                            <td style="padding:8px 12px;color:#6b7280">Folio receta</td>
-                            <td style="padding:8px 12px">${socioSeleccionado.folio_receta||'—'}</td>
-                            <td style="padding:8px 12px;color:#6b7280">Vencimiento receta</td>
-                            <td style="padding:8px 12px">${socioSeleccionado.vencimiento_receta||'—'}</td>
-                          </tr>
-                          <tr style="border-bottom:1px solid #e5e7eb">
-                            <td style="padding:8px 12px;color:#6b7280">Cuota autorizada</td>
-                            <td style="padding:8px 12px">${socioSeleccionado.cuota_mensual||0} gr / mes</td>
-                            <td style="padding:8px 12px;color:#6b7280">Gramos delegados</td>
-                            <td style="padding:8px 12px">${socioSeleccionado.gramos_delegados||0} gr / mes</td>
-                          </tr>
-                          ${socioSeleccionado.notas_admin ? `<tr><td style="padding:8px 12px;color:#6b7280">Notas admin</td><td colspan="3" style="padding:8px 12px">${socioSeleccionado.notas_admin}</td></tr>` : ''}
-                        </table>
-
-                        <h2 style="font-size:14px;font-weight:700;margin:0 0 10px;border-bottom:2px solid #e5e7eb;padding-bottom:6px">Documentos de incorporación</h2>
-                        <table style="width:100%;border-collapse:collapse;margin-bottom:24px">
-                          <thead><tr>
-                            <th style="text-align:left;padding:8px 12px;font-size:11px;color:#9ca3af;border-bottom:1px solid #e5e7eb;width:220px">Documento</th>
-                            <th style="text-align:left;padding:8px 12px;font-size:11px;color:#9ca3af;border-bottom:1px solid #e5e7eb">Archivo</th>
-                          </tr></thead>
-                          <tbody>${docsHtml.join('')}<tr style="border-bottom:1px solid #e5e7eb">
-                            <td style="padding:8px 12px">✅ Reglamento interno</td>
-                            <td style="padding:8px 12px"><span style="background:#EAF3DE;color:#3B6D11;padding:2px 8px;border-radius:20px;font-size:11px">Aceptado en línea al momento de inscripción</span></td>
-                          </tr></tbody>
-                        </table>
-
-                        <h2 style="font-size:14px;font-weight:700;margin:0 0 10px;border-bottom:2px solid #e5e7eb;padding-bottom:6px">Historial de dispensaciones</h2>
                         <table>
-                          <thead><tr>
-                            <th>#</th><th>Fecha</th><th>Orden</th><th>Cepa / Producto</th>
-                            <th style="text-align:right">Gramos</th><th style="text-align:right">Monto</th>
-                            <th>Medio pago</th><th>Estado</th>
-                          </tr></thead>
-                          <tbody>${filas}</tbody>
-                          <tfoot><tr class="total">
-                            <td colspan="4" style="padding:10px 12px;font-weight:600">Total</td>
-                            <td style="padding:10px 12px;text-align:right;font-weight:700">${totalGr} gr</td>
-                            <td style="padding:10px 12px;text-align:right;font-weight:700;color:#185FA5">$${totalMonto.toLocaleString('es-CL')}</td>
-                            <td colspan="2"></td>
-                          </tr></tfoot>
+                          <thead><tr><th>#</th><th>Fecha</th><th>Orden</th><th>Cepa</th><th style="text-align:right">Gramos</th><th style="text-align:right">Monto</th><th>Medio pago</th><th>Estado</th></tr></thead>
+                          <tbody>${filas || '<tr><td colspan="8" style="padding:20px;text-align:center;color:#9ca3af">Sin dispensaciones registradas</td></tr>'}</tbody>
+                          <tfoot><tr class="total"><td colspan="4" style="padding:10px 12px">Total</td><td style="padding:10px 12px;text-align:right">${totalGr} gr</td><td style="padding:10px 12px;text-align:right;color:#185FA5">$${totalMonto.toLocaleString('es-CL')}</td><td colspan="2"></td></tr></tfoot>
                         </table>
-                        <div class="footer">
-                          Este documento fue generado automáticamente por el sistema GreenTech. 
-                          Los registros son inmutables y cumplen con Ley 19.628, Ley 20.000 y Ley 21.575.
-                        </div>
+                        <div class="footer">GreenTech · Registros inmutables · Ley 19.628, Ley 20.000, Ley 21.575</div>
                       </body></html>`
                       const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
                       const url = URL.createObjectURL(blob)
                       const a = document.createElement('a')
                       a.href = url
-                      a.download = `Expediente_${socioSeleccionado.rut}_${new Date().toISOString().split('T')[0]}.html`
+                      a.download = `Dispensaciones_${socioSeleccionado.rut}_${new Date().toISOString().split('T')[0]}.html`
                       a.click()
                       URL.revokeObjectURL(url)
                     }}
                       style={{ padding:'6px 14px', border:'1px solid #185FA5', borderRadius:8, background:'#E6F1FB', color:'#185FA5', fontSize:12, cursor:'pointer', fontWeight:500 }}>
-                      📤 Exportar expediente
+                      📤 Exportar dispensaciones
                     </button>
                   </div>
 
@@ -594,8 +494,35 @@ export default function Trazabilidad() {
                   </span>
                   <button disabled={exportSocios.length === 0} onClick={async () => {
                     const seleccionados = socios.filter(s => exportSocios.includes(s.id))
+                    // helpers
+                    const DOCS_SOCIO = [
+                      { key: 'cedula_anverso',           label: 'Cédula — Anverso' },
+                      { key: 'cedula_reverso',           label: 'Cédula — Reverso' },
+                      { key: 'receta',                   label: 'Receta médica vigente (última aprobada)' },
+                      { key: 'antecedentes',             label: 'Certificado de antecedentes' },
+                      { key: 'declaracion_jurada_firmada', label: 'Declaración jurada (firmada)' },
+                      { key: 'contrato_firmado',         label: 'Contrato de delegación (firmado)' },
+                    ]
+                    const fetchDocB64 = async (rut: string, key: string): Promise<{b64:string,ext:string}|null> => {
+                      for (const ext of ['pdf','jpg','jpeg','png']) {
+                        const { data } = await supabase.storage.from('documentos').createSignedUrl(`${rut}/${key}.${ext}`, 3600)
+                        if (data?.signedUrl) {
+                          try {
+                            const r = await fetch(data.signedUrl)
+                            if (!r.ok) continue
+                            const blob = await r.blob()
+                            const b64 = await new Promise<string>(res => { const fr = new FileReader(); fr.onload = () => res(fr.result as string); fr.readAsDataURL(blob) })
+                            return { b64, ext }
+                          } catch { continue }
+                        }
+                      }
+                      return null
+                    }
                     const filas = await Promise.all(seleccionados.map(async s => {
-                      const { data: disps } = await supabase.from('dispensaciones').select('*').eq('rut_socio', s.rut).order('created_at', { ascending: false })
+                      const [{ data: disps }, ...docResults] = await Promise.all([
+                        supabase.from('dispensaciones').select('*').eq('rut_socio', s.rut).order('created_at', { ascending: false }),
+                        ...DOCS_SOCIO.map(d => fetchDocB64(s.rut, d.key))
+                      ])
                       const ds = disps || []
                       const totalGr = ds.reduce((a,d) => a + d.gramos, 0)
                       const totalMonto = ds.reduce((a,d) => a + d.monto, 0)
@@ -608,31 +535,31 @@ export default function Trazabilidad() {
                         <td style="padding:7px 10px">${d.medio_pago||'—'}</td>
                         <td style="padding:7px 10px">${d.estado}</td>
                       </tr>`).join('')
-                      return `<div style="margin-bottom:32px;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden">
+                      const docsHtml = DOCS_SOCIO.map((doc, idx) => {
+                        const result = docResults[idx] as {b64:string,ext:string}|null
+                        if (!result) return `<tr style="border-bottom:1px solid #f3f4f6"><td style="padding:7px 10px;color:#9ca3af">📄 ${doc.label}</td><td style="padding:7px 10px;color:#9ca3af;font-style:italic">No disponible</td></tr>`
+                        const esImg = ['jpg','jpeg','png'].includes(result.ext)
+                        return `<tr style="border-bottom:1px solid #f3f4f6"><td style="padding:7px 10px;vertical-align:top">📄 ${doc.label}</td><td style="padding:7px 10px">${esImg ? `<img src="${result.b64}" style="max-width:420px;max-height:280px;border-radius:4px;border:1px solid #e5e7eb"/>` : `<object data="${result.b64}" type="application/pdf" width="100%" height="400px" style="border:1px solid #e5e7eb;border-radius:4px"><a href="${result.b64}" download style="color:#185FA5">Descargar PDF</a></object>`}</td></tr>`
+                      }).join('')
+                      return `<div style="margin-bottom:40px;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;page-break-inside:avoid">
                         <div style="background:#EAF3DE;padding:12px 16px;border-bottom:1px solid #97C459">
                           <div style="font-size:14px;font-weight:700">${s.nombre}</div>
                           <div style="font-size:12px;color:#3B6D11">RUT ${s.rut} · ${s.email} · ${s.estado}</div>
-                          <div style="font-size:12px;color:#3B6D11;margin-top:4px">${ds.length} dispensaciones · ${totalGr} gr · $${totalMonto.toLocaleString('es-CL')}</div>
+                          <div style="font-size:12px;color:#3B6D11;margin-top:4px">Cuota: ${s.cuota_mensual||0} gr/mes · Delegados: ${s.gramos_delegados||0} gr/mes · Receta vence: ${s.vencimiento_receta||'—'}</div>
                         </div>
-                        ${ds.length === 0 ? '<p style="padding:12px 16px;color:#9ca3af;font-size:12px">Sin dispensaciones registradas</p>' : `
-                        <table style="width:100%;border-collapse:collapse;font-size:12px">
-                          <thead><tr style="background:#f9fafb;border-bottom:1px solid #e5e7eb">
-                            <th style="padding:7px 10px;font-size:11px;color:#9ca3af;text-align:left;font-weight:500">Fecha</th>
-                            <th style="padding:7px 10px;font-size:11px;color:#9ca3af;text-align:left;font-weight:500">Orden</th>
-                            <th style="padding:7px 10px;font-size:11px;color:#9ca3af;text-align:left;font-weight:500">Cepa</th>
-                            <th style="padding:7px 10px;font-size:11px;color:#9ca3af;text-align:right;font-weight:500">Gramos</th>
-                            <th style="padding:7px 10px;font-size:11px;color:#9ca3af;text-align:right;font-weight:500">Monto</th>
-                            <th style="padding:7px 10px;font-size:11px;color:#9ca3af;text-align:left;font-weight:500">Medio pago</th>
-                            <th style="padding:7px 10px;font-size:11px;color:#9ca3af;text-align:left;font-weight:500">Estado</th>
-                          </tr></thead>
-                          <tbody>${filasDisp}</tbody>
-                          <tfoot><tr style="font-weight:700;border-top:2px solid #e5e7eb;background:#f9fafb">
-                            <td colspan="3" style="padding:8px 10px">Total</td>
-                            <td style="padding:8px 10px;text-align:right">${totalGr} gr</td>
-                            <td style="padding:8px 10px;text-align:right;color:#185FA5">$${totalMonto.toLocaleString('es-CL')}</td>
-                            <td colspan="2"></td>
-                          </tr></tfoot>
-                        </table>`}
+                        <div style="padding:12px 16px">
+                          <div style="font-size:11px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">Documentos</div>
+                          <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:16px">
+                            <tbody>${docsHtml}<tr><td style="padding:7px 10px">✅ Reglamento interno</td><td style="padding:7px 10px"><span style="background:#EAF3DE;color:#3B6D11;padding:2px 8px;border-radius:20px;font-size:10px">Aceptado en línea</span></td></tr></tbody>
+                          </table>
+                          <div style="font-size:11px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">Dispensaciones (${ds.length} · ${totalGr} gr · $${totalMonto.toLocaleString('es-CL')})</div>
+                          ${ds.length === 0 ? '<p style="color:#9ca3af;font-size:12px">Sin dispensaciones registradas</p>' : `
+                          <table style="width:100%;border-collapse:collapse;font-size:12px">
+                            <thead><tr style="background:#f9fafb;border-bottom:1px solid #e5e7eb"><th style="padding:6px 10px;font-size:11px;color:#9ca3af;text-align:left;font-weight:500">Fecha</th><th style="padding:6px 10px;font-size:11px;color:#9ca3af;text-align:left;font-weight:500">Orden</th><th style="padding:6px 10px;font-size:11px;color:#9ca3af;text-align:left;font-weight:500">Cepa</th><th style="padding:6px 10px;font-size:11px;color:#9ca3af;text-align:right;font-weight:500">Gr</th><th style="padding:6px 10px;font-size:11px;color:#9ca3af;text-align:right;font-weight:500">Monto</th><th style="padding:6px 10px;font-size:11px;color:#9ca3af;text-align:left;font-weight:500">Pago</th><th style="padding:6px 10px;font-size:11px;color:#9ca3af;text-align:left;font-weight:500">Estado</th></tr></thead>
+                            <tbody>${filasDisp}</tbody>
+                            <tfoot><tr style="font-weight:700;border-top:2px solid #e5e7eb;background:#f9fafb"><td colspan="3" style="padding:7px 10px">Total</td><td style="padding:7px 10px;text-align:right">${totalGr} gr</td><td style="padding:7px 10px;text-align:right;color:#185FA5">$${totalMonto.toLocaleString('es-CL')}</td><td colspan="2"></td></tr></tfoot>
+                          </table>`}
+                        </div>
                       </div>`
                     }))
                     const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
@@ -641,7 +568,7 @@ export default function Trazabilidad() {
                       h1{font-size:20px;color:#185FA5;margin-bottom:4px}.sub{color:#6b7280;font-size:12px;margin-bottom:28px}
                       .footer{margin-top:32px;padding-top:12px;border-top:1px solid #e5e7eb;font-size:11px;color:#9ca3af;text-align:center}</style>
                     </head><body>
-                      <h1>Expedientes de dispensaciones</h1>
+                      <h1>Expedientes para Fiscalización</h1>
                       <div class="sub">Asociación GreenTech · Generado ${new Date().toLocaleDateString('es-CL',{day:'2-digit',month:'long',year:'numeric'})} · ${seleccionados.length} socio${seleccionados.length!==1?'s':''}</div>
                       ${filas.join('')}
                       <div class="footer">GreenTech · Reg. 390054 · Registros inmutables · Ley 19.628, Ley 20.000, Ley 21.575</div>
@@ -650,7 +577,7 @@ export default function Trazabilidad() {
                     const url = URL.createObjectURL(blob)
                     const a = document.createElement('a')
                     a.href = url
-                    a.download = `Expedientes_GreenTech_${new Date().toISOString().split('T')[0]}.html`
+                    a.download = `Expedientes_Fiscalizacion_${new Date().toISOString().split('T')[0]}.html`
                     a.click()
                     URL.revokeObjectURL(url)
                   }}
