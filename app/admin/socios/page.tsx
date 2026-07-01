@@ -359,6 +359,18 @@ export default function AdminSocios() {
       }
       await supabase.from('socios').update(updatePayload).eq('id', receta.socio_id)
 
+      // 1.5. Copiar archivo como receta canónica → {rut}/receta.pdf
+      if (receta.archivo_url) {
+        try {
+          const match = receta.archivo_url.match(/\/documentos\/(.+)$/)
+          if (match) {
+            const sourcePath = decodeURIComponent(match[1])
+            const rutLimpio = socio.rut.replace(/[^0-9kK]/gi, '')
+            await supabase.storage.from('documentos').copy(sourcePath, `${rutLimpio}/receta.pdf`)
+          }
+        } catch {}
+      }
+
       // 2. Marcar receta como aprobada + audit trail
       await supabase.from('recetas_pendientes').update({
         estado: 'aprobada',
@@ -498,11 +510,21 @@ export default function AdminSocios() {
                         <>
                           <span style={{ background: '#D1FAE5', color: '#065F46', fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 20, display: 'block', marginBottom: 4 }}>✅ Firmado</span>
                           {socio.delegacion_aprobado_por && (
-                            <div style={{ fontSize: 10, color: '#6b7280' }}>
+                            <div style={{ fontSize: 10, color: '#6b7280', marginBottom: 6 }}>
                               {nombresPorEmail[socio.delegacion_aprobado_por] || socio.delegacion_aprobado_por}<br/>
                               {socio.delegacion_aprobado_at ? new Date(socio.delegacion_aprobado_at).toLocaleString('es-CL', { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' }) : ''}
                             </div>
                           )}
+                          <button onClick={async () => {
+                            const { data } = await supabase.storage.from('documentos').createSignedUrl(`${socio.rut}/contrato_firmado.pdf`, 120)
+                            if (data?.signedUrl) {
+                              const w = window.screen.width * 0.4; const h = window.screen.height * 0.42
+                              const left = (window.screen.width - w) / 2; const top = (window.screen.height - h) / 2
+                              window.open(data.signedUrl, '_blank', `width=${w},height=${h},left=${left},top=${top},toolbar=0,menubar=0,scrollbars=1`)
+                            } else alert('No se pudo generar el enlace del contrato.')
+                          }} style={{ fontSize: 11, padding: '4px 10px', border: '1px solid #059669', borderRadius: 8, background: '#fff', color: '#059669', cursor: 'pointer', fontWeight: 600 }}>
+                            📋 Ver contrato
+                          </button>
                         </>
                       ) : (
                         <span style={{ background: '#FEF3C7', color: '#92400E', fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 20 }}>⏳ Pendiente de firma</span>
@@ -1188,7 +1210,7 @@ export default function AdminSocios() {
                                 .from('recetas_pendientes')
                                 .select('archivo_url')
                                 .eq('socio_id', socio.id)
-                                .eq('estado', 'aprobado')
+                                .eq('estado', 'aprobada')
                                 .order('created_at', { ascending: false })
                                 .limit(1)
                                 .single()
@@ -1238,7 +1260,20 @@ export default function AdminSocios() {
                               <span>📋</span>
                               <span style={{ flex: 1 }}>{d.label}</span>
                               {firmado
-                                ? <span style={{ fontSize: 10, background: '#3B6D11', color: '#fff', padding: '2px 8px', borderRadius: 20 }}>✓ Firmado</span>
+                                ? <>
+                                    <span style={{ fontSize: 10, background: '#3B6D11', color: '#fff', padding: '2px 8px', borderRadius: 20 }}>✓ Firmado</span>
+                                    <button onClick={async (e) => {
+                                      e.stopPropagation()
+                                      const { data } = await supabase.storage.from('documentos').createSignedUrl(`${socio.rut}/${d.firmaKey}.pdf`, 120)
+                                      if (data?.signedUrl) {
+                                        const w = window.screen.width * 0.4; const h = window.screen.height * 0.42
+                                        const left = (window.screen.width - w) / 2; const top = (window.screen.height - h) / 2
+                                        window.open(data.signedUrl, '_blank', `width=${w},height=${h},left=${left},top=${top},toolbar=0,menubar=0,scrollbars=1`)
+                                      } else alert('No se pudo generar el enlace.')
+                                    }} style={{ fontSize: 10, background: '#EAF3DE', color: '#3B6D11', padding: '2px 8px', borderRadius: 20, border: 'none', cursor: 'pointer' }}>
+                                      Ver
+                                    </button>
+                                  </>
                                 : <span style={{ fontSize: 10, background: '#FAEEDA', color: '#633806', padding: '2px 8px', borderRadius: 20 }}>Pendiente firma</span>
                               }
                             </div>
