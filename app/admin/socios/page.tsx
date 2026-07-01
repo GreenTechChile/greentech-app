@@ -1182,6 +1182,32 @@ export default function AdminSocios() {
                           <span style={{ flex: 1 }}>{d.label}</span>
                           <button onClick={async (e) => {
                             e.stopPropagation()
+                            // Para la receta: buscar primero la renovación más reciente aprobada
+                            if (d.key === 'receta') {
+                              const { data: recetaAprobada } = await supabase
+                                .from('recetas_pendientes')
+                                .select('archivo_url')
+                                .eq('socio_id', socio.id)
+                                .eq('estado', 'aprobado')
+                                .order('created_at', { ascending: false })
+                                .limit(1)
+                                .single()
+                              if (recetaAprobada?.archivo_url) {
+                                const url = recetaAprobada.archivo_url
+                                const marker = '/object/public/documentos/'
+                                const idx = url.indexOf(marker)
+                                const storagePath = idx >= 0 ? decodeURIComponent(url.slice(idx + marker.length)) : null
+                                if (storagePath) {
+                                  const { data: signed } = await supabase.storage.from('documentos').createSignedUrl(storagePath, 120)
+                                  if (signed?.signedUrl) {
+                                    const w = window.screen.width * 0.4; const h = window.screen.height * 0.42
+                                    const left = (window.screen.width - w) / 2; const top = (window.screen.height - h) / 2
+                                    window.open(signed.signedUrl, '_blank', `width=${w},height=${h},left=${left},top=${top},toolbar=0,menubar=0,scrollbars=1`)
+                                    return
+                                  }
+                                }
+                              }
+                            }
                             for (const ext of ['pdf','jpg','jpeg','png']) {
                               const { data } = await supabase.storage.from('documentos').createSignedUrl(`${socio.rut}/${d.key}.${ext}`, 60)
                               if (data?.signedUrl) {
