@@ -220,7 +220,7 @@ export default function Trazabilidad() {
                 })
                 .map(s => (
                 <div key={s.id}
-                  style={{ padding:'8px 10px', borderRadius:8, marginBottom:4, cursor:'pointer', background:socioSeleccionado?.id===s.id?'#E6F1FB':'#f9fafb', border:`1px solid ${socioSeleccionado?.id===s.id?'#A8CBF0':'#e5e7eb'}`, display:'flex', alignItems:'flex-start', gap:8 }}>
+                  style={{ padding:'8px 10px', borderRadius:8, marginBottom:4, cursor:'pointer', background:'#f9fafb', border:'1px solid #e5e7eb', display:'flex', alignItems:'flex-start', gap:8 }}>
                   <input type="checkbox"
                     checked={exportSocios.includes(s.id)}
                     onChange={e => { e.stopPropagation(); toggleExportSocio(s.id) }}
@@ -228,7 +228,7 @@ export default function Trazabilidad() {
                     style={{ accentColor:'#185FA5', width:13, height:13, marginTop:2, flexShrink:0, cursor:'pointer' }}
                   />
                   <div onClick={() => cargarExpediente(s)} style={{ flex:1, minWidth:0 }}>
-                    <div style={{ fontSize:12, fontWeight:600, color:socioSeleccionado?.id===s.id?'#185FA5':'#111' }}>{s.nombre.split(' ').slice(0,2).join(' ')}</div>
+                    <div style={{ fontSize:12, fontWeight:600, color:'#111' }}>{s.nombre.split(' ').slice(0,2).join(' ')}</div>
                     <div style={{ fontSize:10, color:'#9ca3af' }}>{s.rut}</div>
                     <span style={{ fontSize:9, background:s.estado==='activo'?'#EAF3DE':'#f3f4f6', color:s.estado==='activo'?'#3B6D11':'#9ca3af', padding:'1px 6px', borderRadius:20 }}>
                       {s.estado}
@@ -254,45 +254,56 @@ export default function Trazabilidad() {
                       <div style={{ fontSize:14, fontWeight:600 }}>{socioSeleccionado.nombre}</div>
                       <div style={{ fontSize:11, color:'#6b7280' }}>RUT {socioSeleccionado.rut} · {socioSeleccionado.email}</div>
                     </div>
-                    <button onClick={() => {
-                      const totalGr = socioDispensaciones.reduce((a,d) => a + d.gramos, 0)
-                      const totalMonto = socioDispensaciones.reduce((a,d) => a + d.monto, 0)
-                      const filas = socioDispensaciones.map((d,i) => `
-                        <tr style="border-bottom:1px solid #e5e7eb;${i%2===0?'':'background:#fafafa'}">
-                          <td style="padding:7px 12px;color:#6b7280">${i+1}</td>
-                          <td style="padding:7px 12px">${new Date(d.created_at).toLocaleDateString('es-CL')}</td>
-                          <td style="padding:7px 12px">Orden #${d.orden_numero||'—'}</td>
-                          <td style="padding:7px 12px">${d.cepa||'—'}</td>
-                          <td style="padding:7px 12px;text-align:right">${d.gramos} gr</td>
-                          <td style="padding:7px 12px;text-align:right">$${d.monto.toLocaleString('es-CL')}</td>
-                          <td style="padding:7px 12px">${d.medio_pago||'—'}</td>
-                          <td style="padding:7px 12px"><span style="background:${d.estado==='entregado'||d.estado==='pagado'?'#EAF3DE':'#FAEEDA'};color:${d.estado==='entregado'||d.estado==='pagado'?'#3B6D11':'#633806'};padding:2px 8px;border-radius:20px;font-size:10px">${d.estado}</span></td>
-                        </tr>`).join('')
+                    <button onClick={async () => {
+                      const selIds = exportSocios.length > 0 ? exportSocios : [socioSeleccionado.id]
+                      const seleccionados = socios.filter(s => selIds.includes(s.id))
+                      const secciones = await Promise.all(seleccionados.map(async s => {
+                        const { data: disps } = await supabase.from('dispensaciones').select('*').eq('rut_socio', s.rut).order('created_at', { ascending: false })
+                        const ds = disps || []
+                        const totalGr = ds.reduce((a,d) => a + d.gramos, 0)
+                        const totalMonto = ds.reduce((a,d) => a + d.monto, 0)
+                        const filas = ds.map((d,i) => `
+                          <tr style="border-bottom:1px solid #e5e7eb;${i%2===0?'':'background:#fafafa'}">
+                            <td style="padding:7px 12px;color:#6b7280">${i+1}</td>
+                            <td style="padding:7px 12px">${new Date(d.created_at).toLocaleDateString('es-CL')}</td>
+                            <td style="padding:7px 12px">Orden #${d.orden_numero||'—'}</td>
+                            <td style="padding:7px 12px">${d.cepa||'—'}</td>
+                            <td style="padding:7px 12px;text-align:right">${d.gramos} gr</td>
+                            <td style="padding:7px 12px;text-align:right">$${d.monto.toLocaleString('es-CL')}</td>
+                            <td style="padding:7px 12px">${d.medio_pago||'—'}</td>
+                            <td style="padding:7px 12px"><span style="background:${d.estado==='entregado'||d.estado==='pagado'?'#EAF3DE':'#FAEEDA'};color:${d.estado==='entregado'||d.estado==='pagado'?'#3B6D11':'#633806'};padding:2px 8px;border-radius:20px;font-size:10px">${d.estado}</span></td>
+                          </tr>`).join('')
+                        return `<div style="margin-bottom:32px">
+                          <div style="background:#EAF3DE;border:1px solid #97C459;border-radius:8px 8px 0 0;padding:10px 14px">
+                            <div style="font-size:14px;font-weight:700">${s.nombre}</div>
+                            <div style="font-size:11px;color:#3B6D11">RUT ${s.rut} · ${totalGr} gr · $${totalMonto.toLocaleString('es-CL')}</div>
+                          </div>
+                          <table style="border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px;overflow:hidden">
+                            <thead><tr style="background:#f9fafb"><th style="padding:7px 12px;font-size:11px;color:#9ca3af;font-weight:500;text-align:left">#</th><th style="padding:7px 12px;font-size:11px;color:#9ca3af;font-weight:500;text-align:left">Fecha</th><th style="padding:7px 12px;font-size:11px;color:#9ca3af;font-weight:500;text-align:left">Orden</th><th style="padding:7px 12px;font-size:11px;color:#9ca3af;font-weight:500;text-align:left">Cepa</th><th style="padding:7px 12px;font-size:11px;color:#9ca3af;font-weight:500;text-align:right">Gramos</th><th style="padding:7px 12px;font-size:11px;color:#9ca3af;font-weight:500;text-align:right">Monto</th><th style="padding:7px 12px;font-size:11px;color:#9ca3af;font-weight:500;text-align:left">Pago</th><th style="padding:7px 12px;font-size:11px;color:#9ca3af;font-weight:500;text-align:left">Estado</th></tr></thead>
+                            <tbody>${filas || '<tr><td colspan="8" style="padding:16px;text-align:center;color:#9ca3af">Sin dispensaciones registradas</td></tr>'}</tbody>
+                            <tfoot><tr style="font-weight:700;background:#f9fafb;border-top:2px solid #e5e7eb"><td colspan="4" style="padding:8px 12px">Total</td><td style="padding:8px 12px;text-align:right">${totalGr} gr</td><td style="padding:8px 12px;text-align:right;color:#185FA5">$${totalMonto.toLocaleString('es-CL')}</td><td colspan="2"></td></tr></tfoot>
+                          </table>
+                        </div>`
+                      }))
                       const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
-                        <title>Dispensaciones ${socioSeleccionado.nombre}</title>
-                        <style>body{font-family:Arial,sans-serif;padding:32px;color:#111;font-size:13px}h1{font-size:18px;margin-bottom:4px}.sub{color:#6b7280;font-size:12px;margin-bottom:20px}table{width:100%;border-collapse:collapse}th{text-align:left;padding:8px 12px;font-size:11px;color:#9ca3af;border-bottom:2px solid #e5e7eb}.total{font-weight:700;background:#f9fafb;border-top:2px solid #e5e7eb}.footer{margin-top:28px;padding-top:12px;border-top:1px solid #e5e7eb;font-size:11px;color:#9ca3af}</style>
+                        <title>Dispensaciones GreenTech</title>
+                        <style>body{font-family:Arial,sans-serif;padding:32px;color:#111;font-size:13px;max-width:1000px;margin:0 auto}h1{font-size:18px;margin-bottom:4px}.sub{color:#6b7280;font-size:12px;margin-bottom:24px}table{width:100%;border-collapse:collapse}.footer{margin-top:28px;padding-top:12px;border-top:1px solid #e5e7eb;font-size:11px;color:#9ca3af;text-align:center}</style>
                       </head><body>
-                        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
-                          <div><h1>Historial de Dispensaciones</h1><div class="sub">Asociación GreenTech · ${socioSeleccionado.nombre} · RUT ${socioSeleccionado.rut}</div></div>
-                          <div style="text-align:right;font-size:11px;color:#6b7280">Generado: ${new Date().toLocaleDateString('es-CL',{day:'2-digit',month:'long',year:'numeric'})}<br>Total: ${totalGr} gr · $${totalMonto.toLocaleString('es-CL')}</div>
-                        </div>
-                        <table>
-                          <thead><tr><th>#</th><th>Fecha</th><th>Orden</th><th>Cepa</th><th style="text-align:right">Gramos</th><th style="text-align:right">Monto</th><th>Medio pago</th><th>Estado</th></tr></thead>
-                          <tbody>${filas || '<tr><td colspan="8" style="padding:20px;text-align:center;color:#9ca3af">Sin dispensaciones registradas</td></tr>'}</tbody>
-                          <tfoot><tr class="total"><td colspan="4" style="padding:10px 12px">Total</td><td style="padding:10px 12px;text-align:right">${totalGr} gr</td><td style="padding:10px 12px;text-align:right;color:#185FA5">$${totalMonto.toLocaleString('es-CL')}</td><td colspan="2"></td></tr></tfoot>
-                        </table>
+                        <h1>Historial de Dispensaciones</h1>
+                        <div class="sub">Asociación GreenTech · Generado ${new Date().toLocaleDateString('es-CL',{day:'2-digit',month:'long',year:'numeric'})} · ${seleccionados.length} socio${seleccionados.length!==1?'s':''}</div>
+                        ${secciones.join('')}
                         <div class="footer">GreenTech · Registros inmutables · Ley 19.628, Ley 20.000, Ley 21.575</div>
                       </body></html>`
                       const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
                       const url = URL.createObjectURL(blob)
                       const a = document.createElement('a')
                       a.href = url
-                      a.download = `Dispensaciones_${socioSeleccionado.rut}_${new Date().toISOString().split('T')[0]}.html`
+                      a.download = `Dispensaciones_${seleccionados.length === 1 ? seleccionados[0].rut : 'GreenTech'}_${new Date().toISOString().split('T')[0]}.html`
                       a.click()
                       URL.revokeObjectURL(url)
                     }}
                       style={{ padding:'6px 14px', border:'1px solid #185FA5', borderRadius:8, background:'#E6F1FB', color:'#185FA5', fontSize:12, cursor:'pointer', fontWeight:500 }}>
-                      📤 Exportar dispensaciones
+                      📤 Exportar dispensaciones {exportSocios.length > 1 ? `(${exportSocios.length})` : ''}
                     </button>
                   </div>
 
