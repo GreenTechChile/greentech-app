@@ -470,6 +470,13 @@ export default function Trazabilidad() {
                 <div style={{ fontSize:11, color:'#3B6D11', opacity:0.8 }}>Selecciona uno o más socios para exportar sus expedientes individuales</div>
               </div>
               <div style={{ padding:14 }}>
+                <input
+                  type="text"
+                  placeholder="Buscar por nombre o RUT..."
+                  value={busquedaSocios}
+                  onChange={e => setBusquedaSocios(e.target.value)}
+                  style={{ width:'100%', padding:'6px 10px', border:'1px solid #e5e7eb', borderRadius:8, fontSize:12, outline:'none', marginBottom:8, boxSizing:'border-box' as const }}
+                />
                 {/* Seleccionar todos */}
                 <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10, paddingBottom:8, borderBottom:'1px solid #e5e7eb' }}>
                   <span style={{ fontSize:12, color:'#6b7280' }}>Socios disponibles</span>
@@ -479,7 +486,10 @@ export default function Trazabilidad() {
                     Seleccionar todos
                   </button>
                 </div>
-                {socios.map(s => (
+                {socios.filter(s => {
+                  const q = busquedaSocios.toLowerCase()
+                  return !q || s.nombre.toLowerCase().includes(q) || s.rut.toLowerCase().includes(q)
+                }).map(s => (
                   <div key={s.id} onClick={() => toggleExportSocio(s.id)}
                     style={{ display:'flex', alignItems:'center', gap:8, padding:'7px 10px', borderRadius:8, marginBottom:4, cursor:'pointer', background:exportSocios.includes(s.id)?'#E6F1FB':'#fff', border:`1px solid ${exportSocios.includes(s.id)?'#185FA5':'#e5e7eb'}` }}>
                     <input type="checkbox" checked={exportSocios.includes(s.id)} onChange={()=>toggleExportSocio(s.id)} style={{ accentColor:'#185FA5', width:13, height:13 }}/>
