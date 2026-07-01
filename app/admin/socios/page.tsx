@@ -518,8 +518,17 @@ export default function AdminSocios() {
                       ⬇ Descargar contrato
                     </button>
                     {recetasPorSocioId[socio.id] && (
-                      <button onClick={() => window.open(recetasPorSocioId[socio.id], '_blank')}
-                        style={{ padding: '7px 14px', border: '1px solid #185FA5', borderRadius: 8, background: '#fff', color: '#185FA5', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                      <button onClick={async () => {
+                        // Extraer el path relativo de la URL pública almacenada
+                        const url = recetasPorSocioId[socio.id]
+                        const marker = '/object/public/documentos/'
+                        const idx = url.indexOf(marker)
+                        const storagePath = idx >= 0 ? decodeURIComponent(url.slice(idx + marker.length)) : null
+                        if (!storagePath) { alert('No se pudo obtener la ruta del archivo.'); return }
+                        const { data } = await supabase.storage.from('documentos').createSignedUrl(storagePath, 120)
+                        if (data?.signedUrl) window.open(data.signedUrl, '_blank')
+                        else alert('No se pudo generar el enlace de la receta.')
+                      }} style={{ padding: '7px 14px', border: '1px solid #185FA5', borderRadius: 8, background: '#fff', color: '#185FA5', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
                         🩺 Ver receta
                       </button>
                     )}
