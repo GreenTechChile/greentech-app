@@ -496,7 +496,9 @@ export default function Trazabilidad() {
                   <span style={{ fontSize:11, background:'#E6F1FB', color:'#185FA5', padding:'2px 8px', borderRadius:20 }}>
                     {exportSocios.length} socio{exportSocios.length !== 1 ? 's' : ''} seleccionado{exportSocios.length !== 1 ? 's' : ''}
                   </span>
-                  <button disabled={exportSocios.length === 0} onClick={async () => {
+                  <button disabled={exportSocios.length === 0 || exportando} onClick={async () => {
+                    setExportando(true)
+                    try {
                     const seleccionados = socios.filter(s => exportSocios.includes(s.id))
                     // helpers
                     const DOCS_SOCIO = [
@@ -507,17 +509,46 @@ export default function Trazabilidad() {
                       { key: 'declaracion_jurada_firmada', label: 'Declaración jurada (firmada)' },
                       { key: 'contrato_firmado',         label: 'Contrato de delegación (firmado)' },
                     ]
-                    const fetchDocB64 = async (rut: string, key: string): Promise<{b64:string,ext:string}|null> => {
+                    const urlToB64 = async (signedUrl: string, ext: string): Promise<{b64:string,ext:string}|null> => {
+                      try {
+                        const r = await fetch(signedUrl)
+                        if (!r.ok) return null
+                        const blob = await r.blob()
+                        const b64 = await new Promise<string>(res => { const fr = new FileReader(); fr.onload = () => res(fr.result as string); fr.readAsDataURL(blob) })
+                        return { b64, ext }
+                      } catch { return null }
+                    }
+                    const fetchDocB64 = async (socioId: string, rut: string, key: string): Promise<{b64:string,ext:string}|null> => {
+                      // Para la receta: buscar primero la última aprobada en recetas_pendientes
+                      if (key === 'receta') {
+                        const { data: recetaAprobada } = await supabase
+                          .from('recetas_pendientes')
+                          .select('archivo_url')
+                          .eq('socio_id', socioId)
+                          .eq('estado', 'aprobada')
+                          .order('created_at', { ascending: false })
+                          .limit(1)
+                          .single()
+                        if (recetaAprobada?.archivo_url) {
+                          const url = recetaAprobada.archivo_url
+                          const marker = '/object/public/documentos/'
+                          const idx = url.indexOf(marker)
+                          if (idx >= 0) {
+                            const path = decodeURIComponent(url.slice(idx + marker.length))
+                            const { data: signed } = await supabase.storage.from('documentos').createSignedUrl(path, 3600)
+                            if (signed?.signedUrl) {
+                              const result = await urlToB64(signed.signedUrl, 'pdf')
+                              if (result) return result
+                            }
+                          }
+                        }
+                      }
+                      // Fallback: buscar por extensión en storage
                       for (const ext of ['pdf','jpg','jpeg','png']) {
                         const { data } = await supabase.storage.from('documentos').createSignedUrl(`${rut}/${key}.${ext}`, 3600)
                         if (data?.signedUrl) {
-                          try {
-                            const r = await fetch(data.signedUrl)
-                            if (!r.ok) continue
-                            const blob = await r.blob()
-                            const b64 = await new Promise<string>(res => { const fr = new FileReader(); fr.onload = () => res(fr.result as string); fr.readAsDataURL(blob) })
-                            return { b64, ext }
-                          } catch { continue }
+                          const result = await urlToB64(data.signedUrl, ext)
+                          if (result) return result
                         }
                       }
                       return null
@@ -525,7 +556,7 @@ export default function Trazabilidad() {
                     const filas = await Promise.all(seleccionados.map(async s => {
                       const [{ data: disps }, ...docResults] = await Promise.all([
                         supabase.from('dispensaciones').select('*').eq('rut_socio', s.rut).order('created_at', { ascending: false }),
-                        ...DOCS_SOCIO.map(d => fetchDocB64(s.rut, d.key))
+                        ...DOCS_SOCIO.map(d => fetchDocB64(s.id, s.rut, d.key))
                       ])
                       const ds = disps || []
                       const totalGr = ds.reduce((a,d) => a + d.gramos, 0)
@@ -584,9 +615,10 @@ export default function Trazabilidad() {
                     a.download = `Expedientes_Fiscalizacion_${new Date().toISOString().split('T')[0]}.html`
                     a.click()
                     URL.revokeObjectURL(url)
+                    } finally { setExportando(false) }
                   }}
-                    style={{ padding:'7px 16px', border:'none', borderRadius:8, background:exportSocios.length>0?'#3B6D11':'#9ca3af', color:'#EAF3DE', fontSize:12, fontWeight:600, cursor:exportSocios.length>0?'pointer':'not-allowed' }}>
-                    📥 Exportar seleccionados
+                    style={{ padding:'7px 16px', border:'none', borderRadius:8, background:exportSocios.length>0&&!exportando?'#3B6D11':'#9ca3af', color:'#EAF3DE', fontSize:12, fontWeight:600, cursor:exportSocios.length>0&&!exportando?'pointer':'not-allowed' }}>
+                    {exportando ? '⏳ Generando expedientes...' : '📥 Exportar seleccionados'}
                   </button>
                 </div>
               </div>
@@ -743,7 +775,24 @@ export default function Trazabilidad() {
                   const sociosDocsHtml = (await Promise.all(socios.map(async (s, si) => {
                     const docKeys = Object.keys(DOC_LABELS)
                     const docEntries = await Promise.all(docKeys.map(async (key) => {
-                      const url = await getSignedUrl(`${s.rut}/${key}`)
+                      // Para la receta: buscar la última aprobada en recetas_pendientes
+                      let url: string|null = null
+                      if (key === 'receta') {
+                        const { data: recetaAprobada } = await supabase
+                          .from('recetas_pendientes').select('archivo_url')
+                          .eq('socio_id', s.id).eq('estado', 'aprobada')
+                          .order('created_at', { ascending: false }).limit(1).single()
+                        if (recetaAprobada?.archivo_url) {
+                          const marker = '/object/public/documentos/'
+                          const idx = recetaAprobada.archivo_url.indexOf(marker)
+                          if (idx >= 0) {
+                            const path = decodeURIComponent(recetaAprobada.archivo_url.slice(idx + marker.length))
+                            const { data: signed } = await supabase.storage.from('documentos').createSignedUrl(path, 7200)
+                            if (signed?.signedUrl) url = signed.signedUrl
+                          }
+                        }
+                      }
+                      if (!url) url = await getSignedUrl(`${s.rut}/${key}`)
                       if (!url) return `<tr style="border-bottom:1px solid #f3f4f6"><td style="padding:7px 10px;color:#9ca3af;width:220px">📄 ${DOC_LABELS[key]}</td><td style="padding:7px 10px;color:#9ca3af;font-style:italic">No subido</td></tr>`
                       const emb = await toBase64(url)
                       if (!emb) return `<tr style="border-bottom:1px solid #f3f4f6"><td style="padding:7px 10px;width:220px">📄 ${DOC_LABELS[key]}</td><td style="padding:7px 10px"><a href="${url}" target="_blank" style="color:#185FA5">Ver</a></td></tr>`
