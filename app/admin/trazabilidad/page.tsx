@@ -228,8 +228,10 @@ export default function Trazabilidad() {
                       const DOCS = [
                         { key: 'cedula_anverso', label: 'Cédula de identidad — Anverso' },
                         { key: 'cedula_reverso', label: 'Cédula de identidad — Reverso' },
-                        { key: 'receta', label: 'Receta médica vigente' },
+                        { key: 'receta', label: 'Receta médica vigente (última aprobada)' },
                         { key: 'antecedentes', label: 'Certificado de antecedentes' },
+                        { key: 'declaracion_jurada_firmada', label: 'Declaración jurada de ingreso (firmada)' },
+                        { key: 'contrato_firmado', label: 'Contrato de delegación de cultivo (firmado)' },
                       ]
                       const docsHtml: string[] = []
                       for (const doc of DOCS) {
