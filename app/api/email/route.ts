@@ -370,6 +370,19 @@ function template(evento: string, datos: Datos): { subject: string; html: string
       return { subject: 'Resolución de solicitud de baja — GreenTech', html }
     }
 
+    case 'delegacion_rechazada': {
+      const nombre = String(datos.nombre || 'Socio')
+      const motivo = String(datos.motivo || 'No se especificó motivo.')
+      const html = layout('Solicitud de delegación — GreenTech', `
+        ${h1('Solicitud de delegación revisada')}
+        ${p(`Hola <strong>${nombre}</strong>, la directiva ha revisado tu solicitud de actualización del contrato de delegación de cultivo.`)}
+        ${warningBox(`<strong>Motivo del rechazo:</strong> ${motivo}`)}
+        ${p(`Si tienes dudas o deseas presentar una nueva solicitud, puedes hacerlo desde la sección <strong>Mis Documentos</strong> en el portal, o contactarnos a <a href="mailto:contacto@asociaciongreentech.cl" style="color:${C.verde};">contacto@asociaciongreentech.cl</a>.`)}
+        ${btn('Ir a Mis Documentos', `${APP_URL}/socio/documentos`)}
+      `)
+      return { subject: 'Resolución de solicitud de delegación — GreenTech', html }
+    }
+
     case 'reset_password': {
       const nombre = String(datos.nombre || 'Socio/a')
       const link = String(datos.link || `${APP_URL}/login`)

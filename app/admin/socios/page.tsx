@@ -53,6 +53,8 @@ export default function AdminSocios() {
   const [solicitudesBaja, setSolicitudesBaja] = useState<any[]>([])
   const [procesandoBaja, setProcesandoBaja] = useState<string|null>(null)
   const [filtroBajas, setFiltroBajas] = useState<'pendiente'|'todas'>('pendiente')
+  const [rechazandoDelegacionId, setRechazandoDelegacionId] = useState<string|null>(null)
+  const [motivoRechazoDelegacion, setMotivoRechazoDelegacion] = useState('')
 
   useEffect(() => {
     cargarConteos()
@@ -531,7 +533,65 @@ export default function AdminSocios() {
                         e.target.value = ''
                       }} />
                     </label>
-                  </div>}
+                    <button onClick={() => {
+                      setRechazandoDelegacionId(rechazandoDelegacionId === socio.id ? null : socio.id)
+                      setMotivoRechazoDelegacion('')
+                    }} style={{ padding: '7px 14px', border: '1px solid #A32D2D', borderRadius: 8, background: '#fff', color: '#A32D2D', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                      ✕ Rechazar
+                    </button>
+                  </div>
+
+                  {/* Panel de rechazo inline */}
+                  {rechazandoDelegacionId === socio.id && (
+                    <div style={{ padding: '12px 18px 14px', borderTop: '1px solid #FECACA', background: '#FFF8F8' }}>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: '#A32D2D', marginBottom: 8 }}>Motivo del rechazo (se enviará al socio por email)</div>
+                      <textarea
+                        value={motivoRechazoDelegacion}
+                        onChange={e => setMotivoRechazoDelegacion(e.target.value)}
+                        placeholder="Ej: La documentación no cumple los requisitos..."
+                        style={{ width: '100%', padding: '8px 10px', border: '1px solid #FECACA', borderRadius: 8, fontSize: 12, resize: 'none', height: 70, boxSizing: 'border-box' as const, marginBottom: 10 }}
+                      />
+                      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                        <button onClick={() => { setRechazandoDelegacionId(null); setMotivoRechazoDelegacion('') }}
+                          style={{ padding: '6px 14px', border: '1px solid #e5e7eb', borderRadius: 8, background: '#fff', fontSize: 12, cursor: 'pointer' }}>
+                          Cancelar
+                        </button>
+                        <button disabled={!motivoRechazoDelegacion.trim()} onClick={async () => {
+                          const { data: { user: adminUser } } = await supabase.auth.getUser()
+                          const nombreAdmin = adminUser?.user_metadata?.nombre || adminUser?.email || 'Admin'
+                          // Limpiar campos de delegación en el socio
+                          const { error } = await supabase.from('socios').update({
+                            delegacion_estado: null,
+                            delegacion_nueva_cuota: null,
+                            delegacion_pdf_url: null,
+                          }).eq('id', socio.id)
+                          if (error) { alert('Error al rechazar: ' + error.message); return }
+                          // Enviar email al socio
+                          await fetch('/api/email', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              evento: 'delegacion_rechazada',
+                              destinatario: socio.email,
+                              datos: { nombre: socio.nombre, motivo: motivoRechazoDelegacion.trim() },
+                            }),
+                          })
+                          await logAudit('rechazar_delegacion', 'delegacion', socio.id, nombreAdmin, {
+                            socio_nombre: socio.nombre, rut: socio.rut,
+                            motivo: motivoRechazoDelegacion.trim(),
+                          })
+                          setMensaje(`✅ Delegación de ${socio.nombre} rechazada. Se notificó al socio por email.`)
+                          setTimeout(() => setMensaje(''), 6000)
+                          setRechazandoDelegacionId(null)
+                          setMotivoRechazoDelegacion('')
+                          cargarSocios()
+                          cargarConteos()
+                        }} style={{ padding: '6px 14px', border: 'none', borderRadius: 8, background: motivoRechazoDelegacion.trim() ? '#A32D2D' : '#e5e7eb', color: motivoRechazoDelegacion.trim() ? '#fff' : '#9ca3af', fontSize: 12, fontWeight: 600, cursor: motivoRechazoDelegacion.trim() ? 'pointer' : 'not-allowed' }}>
+                          Confirmar rechazo
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
