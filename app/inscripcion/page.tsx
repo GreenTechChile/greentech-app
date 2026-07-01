@@ -288,7 +288,7 @@ export default function Inscripcion() {
   }
 
   const gramosEnDomicilio = form.cuota_mensual && form.gramos_delegados
-    ? Math.max(0, parseInt(form.cuota_mensual) - parseInt(form.gramos_delegados)) : 0
+    ? Math.max(0, parseFloat(form.cuota_mensual) - parseFloat(form.gramos_delegados)) : 0
 
   const handleSubmit = async () => {
     if (!reglamentoAceptado) { setError('Debes aceptar el reglamento interno.'); return }
@@ -773,12 +773,12 @@ export default function Inscripcion() {
                 <div className="gt-grid2" style={s.grid2}>
                   <div style={s.field}>
                     <label style={{...s.label,color:'#3B6D11'}}>Gramos autorizados en receta (máximo) <span style={s.req}>*</span></label>
-                    <input style={{...s.input,borderColor:'#97C459'}} type="number" min="1" value={form.cuota_mensual} onChange={e=>update('cuota_mensual',e.target.value)} placeholder="Ej: 30"/>
+                    <input style={{...s.input,borderColor:'#97C459'}} type="number" min="0.5" step="0.5" value={form.cuota_mensual} onChange={e=>update('cuota_mensual',e.target.value)} placeholder="Ej: 30"/>
                     <span style={{...s.hint,color:'#3B6D11'}}>Cantidad máxima indicada por tu médico</span>
                   </div>
                   <div style={s.field}>
                     <label style={{...s.label,color:'#3B6D11'}}>Gramos que delegas a GreenTech (mensual) <span style={s.req}>*</span></label>
-                    <input style={{...s.input,borderColor:'#97C459'}} type="number" min="1" max={parseInt(form.cuota_mensual)||999} value={form.gramos_delegados} onChange={e=>update('gramos_delegados',e.target.value)} placeholder="Ej: 30"/>
+                    <input style={{...s.input,borderColor:'#97C459'}} type="number" min="0.5" step="0.5" max={parseFloat(form.cuota_mensual)||999} value={form.gramos_delegados} onChange={e=>update('gramos_delegados',e.target.value)} placeholder="Ej: 30"/>
                     <span style={{...s.hint,color:'#3B6D11'}}>Este será tu límite máximo de dispensación mensual</span>
                   </div>
                 </div>
@@ -791,7 +791,7 @@ export default function Inscripcion() {
                 <button style={s.btnPrimary} onClick={()=>{
                   if(!form.diagnostico||!form.medico_nombre||!form.medico_rut||!form.folio_receta||!form.cuota_mensual||!form.gramos_delegados||!form.vencimiento_receta){setError('Completa todos los campos obligatorios.');return}
                   if(form.vencimiento_receta < new Date().toISOString().split('T')[0]){setError('La fecha de vencimiento de la receta debe ser una fecha futura.');return}
-                  if(parseInt(form.gramos_delegados)>parseInt(form.cuota_mensual)){setError('Los gramos delegados no pueden superar los autorizados en receta.');return}
+                  if(parseFloat(form.gramos_delegados)>parseFloat(form.cuota_mensual)){setError('Los gramos delegados no pueden superar los autorizados en receta.');return}
                   setError('');setPaso(5)
                 }}>Siguiente →</button>
               </div>

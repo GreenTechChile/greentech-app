@@ -213,12 +213,12 @@ export default function MisDocumentos() {
   }
 
   // Computa si la cuota nueva requiere actualizar delegación
-  const nuevaCuota = parseInt(formReceta.cuota_mensual) || 0
+  const nuevaCuota = parseFloat(formReceta.cuota_mensual) || 0
   const delegacionOpcional    = gramosDelegados > 0 && nuevaCuota > gramosDelegados && nuevaCuota > 0 && !!formReceta.cuota_mensual
   const delegacionObligatoria = gramosDelegados > 0 && nuevaCuota < gramosDelegados && nuevaCuota > 0 && !!formReceta.cuota_mensual
 
   const iniciarActualizacionDelegacion = async () => {
-    const gramosDelegar = parseInt(cuotaDelegacion)
+    const gramosDelegar = parseFloat(cuotaDelegacion)
     if (!rutSocio) { setMensaje('❌ No se encontró tu RUT. Recarga la página.'); return }
     if (!socioId) { setMensaje('❌ No se encontró tu ID de socio. Recarga la página.'); return }
     if (!gramosDelegar || gramosDelegar < 1 || gramosDelegar > nuevaCuota) { setMensaje('❌ El monto de delegación no es válido.'); return }
@@ -320,7 +320,7 @@ export default function MisDocumentos() {
       // 3. Obtener URL pública
       const { data: urlData } = supabase.storage.from('documentos').getPublicUrl(path)
       // 4. Insertar en recetas_pendientes
-      const nuevosCuota = parseInt(formReceta.cuota_mensual)
+      const nuevosCuota = parseFloat(formReceta.cuota_mensual)
       const requiereNuevoContrato = gramosDelegados > 0 && nuevosCuota < gramosDelegados
       const notaContrato = requiereNuevoContrato
         ? `⚠️ REQUIERE NUEVO CONTRATO: nueva cuota ${nuevosCuota}g es menor a gramos delegados actuales (${gramosDelegados}g). Hay que rehacer el contrato de delegación de cultivo.`
@@ -537,7 +537,7 @@ export default function MisDocumentos() {
                 </div>
                 <div>
                   <label style={{ fontSize:11, color:'#6b7280', display:'block', marginBottom:4 }}>Cuota mensual indicada (gr) <span style={{ color:'#A32D2D' }}>*</span></label>
-                  <input type="number" min="1" value={formReceta.cuota_mensual} onChange={e => { updateForm('cuota_mensual', e.target.value); setDelegacionSolicitada(false); setCuotaDelegacion('') }}
+                  <input type="number" min="0.5" step="0.5" value={formReceta.cuota_mensual} onChange={e => { updateForm('cuota_mensual', e.target.value); setDelegacionSolicitada(false); setCuotaDelegacion('') }}
                     placeholder="Ej: 30" style={{ width:'100%', padding:'8px 10px', border:`1px solid ${delegacionOpcional ? '#3b82f6' : '#d1d5db'}`, borderRadius:7, fontSize:13, boxSizing:'border-box' as const }} />
                   {delegacionObligatoria && (
                     <div style={{ fontSize:11, color:'#ea580c', marginTop:4 }}>⚠️ Menor a los gramos delegados ({gramosDelegados}g) — debes actualizar el contrato antes de enviar</div>
@@ -556,7 +556,7 @@ export default function MisDocumentos() {
               {/* ── Sección delegación de cultivo ── */}
               {(delegacionObligatoria || delegacionOpcional) && (() => {
                 const esObligatorio = delegacionObligatoria
-                const inputValido = !!cuotaDelegacion && parseInt(cuotaDelegacion) >= 1 && parseInt(cuotaDelegacion) <= nuevaCuota
+                const inputValido = !!cuotaDelegacion && parseFloat(cuotaDelegacion) >= 0.5 && parseFloat(cuotaDelegacion) <= nuevaCuota
                 return (
                   <div style={{
                     background: esObligatorio ? '#FFF7ED' : '#EFF6FF',
@@ -570,15 +570,15 @@ export default function MisDocumentos() {
                       </div>
                       <p style={{ fontSize:12, color: esObligatorio ? '#78350F' : '#1E40AF', margin:'0 0 10px', lineHeight:1.5 }}>
                         {esObligatorio
-                          ? <>Tu receta indica <strong>{nuevaCuota}g</strong> mensuales, que es menor a tu delegación actual de <strong>{gramosDelegados}g</strong>. Debes actualizar el contrato antes de enviar la receta. Indica cuántos gramos deseas delegar (entre 1 y {nuevaCuota}g).</>
-                          : <>Tu receta indica <strong>{nuevaCuota}g</strong> mensuales. Si deseas actualizar tu delegación actual de <strong>{gramosDelegados}g</strong>, indica el nuevo monto (entre 1 y {nuevaCuota}g). Este paso es opcional.</>
+                          ? <>Tu receta indica <strong>{nuevaCuota}g</strong> mensuales, que es menor a tu delegación actual de <strong>{gramosDelegados}g</strong>. Debes actualizar el contrato antes de enviar la receta. Indica cuántos gramos deseas delegar (entre 0.5 y {nuevaCuota}g).</>
+                          : <>Tu receta indica <strong>{nuevaCuota}g</strong> mensuales. Si deseas actualizar tu delegación actual de <strong>{gramosDelegados}g</strong>, indica el nuevo monto (entre 0.5 y {nuevaCuota}g). Este paso es opcional.</>
                         }
                       </p>
                       {!delegacionSolicitada ? (
                         <div style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' as const }}>
                           <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                             <input
-                              type="number" min="1" max={nuevaCuota}
+                              type="number" min="0.5" step="0.5" max={nuevaCuota}
                               value={cuotaDelegacion}
                               onChange={e => setCuotaDelegacion(e.target.value)}
                               placeholder={`1 – ${nuevaCuota}`}
@@ -587,7 +587,7 @@ export default function MisDocumentos() {
                             <span style={{ fontSize:12, color: esObligatorio ? '#92400E' : '#1E40AF' }}>gr</span>
                           </div>
                           {cuotaDelegacion && !inputValido && (
-                            <span style={{ fontSize:11, color:'#DC2626' }}>Debe ser entre 1 y {nuevaCuota}g</span>
+                            <span style={{ fontSize:11, color:'#DC2626' }}>Debe ser entre 0.5 y {nuevaCuota}g</span>
                           )}
                           <button
                             onClick={iniciarActualizacionDelegacion}
