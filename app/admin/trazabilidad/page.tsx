@@ -209,10 +209,54 @@ export default function Trazabilidad() {
                   onChange={toggleTodos}
                   style={{ accentColor:'#185FA5', width:13, height:13, cursor:'pointer' }}
                 />
-                <span style={{ fontSize:11, color:'#6b7280', cursor:'pointer' }} onClick={toggleTodos}>
+                <span style={{ fontSize:11, color:'#6b7280', cursor:'pointer', flex:1 }} onClick={toggleTodos}>
                   Seleccionar todos ({socios.length})
                 </span>
               </div>
+              <button
+                disabled={exportSocios.length === 0}
+                onClick={async () => {
+                  const seleccionados = socios.filter(s => exportSocios.includes(s.id))
+                  const secciones = await Promise.all(seleccionados.map(async s => {
+                    const { data: disps } = await supabase.from('dispensaciones').select('*').eq('rut_socio', s.rut).order('created_at', { ascending: false })
+                    const ds = disps || []
+                    const totalGr = ds.reduce((a,d) => a + d.gramos, 0)
+                    const totalMonto = ds.reduce((a,d) => a + d.monto, 0)
+                    const filas = ds.map((d,i) => `
+                      <tr style="border-bottom:1px solid #e5e7eb;${i%2===0?'':'background:#fafafa'}">
+                        <td style="padding:7px 12px;color:#6b7280">${i+1}</td>
+                        <td style="padding:7px 12px">${new Date(d.created_at).toLocaleDateString('es-CL')}</td>
+                        <td style="padding:7px 12px">Orden #${d.orden_numero||'—'}</td>
+                        <td style="padding:7px 12px">${d.cepa||'—'}</td>
+                        <td style="padding:7px 12px;text-align:right">${d.gramos} gr</td>
+                        <td style="padding:7px 12px;text-align:right">$${d.monto.toLocaleString('es-CL')}</td>
+                        <td style="padding:7px 12px">${d.medio_pago||'—'}</td>
+                        <td style="padding:7px 12px"><span style="background:${d.estado==='entregado'||d.estado==='pagado'?'#EAF3DE':'#FAEEDA'};color:${d.estado==='entregado'||d.estado==='pagado'?'#3B6D11':'#633806'};padding:2px 8px;border-radius:20px;font-size:10px">${d.estado}</span></td>
+                      </tr>`).join('')
+                    return `<div style="margin-bottom:32px">
+                      <div style="background:#EAF3DE;border:1px solid #97C459;border-radius:8px 8px 0 0;padding:10px 14px">
+                        <div style="font-size:14px;font-weight:700">${s.nombre}</div>
+                        <div style="font-size:11px;color:#3B6D11">RUT ${s.rut} · ${totalGr} gr · $${totalMonto.toLocaleString('es-CL')}</div>
+                      </div>
+                      <table style="border:1px solid #e5e7eb;border-top:none;width:100%;border-collapse:collapse">
+                        <thead><tr style="background:#f9fafb"><th style="padding:7px 12px;font-size:11px;color:#9ca3af;font-weight:500;text-align:left">#</th><th style="padding:7px 12px;font-size:11px;color:#9ca3af;font-weight:500;text-align:left">Fecha</th><th style="padding:7px 12px;font-size:11px;color:#9ca3af;font-weight:500;text-align:left">Orden</th><th style="padding:7px 12px;font-size:11px;color:#9ca3af;font-weight:500;text-align:left">Cepa</th><th style="padding:7px 12px;font-size:11px;color:#9ca3af;font-weight:500;text-align:right">Gr</th><th style="padding:7px 12px;font-size:11px;color:#9ca3af;font-weight:500;text-align:right">Monto</th><th style="padding:7px 12px;font-size:11px;color:#9ca3af;font-weight:500;text-align:left">Pago</th><th style="padding:7px 12px;font-size:11px;color:#9ca3af;font-weight:500;text-align:left">Estado</th></tr></thead>
+                        <tbody>${filas || '<tr><td colspan="8" style="padding:16px;text-align:center;color:#9ca3af">Sin dispensaciones</td></tr>'}</tbody>
+                        <tfoot><tr style="font-weight:700;background:#f9fafb;border-top:2px solid #e5e7eb"><td colspan="4" style="padding:8px 12px">Total</td><td style="padding:8px 12px;text-align:right">${totalGr} gr</td><td style="padding:8px 12px;text-align:right;color:#185FA5">$${totalMonto.toLocaleString('es-CL')}</td><td colspan="2"></td></tr></tfoot>
+                      </table>
+                    </div>`
+                  }))
+                  const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Dispensaciones GreenTech</title><style>body{font-family:Arial,sans-serif;padding:32px;color:#111;font-size:13px;max-width:1000px;margin:0 auto}h1{font-size:18px;margin-bottom:4px}.sub{color:#6b7280;font-size:12px;margin-bottom:24px}table{width:100%;border-collapse:collapse}.footer{margin-top:28px;padding-top:12px;border-top:1px solid #e5e7eb;font-size:11px;color:#9ca3af;text-align:center}</style></head><body><h1>Historial de Dispensaciones</h1><div class="sub">Asociación GreenTech · Generado ${new Date().toLocaleDateString('es-CL',{day:'2-digit',month:'long',year:'numeric'})} · ${seleccionados.length} socio${seleccionados.length!==1?'s':''}</div>${secciones.join('')}<div class="footer">GreenTech · Registros inmutables · Ley 19.628, Ley 20.000, Ley 21.575</div></body></html>`
+                  const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
+                  const url = URL.createObjectURL(blob)
+                  const a = document.createElement('a')
+                  a.href = url
+                  a.download = `Dispensaciones_${seleccionados.length===1?seleccionados[0].rut:'GreenTech'}_${new Date().toISOString().split('T')[0]}.html`
+                  a.click()
+                  URL.revokeObjectURL(url)
+                }}
+                style={{ width:'100%', padding:'7px', border:'none', borderRadius:8, background:exportSocios.length>0?'#185FA5':'#d1d5db', color:'#fff', fontSize:12, fontWeight:600, cursor:exportSocios.length>0?'pointer':'not-allowed', marginBottom:12 }}>
+                📤 Exportar dispensaciones{exportSocios.length > 0 ? ` (${exportSocios.length})` : ''}
+              </button>
               {socios
                 .filter(s => {
                   const q = busquedaSocios.toLowerCase()
@@ -254,57 +298,6 @@ export default function Trazabilidad() {
                       <div style={{ fontSize:14, fontWeight:600 }}>{socioSeleccionado.nombre}</div>
                       <div style={{ fontSize:11, color:'#6b7280' }}>RUT {socioSeleccionado.rut} · {socioSeleccionado.email}</div>
                     </div>
-                    <button onClick={async () => {
-                      const selIds = exportSocios.length > 0 ? exportSocios : [socioSeleccionado.id]
-                      const seleccionados = socios.filter(s => selIds.includes(s.id))
-                      const secciones = await Promise.all(seleccionados.map(async s => {
-                        const { data: disps } = await supabase.from('dispensaciones').select('*').eq('rut_socio', s.rut).order('created_at', { ascending: false })
-                        const ds = disps || []
-                        const totalGr = ds.reduce((a,d) => a + d.gramos, 0)
-                        const totalMonto = ds.reduce((a,d) => a + d.monto, 0)
-                        const filas = ds.map((d,i) => `
-                          <tr style="border-bottom:1px solid #e5e7eb;${i%2===0?'':'background:#fafafa'}">
-                            <td style="padding:7px 12px;color:#6b7280">${i+1}</td>
-                            <td style="padding:7px 12px">${new Date(d.created_at).toLocaleDateString('es-CL')}</td>
-                            <td style="padding:7px 12px">Orden #${d.orden_numero||'—'}</td>
-                            <td style="padding:7px 12px">${d.cepa||'—'}</td>
-                            <td style="padding:7px 12px;text-align:right">${d.gramos} gr</td>
-                            <td style="padding:7px 12px;text-align:right">$${d.monto.toLocaleString('es-CL')}</td>
-                            <td style="padding:7px 12px">${d.medio_pago||'—'}</td>
-                            <td style="padding:7px 12px"><span style="background:${d.estado==='entregado'||d.estado==='pagado'?'#EAF3DE':'#FAEEDA'};color:${d.estado==='entregado'||d.estado==='pagado'?'#3B6D11':'#633806'};padding:2px 8px;border-radius:20px;font-size:10px">${d.estado}</span></td>
-                          </tr>`).join('')
-                        return `<div style="margin-bottom:32px">
-                          <div style="background:#EAF3DE;border:1px solid #97C459;border-radius:8px 8px 0 0;padding:10px 14px">
-                            <div style="font-size:14px;font-weight:700">${s.nombre}</div>
-                            <div style="font-size:11px;color:#3B6D11">RUT ${s.rut} · ${totalGr} gr · $${totalMonto.toLocaleString('es-CL')}</div>
-                          </div>
-                          <table style="border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px;overflow:hidden">
-                            <thead><tr style="background:#f9fafb"><th style="padding:7px 12px;font-size:11px;color:#9ca3af;font-weight:500;text-align:left">#</th><th style="padding:7px 12px;font-size:11px;color:#9ca3af;font-weight:500;text-align:left">Fecha</th><th style="padding:7px 12px;font-size:11px;color:#9ca3af;font-weight:500;text-align:left">Orden</th><th style="padding:7px 12px;font-size:11px;color:#9ca3af;font-weight:500;text-align:left">Cepa</th><th style="padding:7px 12px;font-size:11px;color:#9ca3af;font-weight:500;text-align:right">Gramos</th><th style="padding:7px 12px;font-size:11px;color:#9ca3af;font-weight:500;text-align:right">Monto</th><th style="padding:7px 12px;font-size:11px;color:#9ca3af;font-weight:500;text-align:left">Pago</th><th style="padding:7px 12px;font-size:11px;color:#9ca3af;font-weight:500;text-align:left">Estado</th></tr></thead>
-                            <tbody>${filas || '<tr><td colspan="8" style="padding:16px;text-align:center;color:#9ca3af">Sin dispensaciones registradas</td></tr>'}</tbody>
-                            <tfoot><tr style="font-weight:700;background:#f9fafb;border-top:2px solid #e5e7eb"><td colspan="4" style="padding:8px 12px">Total</td><td style="padding:8px 12px;text-align:right">${totalGr} gr</td><td style="padding:8px 12px;text-align:right;color:#185FA5">$${totalMonto.toLocaleString('es-CL')}</td><td colspan="2"></td></tr></tfoot>
-                          </table>
-                        </div>`
-                      }))
-                      const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
-                        <title>Dispensaciones GreenTech</title>
-                        <style>body{font-family:Arial,sans-serif;padding:32px;color:#111;font-size:13px;max-width:1000px;margin:0 auto}h1{font-size:18px;margin-bottom:4px}.sub{color:#6b7280;font-size:12px;margin-bottom:24px}table{width:100%;border-collapse:collapse}.footer{margin-top:28px;padding-top:12px;border-top:1px solid #e5e7eb;font-size:11px;color:#9ca3af;text-align:center}</style>
-                      </head><body>
-                        <h1>Historial de Dispensaciones</h1>
-                        <div class="sub">Asociación GreenTech · Generado ${new Date().toLocaleDateString('es-CL',{day:'2-digit',month:'long',year:'numeric'})} · ${seleccionados.length} socio${seleccionados.length!==1?'s':''}</div>
-                        ${secciones.join('')}
-                        <div class="footer">GreenTech · Registros inmutables · Ley 19.628, Ley 20.000, Ley 21.575</div>
-                      </body></html>`
-                      const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
-                      const url = URL.createObjectURL(blob)
-                      const a = document.createElement('a')
-                      a.href = url
-                      a.download = `Dispensaciones_${seleccionados.length === 1 ? seleccionados[0].rut : 'GreenTech'}_${new Date().toISOString().split('T')[0]}.html`
-                      a.click()
-                      URL.revokeObjectURL(url)
-                    }}
-                      style={{ padding:'6px 14px', border:'1px solid #185FA5', borderRadius:8, background:'#E6F1FB', color:'#185FA5', fontSize:12, cursor:'pointer', fontWeight:500 }}>
-                      📤 Exportar dispensaciones {exportSocios.length > 1 ? `(${exportSocios.length})` : ''}
-                    </button>
                   </div>
 
                   {/* Stats del socio */}
