@@ -221,7 +221,7 @@ export default function MisDocumentos() {
     const gramosDelegar = parseFloat(cuotaDelegacion)
     if (!rutSocio) { setMensaje('❌ No se encontró tu RUT. Recarga la página.'); return }
     if (!socioId) { setMensaje('❌ No se encontró tu ID de socio. Recarga la página.'); return }
-    if (!gramosDelegar || gramosDelegar < 1 || gramosDelegar > nuevaCuota) { setMensaje('❌ El monto de delegación no es válido.'); return }
+    if (!gramosDelegar || gramosDelegar < 0.5 || gramosDelegar > nuevaCuota) { setMensaje('❌ El monto de delegación no es válido.'); return }
     setFirmandoContrato(true)
     setMensaje('')
     try {
