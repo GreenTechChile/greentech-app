@@ -539,7 +539,7 @@ export default function AdminSocios() {
                     }} style={{ padding: '7px 14px', border: '1px solid #A32D2D', borderRadius: 8, background: '#fff', color: '#A32D2D', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
                       ✕ Rechazar
                     </button>
-                  </div>
+                  </div>}
 
                   {/* Panel de rechazo inline */}
                   {rechazandoDelegacionId === socio.id && (
