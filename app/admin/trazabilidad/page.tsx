@@ -671,12 +671,12 @@ export default function Trazabilidad() {
                   // ── helpers ──────────────────────────────────────────────────
                   const EXTS = ['pdf','jpg','jpeg','png']
                   const DOC_LABELS: Record<string, string> = {
-                    cedula_anverso:    'Cédula de identidad — Anverso',
-                    cedula_reverso:    'Cédula de identidad — Reverso',
-                    receta:            'Receta médica vigente',
-                    antecedentes:      'Certificado de antecedentes',
-                    contrato:          'Contrato de membresía',
-                    declaracion_jurada:'Declaración jurada',
+                    cedula_anverso:              'Cédula de identidad — Anverso',
+                    cedula_reverso:              'Cédula de identidad — Reverso',
+                    receta:                      'Receta médica vigente (última aprobada)',
+                    antecedentes:               'Certificado de antecedentes',
+                    declaracion_jurada_firmada: 'Declaración jurada (firmada)',
+                    contrato_firmado:            'Contrato de delegación (firmado)',
                   }
                   // Claves del bucket documentos-corporacion/institucional/ → etiqueta
                   const CORP_DOC_LABELS: Record<string, string> = {
