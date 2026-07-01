@@ -207,10 +207,10 @@ export default function Cultivo() {
     if (gramHumedo) updates.gramaje_humedo = parseInt(gramHumedo)
     if (gramSeco) updates.gramaje_seco = parseInt(gramSeco)
     const { error } = await supabase.from('lotes_cultivo').update(updates).eq('id', loteSeleccionado)
-    if (!error && nuevoEstado === 'secado' && gramSeco) {
+    if (!error && nuevoEstado === 'procesado') {
       const lote = lotes.find(l => l.id === loteSeleccionado)
-      if (lote) {
-        const gramosSecoNum = parseInt(gramSeco)
+      if (lote && lote.gramaje_seco) {
+        const gramosSecoNum = lote.gramaje_seco
         const { data: cepa } = await supabase.from('cepas').select('id, stock_gramos').eq('nombre', lote.cepa).single()
         if (cepa) {
           const nuevoStock = cepa.stock_gramos + gramosSecoNum
@@ -222,7 +222,7 @@ export default function Cultivo() {
             gramos: gramosSecoNum,
             stock_antes: cepa.stock_gramos,
             stock_despues: nuevoStock,
-            motivo: `Secado completo / inicio curado — lote ${lote.codigo}`,
+            motivo: `Curado completo — lote ${lote.codigo}`,
             registrado_por: responsableRegistro || lote.responsable || 'Cultivador',
             lote_codigo: lote.codigo,
           })
