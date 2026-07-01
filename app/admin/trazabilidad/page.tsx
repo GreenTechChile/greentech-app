@@ -264,7 +264,7 @@ export default function Trazabilidad() {
                 })
                 .map(s => (
                 <div key={s.id}
-                  style={{ padding:'8px 10px', borderRadius:8, marginBottom:4, cursor:'pointer', background:'#f9fafb', border:'1px solid #e5e7eb', display:'flex', alignItems:'flex-start', gap:8 }}>
+                  style={{ padding:'8px 10px', borderRadius:8, marginBottom:4, cursor:'pointer', background:socioSeleccionado?.id===s.id?'#E6F1FB':'#f9fafb', border:`1px solid ${socioSeleccionado?.id===s.id?'#A8CBF0':'#e5e7eb'}`, display:'flex', alignItems:'flex-start', gap:8 }}>
                   <input type="checkbox"
                     checked={exportSocios.includes(s.id)}
                     onChange={e => { e.stopPropagation(); toggleExportSocio(s.id) }}
@@ -272,7 +272,7 @@ export default function Trazabilidad() {
                     style={{ accentColor:'#185FA5', width:13, height:13, marginTop:2, flexShrink:0, cursor:'pointer' }}
                   />
                   <div onClick={() => cargarExpediente(s)} style={{ flex:1, minWidth:0 }}>
-                    <div style={{ fontSize:12, fontWeight:600, color:'#111' }}>{s.nombre.split(' ').slice(0,2).join(' ')}</div>
+                    <div style={{ fontSize:12, fontWeight:600, color:socioSeleccionado?.id===s.id?'#185FA5':'#111' }}>{s.nombre.split(' ').slice(0,2).join(' ')}</div>
                     <div style={{ fontSize:10, color:'#9ca3af' }}>{s.rut}</div>
                     <span style={{ fontSize:9, background:s.estado==='activo'?'#EAF3DE':'#f3f4f6', color:s.estado==='activo'?'#3B6D11':'#9ca3af', padding:'1px 6px', borderRadius:20 }}>
                       {s.estado}
