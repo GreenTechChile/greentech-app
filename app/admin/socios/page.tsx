@@ -55,6 +55,7 @@ export default function AdminSocios() {
   const [filtroBajas, setFiltroBajas] = useState<'pendiente'|'todas'>('pendiente')
   const [rechazandoDelegacionId, setRechazandoDelegacionId] = useState<string|null>(null)
   const [motivoRechazoDelegacion, setMotivoRechazoDelegacion] = useState('')
+  const [recetasPorSocioId, setRecetasPorSocioId] = useState<Record<string, string>>({}) // socio_id → archivo_url
 
   useEffect(() => {
     cargarConteos()
@@ -124,7 +125,25 @@ export default function AdminSocios() {
       let query = supabase.from('socios').select('*, delegacion_nueva_cuota, delegacion_pdf_url, delegacion_estado').not('delegacion_estado', 'is', null).order('created_at', { ascending: false })
       if (filtroDelegaciones === 'pendiente_firma') query = (query as any).eq('delegacion_estado', 'pendiente_firma')
       const { data } = await query
-      if (data) setSocios(data)
+      if (data) {
+        setSocios(data)
+        // Cargar recetas pendientes para mostrar el archivo asociado
+        const ids = data.map((s: any) => s.id)
+        if (ids.length > 0) {
+          const { data: recetas } = await supabase
+            .from('recetas_pendientes')
+            .select('socio_id, archivo_url')
+            .in('socio_id', ids)
+            .eq('estado', 'pendiente')
+            .order('created_at', { ascending: false })
+          if (recetas) {
+            // Tomar la más reciente por socio
+            const mapa: Record<string, string> = {}
+            recetas.forEach((r: any) => { if (!mapa[r.socio_id] && r.archivo_url) mapa[r.socio_id] = r.archivo_url })
+            setRecetasPorSocioId(mapa)
+          }
+        }
+      }
     } else if (tab === 'socios') {
       const { data } = await supabase.from('socios').select('*, delegacion_nueva_cuota, delegacion_pdf_url, delegacion_estado').eq('estado', filtroSocios).order('created_at', { ascending: false })
       if (data) setSocios(data)
@@ -498,6 +517,12 @@ export default function AdminSocios() {
                     }} style={{ padding: '7px 14px', border: '1px solid #D97706', borderRadius: 8, background: '#fff', color: '#D97706', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
                       ⬇ Descargar contrato
                     </button>
+                    {recetasPorSocioId[socio.id] && (
+                      <button onClick={() => window.open(recetasPorSocioId[socio.id], '_blank')}
+                        style={{ padding: '7px 14px', border: '1px solid #185FA5', borderRadius: 8, background: '#fff', color: '#185FA5', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                        🩺 Ver receta
+                      </button>
+                    )}
                     <label style={{ padding: '7px 14px', border: 'none', borderRadius: 8, background: '#3B6D11', color: '#EAF3DE', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
                       ⬆ Subir firmado
                       <input type="file" accept=".pdf" style={{ display: 'none' }} onChange={async (e) => {
