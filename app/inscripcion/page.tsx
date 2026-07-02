@@ -777,7 +777,7 @@ export default function Inscripcion() {
                   </div>
                   <div style={s.field}>
                     <label style={{...s.label,color:'#0369a1'}}>Gramos que delegas a GreenTech (mensual) <span style={s.req}>*</span></label>
-                    <input style={{...s.input,borderColor:'#7dd3fc'}} type="number" min="0.5" step="0.5" max={parseFloat(form.cuota_mensual)||999} value={form.gramos_delegados} onChange={e=>update('gramos_delegados',e.target.value)} placeholder="Ej: 30"/>
+                    <input style={{...s.input,borderColor:'#7dd3fc'}} type="number" min="1" step="0.5" max={parseFloat(form.cuota_mensual)||999} value={form.gramos_delegados} onChange={e=>update('gramos_delegados',e.target.value)} placeholder="Ej: 30"/>
                     <span style={{...s.hint,color:'#0369a1'}}>Este será tu límite máximo de dispensación mensual</span>
                   </div>
                 </div>
@@ -790,6 +790,7 @@ export default function Inscripcion() {
                 <button style={s.btnPrimary} onClick={()=>{
                   if(!form.diagnostico||!form.medico_nombre||!form.medico_rut||!form.folio_receta||!form.cuota_mensual||!form.gramos_delegados||!form.vencimiento_receta){setError('Completa todos los campos obligatorios.');return}
                   if(form.vencimiento_receta < new Date().toISOString().split('T')[0]){setError('La fecha de vencimiento de la receta debe ser una fecha futura.');return}
+                  if(parseFloat(form.gramos_delegados) < 1){setError('Los gramos delegados deben ser al menos 1 gr.');return}
                   if(parseFloat(form.gramos_delegados)>parseFloat(form.cuota_mensual)){setError('Los gramos delegados no pueden superar los autorizados en receta.');return}
                   setError('');setPaso(5)
                 }}>Siguiente →</button>
