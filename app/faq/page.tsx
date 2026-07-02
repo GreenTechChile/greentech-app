@@ -76,7 +76,7 @@ const FAQS_ESTATICAS: { categoria: string; items: { pregunta: string; respuesta:
     items: [
       {
         pregunta: '¿Mis datos médicos están protegidos?',
-        respuesta: 'Sí. Toda la información personal y médica se almacena cifrada en servidores seguros (Supabase con RLS activo). No compartimos ningún dato con terceros. El acceso a tu información es estrictamente personal y requiere autenticación con tu RUT y contraseña.',
+        respuesta: 'Sí. Toda la información personal y médica se almacena cifrada en servidores seguros. No compartimos ningún dato con terceros. El acceso a tu información es estrictamente personal y requiere autenticación con tu RUT y contraseña.',
       },
       {
         pregunta: 'Olvidé mi contraseña, ¿qué hago?',
@@ -84,7 +84,7 @@ const FAQS_ESTATICAS: { categoria: string; items: { pregunta: string; respuesta:
       },
       {
         pregunta: '¿Puedo acceder desde el celular?',
-        respuesta: 'Sí. La plataforma está optimizada para dispositivos móviles. Solo necesitas un navegador actualizado — no requiere instalación de ninguna aplicación. Accede desde cualquier dispositivo en app.asociaciongreentech.cl con tu RUT y contraseña.',
+        respuesta: 'Sí. La plataforma está optimizada para dispositivos móviles. Solo necesitas un navegador actualizado — no requiere instalación de ninguna aplicación. Accede desde cualquier dispositivo en www.asociaciongreentech.cl con tu RUT y contraseña.',
       },
     ],
   },
