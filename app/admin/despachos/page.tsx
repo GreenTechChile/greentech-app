@@ -178,6 +178,13 @@ export default function Despachos() {
   const [subiendoFoto, setSubiendoFoto] = useState(false)
   const [modalVerFoto, setModalVerFoto] = useState<{url:string, ordenBase:string}|null>(null)
   const [buscandoFoto, setBuscandoFoto] = useState<string|null>(null)
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
 
   const toggleCheck = (ordenId: string, idx: number, total: number) => {
     setChecklistState(prev => {
@@ -536,32 +543,34 @@ export default function Despachos() {
                     </div>
 
                     {/* Footer */}
-                    <div style={{ padding:'12px 16px', borderTop:'1px solid #f3f4f6', display:'flex', justifyContent:'space-between', alignItems:'center', background:'#fafafa' }}>
-                      <div style={{ display:'flex', gap:8 }}>
-                        <button onClick={() => imprimirEtiqueta(o)}
-                          style={{ padding:'7px 14px', border:'1px solid #d1d5db', borderRadius:8, background:'#fff', color:'#374151', fontSize:12, cursor:'pointer', display:'flex', alignItems:'center', gap:5 }}>
-                          🖨️ Etiqueta
-                        </button>
-                        <button onClick={() => imprimirReceta(o)}
-                          style={{ padding:'7px 14px', border:'1px solid #d1d5db', borderRadius:8, background:'#fff', color:'#374151', fontSize:12, cursor:'pointer', display:'flex', alignItems:'center', gap:5 }}>
-                          📋 Receta médica
-                        </button>
-                        <button onClick={() => imprimirComprobante(o)}
-                          style={{ padding:'7px 14px', border:'1px solid #d1d5db', borderRadius:8, background:'#fff', color:'#374151', fontSize:12, cursor:'pointer', display:'flex', alignItems:'center', gap:5 }}>
-                          💳 Comprobante
-                        </button>
-                      </div>
+                    <div style={{ padding:'12px 16px', borderTop:'1px solid #f3f4f6', background:'#fafafa' }}>
+                      {/* Botón de acción principal */}
                       {o.estado !== 'entregado' && (() => {
                         const total = 6
                         const checks = checklistState[o.ordenBase] || []
                         const checklistCompleto = o.estado !== 'preparando' || (checks.length === total && checks.every(Boolean))
                         return (
                           <button onClick={() => checklistCompleto && avanzarEstado(o)} disabled={procesando===o.ordenBase || !checklistCompleto}
-                            style={{ padding:'8px 20px', border:'none', borderRadius:8, background:procesando===o.ordenBase||!checklistCompleto?'#9ca3af':cfg.color, color:'#fff', fontSize:13, fontWeight:600, cursor:procesando===o.ordenBase||!checklistCompleto?'not-allowed':'pointer' }}>
+                            style={{ width: isMobile ? '100%' : 'auto', marginBottom: isMobile ? 10 : 0, padding:'10px 20px', border:'none', borderRadius:8, background:procesando===o.ordenBase||!checklistCompleto?'#9ca3af':cfg.color, color:'#fff', fontSize:13, fontWeight:600, cursor:procesando===o.ordenBase||!checklistCompleto?'not-allowed':'pointer', display: isMobile ? 'block' : 'inline-block' }}>
                             {procesando===o.ordenBase ? 'Procesando...' : `${cfg.nextLabel} →`}
                           </button>
                         )
                       })()}
+                      {/* Botones secundarios */}
+                      <div style={{ display:'flex', gap:8, flexWrap:'wrap' as const }}>
+                        <button onClick={() => imprimirEtiqueta(o)}
+                          style={{ padding:'7px 12px', border:'1px solid #d1d5db', borderRadius:8, background:'#fff', color:'#374151', fontSize:11, cursor:'pointer', display:'flex', alignItems:'center', gap:4 }}>
+                          🖨️ Etiqueta
+                        </button>
+                        <button onClick={() => imprimirReceta(o)}
+                          style={{ padding:'7px 12px', border:'1px solid #d1d5db', borderRadius:8, background:'#fff', color:'#374151', fontSize:11, cursor:'pointer', display:'flex', alignItems:'center', gap:4 }}>
+                          📋 Receta
+                        </button>
+                        <button onClick={() => imprimirComprobante(o)}
+                          style={{ padding:'7px 12px', border:'1px solid #d1d5db', borderRadius:8, background:'#fff', color:'#374151', fontSize:11, cursor:'pointer', display:'flex', alignItems:'center', gap:4 }}>
+                          💳 Comprobante
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )}
