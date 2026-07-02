@@ -12,7 +12,7 @@ interface Lote {
 }
 
 const estadoConfig: Record<string, {label:string,bg:string,color:string,border:string}> = {
-  crecimiento: { label:'🌱 En crecimiento', bg:'#EAF3DE', color:'#3B6D11', border:'#97C459' },
+  crecimiento: { label:'🌱 En crecimiento', bg:'#e0f2fe', color:'#0369a1', border:'#7dd3fc' },
   cosechado:   { label:'✂️ Cosechado',       bg:'#FAEEDA', color:'#633806', border:'#EF9F27' },
   secado:      { label:'💨 En secado',        bg:'#E6F1FB', color:'#185FA5', border:'#A8CBF0' },
   procesado:   { label:'✅ Procesado',        bg:'#f3f4f6', color:'#374151', border:'#d1d5db' },
@@ -270,14 +270,14 @@ export default function Cultivo() {
               📝 Registrar actualización
             </button>
             <button onClick={() => { setMostrarForm(!mostrarForm); setMostrarRegistro(false); setMostrarNuevaCepa(false) }}
-              style={{ padding:'8px 14px', border:'none', borderRadius:8, background:'#3B6D11', color:'#EAF3DE', fontSize:13, fontWeight:600, cursor:'pointer' }}>
+              style={{ padding:'8px 14px', border:'none', borderRadius:8, background:'#0369a1', color:'#e0f2fe', fontSize:13, fontWeight:600, cursor:'pointer' }}>
               + Nuevo lote
             </button>
           </div>
         </div>
 
         {mensaje && (
-          <div style={{ background:mensaje.startsWith('✅')?'#EAF3DE':'#FCEBEB', border:`1px solid ${mensaje.startsWith('✅')?'#97C459':'#F5C5C5'}`, borderRadius:8, padding:'10px 14px', fontSize:12, color:mensaje.startsWith('✅')?'#3B6D11':'#A32D2D', marginBottom:16 }}>
+          <div style={{ background:mensaje.startsWith('✅')?'#e0f2fe':'#FCEBEB', border:`1px solid ${mensaje.startsWith('✅')?'#7dd3fc':'#F5C5C5'}`, borderRadius:8, padding:'10px 14px', fontSize:12, color:mensaje.startsWith('✅')?'#0369a1':'#A32D2D', marginBottom:16 }}>
             {mensaje}
           </div>
         )}
@@ -332,7 +332,7 @@ export default function Cultivo() {
                     {ncImagen ? 'Cambiar imagen' : 'Subir imagen'}
                   </button>
                   <div style={{ fontSize:11, color:'#9ca3af', marginTop:4 }}>JPG, PNG · máx. 5 MB</div>
-                  {ncImagen && <div style={{ fontSize:11, color:'#3B6D11', marginTop:2 }}>✓ {ncImagen.name}</div>}
+                  {ncImagen && <div style={{ fontSize:11, color:'#0369a1', marginTop:2 }}>✓ {ncImagen.name}</div>}
                 </div>
                 <input id="nc-imagen" type="file" accept="image/*" style={{ display:'none' }}
                   onChange={e => { const file = e.target.files?.[0]; if (file) { setNcImagen(file); const reader = new FileReader(); reader.onload = ev => setNcImagenPreview(ev.target?.result as string); reader.readAsDataURL(file) } }} />
@@ -357,10 +357,10 @@ export default function Cultivo() {
 
         {/* Form nuevo lote */}
         {mostrarForm && (
-          <div style={{ border:'1px solid #97C459', borderRadius:12, padding:18, marginBottom:20, background:'#FAFFF5' }}>
+          <div style={{ border:'1px solid #7dd3fc', borderRadius:12, padding:18, marginBottom:20, background:'#FAFFF5' }}>
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
-              <div style={{ fontSize:14, fontWeight:600, color:'#3B6D11' }}>🌱 Registrar nuevo lote</div>
-              <div style={{ fontSize:12, background:'#EAF3DE', color:'#3B6D11', padding:'4px 12px', borderRadius:20 }}>
+              <div style={{ fontSize:14, fontWeight:600, color:'#0369a1' }}>🌱 Registrar nuevo lote</div>
+              <div style={{ fontSize:12, background:'#e0f2fe', color:'#0369a1', padding:'4px 12px', borderRadius:20 }}>
                 Código: <strong>{generarCodigo()}</strong>
               </div>
             </div>
@@ -397,7 +397,7 @@ export default function Cultivo() {
             </div>
             <div style={{ display:'flex', justifyContent:'flex-end', gap:8 }}>
               <button onClick={() => setMostrarForm(false)} style={{ padding:'7px 16px', border:'1px solid #e5e7eb', borderRadius:8, background:'#fff', fontSize:13, cursor:'pointer' }}>Cancelar</button>
-              <button onClick={crearLote} disabled={guardando} style={{ padding:'7px 16px', border:'none', borderRadius:8, background:'#3B6D11', color:'#EAF3DE', fontSize:13, fontWeight:600, cursor:'pointer' }}>
+              <button onClick={crearLote} disabled={guardando} style={{ padding:'7px 16px', border:'none', borderRadius:8, background:'#0369a1', color:'#e0f2fe', fontSize:13, fontWeight:600, cursor:'pointer' }}>
                 {guardando ? 'Guardando...' : `Crear lote ${generarCodigo()}`}
               </button>
             </div>
@@ -496,7 +496,7 @@ export default function Cultivo() {
 
             {/* Ratio H/S — al registrar gramaje seco */}
             {proximoRegistro?.value === 'secado' && gramHumedoGuardado && gramSeco && (
-              <div style={{ background:'#EAF3DE', border:'1px solid #97C459', borderRadius:8, padding:'8px 12px', fontSize:12, color:'#3B6D11', marginBottom:12 }}>
+              <div style={{ background:'#e0f2fe', border:'1px solid #7dd3fc', borderRadius:8, padding:'8px 12px', fontSize:12, color:'#0369a1', marginBottom:12 }}>
                 🧮 Ratio H/S: <strong>{((parseInt(gramSeco)/gramHumedoGuardado)*100).toFixed(1)}%</strong> · Se registrarán <strong>{gramSeco} gr secos</strong> para {loteActual?.cepa||'—'}
               </div>
             )}
@@ -557,7 +557,7 @@ export default function Cultivo() {
                       { k:'Cosecha estimada', v:lote.cosecha_estimada||'—' },
                       ...(lote.gramaje_humedo ? [{k:'Gramaje húmedo',v:`${lote.gramaje_humedo} gr`}] : []),
                       ...(lote.gramaje_seco ? [{k:'Gramaje seco',v:`${lote.gramaje_seco} gr`}] : []),
-                      ...(ratio ? [{k:'Ratio H/S',v:`${ratio}%`,color:'#3B6D11'}] : []),
+                      ...(ratio ? [{k:'Ratio H/S',v:`${ratio}%`,color:'#0369a1'}] : []),
                     ].map((r,i) => (
                       <div key={i} style={{ display:'flex', justifyContent:'space-between', fontSize:12, padding:'4px 0', borderBottom:'1px solid #f3f4f6' }}>
                         <span style={{ color:'#6b7280' }}>{r.k}</span>
@@ -595,7 +595,7 @@ export default function Cultivo() {
                         <div style={{ fontSize:13, fontWeight:500 }}>{lote.codigo} · {lote.cepa}</div>
                         {lote.tipo_cultivo && <div style={{ fontSize:11, color:'#9ca3af' }}>{tipoCultivoIcon[lote.tipo_cultivo]} {lote.tipo_cultivo}</div>}
                       </div>
-                      <span style={{ fontSize:10, background:'#EAF3DE', color:'#3B6D11', padding:'2px 8px', borderRadius:20 }}>✅ Procesado</span>
+                      <span style={{ fontSize:10, background:'#e0f2fe', color:'#0369a1', padding:'2px 8px', borderRadius:20 }}>✅ Procesado</span>
                     </div>
                     <div style={{ padding:'10px 14px' }}>
                       {[

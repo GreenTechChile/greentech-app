@@ -139,7 +139,7 @@ export default function Login() {
 
         {/* Logo */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 28 }}>
-          <div style={{ width: 36, height: 36, background: '#EAF3DE', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>🌿</div>
+          <div style={{ width: 36, height: 36, background: '#e0f2fe', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>🌿</div>
           <span style={{ fontSize: 15, fontWeight: 600 }}>GreenTech</span>
         </div>
 
@@ -204,7 +204,7 @@ export default function Login() {
           <button
             type="submit"
             disabled={loading}
-            style={{ width: '100%', background: loading ? '#9ca3af' : '#3B6D11', color: '#EAF3DE', border: 'none', borderRadius: 8, padding: 11, fontSize: 14, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', marginBottom: 14 }}
+            style={{ width: '100%', background: loading ? '#9ca3af' : '#0369a1', color: '#e0f2fe', border: 'none', borderRadius: 8, padding: 11, fontSize: 14, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', marginBottom: 14 }}
           >
             {loading ? 'Ingresando...' : 'Ingresar →'}
           </button>
@@ -212,12 +212,12 @@ export default function Login() {
 
         <div style={{ textAlign: 'center', fontSize: 12, color: '#9ca3af' }}>
           <button onClick={() => { setShowRecovery(true); setRecoveryMsg(''); setRecoveryRut('') }}
-            style={{ background: 'none', border: 'none', color: '#3B6D11', cursor: 'pointer', fontSize: 12, padding: 0 }}>
+            style={{ background: 'none', border: 'none', color: '#0369a1', cursor: 'pointer', fontSize: 12, padding: 0 }}>
             ¿Olvidaste tu contraseña?
           </button>
           <div style={{ margin: '12px 0', borderTop: '1px solid #e5e7eb', paddingTop: 12 }}>
             ¿Aún no eres socio?{' '}
-            <Link href="/inscripcion" style={{ color: '#3B6D11', fontWeight: 500 }}>Solicita tu incorporación</Link>
+            <Link href="/inscripcion" style={{ color: '#0369a1', fontWeight: 500 }}>Solicita tu incorporación</Link>
           </div>
         </div>
 
@@ -232,7 +232,7 @@ export default function Login() {
               <button onClick={() => setShowRecovery(false)} style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', color: '#9ca3af' }}>×</button>
             </div>
             {recoveryMsg ? (
-              <p style={{ fontSize: 13, color: '#3B6D11', background: '#EAF3DE', border: '1px solid #97C459', borderRadius: 8, padding: '10px 14px', margin: 0 }}>{recoveryMsg}</p>
+              <p style={{ fontSize: 13, color: '#0369a1', background: '#e0f2fe', border: '1px solid #7dd3fc', borderRadius: 8, padding: '10px 14px', margin: 0 }}>{recoveryMsg}</p>
             ) : (
               <>
                 <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 16 }}>Ingresa tu RUT y te enviaremos un link de recuperación a tu correo registrado.</p>
@@ -257,7 +257,7 @@ export default function Login() {
                     setRecoveryLoading(false)
                     setRecoveryMsg('Si tu RUT está registrado, recibirás un correo con las instrucciones para restablecer tu contraseña.')
                   }}
-                  style={{ width: '100%', background: recoveryLoading || !validarRut(recoveryRut) ? '#9ca3af' : '#3B6D11', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 0', fontSize: 14, fontWeight: 600, cursor: recoveryLoading || !validarRut(recoveryRut) ? 'not-allowed' : 'pointer' }}
+                  style={{ width: '100%', background: recoveryLoading || !validarRut(recoveryRut) ? '#9ca3af' : '#0369a1', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 0', fontSize: 14, fontWeight: 600, cursor: recoveryLoading || !validarRut(recoveryRut) ? 'not-allowed' : 'pointer' }}
                 >
                   {recoveryLoading ? 'Enviando...' : 'Enviar link de recuperación'}
                 </button>

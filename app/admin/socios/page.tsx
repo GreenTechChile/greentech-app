@@ -443,7 +443,7 @@ export default function AdminSocios() {
         </div>
 
         {mensaje && (
-          <div style={{ background: mensaje.startsWith('✅') ? '#EAF3DE' : mensaje.startsWith('❌') ? '#FCEBEB' : '#f9fafb', border: `1px solid ${mensaje.startsWith('✅') ? '#97C459' : mensaje.startsWith('❌') ? '#F5C5C5' : '#e5e7eb'}`, borderRadius: 8, padding: '12px 14px', fontSize: 12, color: mensaje.startsWith('✅') ? '#3B6D11' : mensaje.startsWith('❌') ? '#A32D2D' : '#374151', marginBottom: 16, lineHeight: 1.6 }}>
+          <div style={{ background: mensaje.startsWith('✅') ? '#e0f2fe' : mensaje.startsWith('❌') ? '#FCEBEB' : '#f9fafb', border: `1px solid ${mensaje.startsWith('✅') ? '#7dd3fc' : mensaje.startsWith('❌') ? '#F5C5C5' : '#e5e7eb'}`, borderRadius: 8, padding: '12px 14px', fontSize: 12, color: mensaje.startsWith('✅') ? '#0369a1' : mensaje.startsWith('❌') ? '#A32D2D' : '#374151', marginBottom: 16, lineHeight: 1.6 }}>
             {mensaje}
           </div>
         )}
@@ -554,7 +554,7 @@ export default function AdminSocios() {
                         🩺 Ver receta
                       </button>
                     )}
-                    <label style={{ padding: '7px 14px', border: 'none', borderRadius: 8, background: '#3B6D11', color: '#EAF3DE', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                    <label style={{ padding: '7px 14px', border: 'none', borderRadius: 8, background: '#0369a1', color: '#e0f2fe', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
                       ⬆ Subir firmado
                       <input type="file" accept=".pdf" style={{ display: 'none' }} onChange={async (e) => {
                         const file = e.target.files?.[0]
@@ -680,7 +680,7 @@ export default function AdminSocios() {
             const socio = r.socios
             const esRechazando = rechazandoRecetaId === r.id
             const estadoBadge = r.estado === 'aprobada'
-              ? { label: '✅ Aprobada', bg: '#EAF3DE', color: '#3B6D11' }
+              ? { label: '✅ Aprobada', bg: '#e0f2fe', color: '#0369a1' }
               : r.estado === 'rechazada'
               ? { label: '❌ Rechazada', bg: '#FEE2E2', color: '#991B1B' }
               : null
@@ -696,7 +696,7 @@ export default function AdminSocios() {
             }
             const nombreAdminProceso = r.aprobado_por ? (nombresPorEmail[r.aprobado_por] || r.aprobado_por) : null
             return (
-              <div key={r.id} style={{ border: `1px solid ${r.estado === 'pendiente' ? '#e5e7eb' : r.estado === 'aprobada' ? '#97C459' : '#F5C5C5'}`, borderRadius: 12, marginBottom: 10, overflow: 'hidden' }}>
+              <div key={r.id} style={{ border: `1px solid ${r.estado === 'pendiente' ? '#e5e7eb' : r.estado === 'aprobada' ? '#7dd3fc' : '#F5C5C5'}`, borderRadius: 12, marginBottom: 10, overflow: 'hidden' }}>
                 <div onClick={esHistorial ? toggleExpandir : undefined}
                   style={{ padding: '12px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f9fafb', cursor: esHistorial ? 'pointer' : 'default' }}>
                   <div style={{ flex: 1 }}>
@@ -759,7 +759,7 @@ export default function AdminSocios() {
                           <>
                             <button onClick={() => aprobarReceta(r)} disabled={bloqueado}
                               title={delegacionBloquea ? 'Primero debe firmarse el contrato de delegación pendiente' : ''}
-                              style={{ padding: '7px 18px', border: 'none', borderRadius: 8, background: bloqueado ? '#9ca3af' : '#3B6D11', color: '#EAF3DE', fontSize: 13, fontWeight: 600, cursor: bloqueado ? 'not-allowed' : 'pointer' }}>
+                              style={{ padding: '7px 18px', border: 'none', borderRadius: 8, background: bloqueado ? '#9ca3af' : '#0369a1', color: '#e0f2fe', fontSize: 13, fontWeight: 600, cursor: bloqueado ? 'not-allowed' : 'pointer' }}>
                               {procesando === r.id ? 'Procesando...' : '✅ Aprobar receta'}
                             </button>
                             {delegacionBloquea && (
@@ -991,7 +991,7 @@ export default function AdminSocios() {
                             {ocupado ? '⏳ Enviando...' : p.link_enviado_por ? '📧 Reenviar' : '📧 Enviar link'}
                           </button>
                           {yaEsSocio && (
-                            <span style={{ fontSize: 10, color: '#3B6D11', fontWeight: 500 }}>✓ Inscripción registrada</span>
+                            <span style={{ fontSize: 10, color: '#0369a1', fontWeight: 500 }}>✓ Inscripción registrada</span>
                           )}
                         </div>
                       )
@@ -1036,8 +1036,8 @@ export default function AdminSocios() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
                       <span style={{ fontSize: 14, fontWeight: 600 }}>{s.nombre}</span>
                       <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, fontWeight: 600,
-                        background: s.estado === 'pendiente' ? '#FAEEDA' : s.estado === 'aprobada' ? '#EAF3DE' : '#f3f4f6',
-                        color: s.estado === 'pendiente' ? '#633806' : s.estado === 'aprobada' ? '#3B6D11' : '#6b7280' }}>
+                        background: s.estado === 'pendiente' ? '#FAEEDA' : s.estado === 'aprobada' ? '#e0f2fe' : '#f3f4f6',
+                        color: s.estado === 'pendiente' ? '#633806' : s.estado === 'aprobada' ? '#0369a1' : '#6b7280' }}>
                         {s.estado === 'pendiente' ? 'Pendiente' : s.estado === 'aprobada' ? 'Aprobada' : 'Rechazada'}
                       </span>
                     </div>
@@ -1157,7 +1157,7 @@ export default function AdminSocios() {
                   <div style={{ fontSize: 11, color: '#6b7280' }}>RUT {socio.rut} · {socio.email} · {socio.telefono}</div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, background: filtroSocios === 'pendiente' ? '#FAEEDA' : filtroSocios === 'activo' ? '#EAF3DE' : '#FCEBEB', color: filtroSocios === 'pendiente' ? '#633806' : filtroSocios === 'activo' ? '#3B6D11' : '#A32D2D' }}>
+                  <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, background: filtroSocios === 'pendiente' ? '#FAEEDA' : filtroSocios === 'activo' ? '#e0f2fe' : '#FCEBEB', color: filtroSocios === 'pendiente' ? '#633806' : filtroSocios === 'activo' ? '#0369a1' : '#A32D2D' }}>
                     {filtroSocios === 'pendiente' ? 'Pendiente' : filtroSocios === 'activo' ? 'Aprobado' : 'Rechazado'}
                   </span>
                   <div style={{ fontSize: 11, color: urgente ? '#A32D2D' : '#9ca3af', marginTop: 3 }}>
@@ -1242,7 +1242,7 @@ export default function AdminSocios() {
                               }
                             }
                             alert('Documento no encontrado.')
-                          }} style={{ fontSize: 10, background: '#EAF3DE', color: '#3B6D11', padding: '2px 8px', borderRadius: 20, border: 'none', cursor: 'pointer' }}>
+                          }} style={{ fontSize: 10, background: '#e0f2fe', color: '#0369a1', padding: '2px 8px', borderRadius: 20, border: 'none', cursor: 'pointer' }}>
                             Ver
                           </button>
                         </div>
@@ -1254,14 +1254,14 @@ export default function AdminSocios() {
                         const subiendoKey = `${socio.id}_${d.firmaKey}`
                         const estaSubiendo = subiendo[subiendoKey]
                         return (
-                          <div key={i} style={{ background: firmado ? '#EAF3DE' : '#f9fafb', border: `1px solid ${firmado ? '#97C459' : '#e5e7eb'}`, borderRadius: 6, marginBottom: 6, overflow: 'hidden' }}>
+                          <div key={i} style={{ background: firmado ? '#e0f2fe' : '#f9fafb', border: `1px solid ${firmado ? '#7dd3fc' : '#e5e7eb'}`, borderRadius: 6, marginBottom: 6, overflow: 'hidden' }}>
                             {/* Fila principal */}
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', fontSize: 12 }}>
                               <span>📋</span>
                               <span style={{ flex: 1 }}>{d.label}</span>
                               {firmado
                                 ? <>
-                                    <span style={{ fontSize: 10, background: '#3B6D11', color: '#fff', padding: '2px 8px', borderRadius: 20 }}>✓ Firmado</span>
+                                    <span style={{ fontSize: 10, background: '#0369a1', color: '#fff', padding: '2px 8px', borderRadius: 20 }}>✓ Firmado</span>
                                     <button onClick={async (e) => {
                                       e.stopPropagation()
                                       const { data } = await supabase.storage.from('documentos').createSignedUrl(`${socio.rut}/${d.firmaKey}.pdf`, 120)
@@ -1270,7 +1270,7 @@ export default function AdminSocios() {
                                         const left = (window.screen.width - w) / 2; const top = (window.screen.height - h) / 2
                                         window.open(data.signedUrl, '_blank', `width=${w},height=${h},left=${left},top=${top},toolbar=0,menubar=0,scrollbars=1`)
                                       } else alert('No se pudo generar el enlace.')
-                                    }} style={{ fontSize: 10, background: '#EAF3DE', color: '#3B6D11', padding: '2px 8px', borderRadius: 20, border: 'none', cursor: 'pointer' }}>
+                                    }} style={{ fontSize: 10, background: '#e0f2fe', color: '#0369a1', padding: '2px 8px', borderRadius: 20, border: 'none', cursor: 'pointer' }}>
                                       Ver
                                     </button>
                                   </>
@@ -1290,7 +1290,7 @@ export default function AdminSocios() {
                                 <button
                                   onClick={(e) => { e.stopPropagation(); fileInputRefs.current[subiendoKey]?.click() }}
                                   disabled={estaSubiendo}
-                                  style={{ flex: 1, fontSize: 11, padding: '4px 0', background: estaSubiendo ? '#9ca3af' : firmado ? '#EAF3DE' : '#fff', color: estaSubiendo ? '#fff' : firmado ? '#3B6D11' : '#374151', border: `1px solid ${firmado ? '#97C459' : '#e5e7eb'}`, borderRadius: 6, cursor: estaSubiendo ? 'not-allowed' : 'pointer', fontWeight: 500 }}>
+                                  style={{ flex: 1, fontSize: 11, padding: '4px 0', background: estaSubiendo ? '#9ca3af' : firmado ? '#e0f2fe' : '#fff', color: estaSubiendo ? '#fff' : firmado ? '#0369a1' : '#374151', border: `1px solid ${firmado ? '#7dd3fc' : '#e5e7eb'}`, borderRadius: 6, cursor: estaSubiendo ? 'not-allowed' : 'pointer', fontWeight: 500 }}>
                                   {estaSubiendo ? '⏳ Subiendo...' : firmado ? '↑ Reemplazar firmado' : '⬆ Subir firmado'}
                                 </button>
                                 <input
@@ -1312,10 +1312,10 @@ export default function AdminSocios() {
                       })}
 
                       {/* Reglamento */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', background: '#EAF3DE', borderRadius: 6, marginBottom: 6, fontSize: 12 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', background: '#e0f2fe', borderRadius: 6, marginBottom: 6, fontSize: 12 }}>
                         <span>✅</span>
                         <span style={{ flex: 1 }}>Reglamento aceptado en línea</span>
-                        <span style={{ fontSize: 10, background: '#3B6D11', color: '#EAF3DE', padding: '2px 8px', borderRadius: 20 }}>Firmado</span>
+                        <span style={{ fontSize: 10, background: '#0369a1', color: '#e0f2fe', padding: '2px 8px', borderRadius: 20 }}>Firmado</span>
                       </div>
 
                       {/* Aviso si faltan documentos firmados (solo pendientes) */}
@@ -1342,7 +1342,7 @@ export default function AdminSocios() {
                         onClick={(e) => { e.stopPropagation(); if (listoParaAprobar) aprobar(socio) }}
                         disabled={procesando === socio.id || !listoParaAprobar}
                         title={!listoParaAprobar ? 'Sube el contrato y la declaración firmados primero' : ''}
-                        style={{ padding: '7px 16px', border: 'none', borderRadius: 8, background: procesando === socio.id ? '#9ca3af' : !listoParaAprobar ? '#d1d5db' : '#3B6D11', color: !listoParaAprobar ? '#6b7280' : '#EAF3DE', fontSize: 12, cursor: procesando === socio.id || !listoParaAprobar ? 'not-allowed' : 'pointer', fontWeight: 600 }}>
+                        style={{ padding: '7px 16px', border: 'none', borderRadius: 8, background: procesando === socio.id ? '#9ca3af' : !listoParaAprobar ? '#d1d5db' : '#0369a1', color: !listoParaAprobar ? '#6b7280' : '#e0f2fe', fontSize: 12, cursor: procesando === socio.id || !listoParaAprobar ? 'not-allowed' : 'pointer', fontWeight: 600 }}>
                         {procesando === socio.id ? 'Procesando...' : '✓ Aprobar'}
                       </button>
                     </div>
@@ -1406,7 +1406,7 @@ export default function AdminSocios() {
                       {socio.aprobado_por && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                           <span>{filtroSocios === 'activo' ? '✅' : '✕'}</span>
-                          <span style={{ fontWeight: 500, color: filtroSocios === 'activo' ? '#3B6D11' : '#A32D2D' }}>
+                          <span style={{ fontWeight: 500, color: filtroSocios === 'activo' ? '#0369a1' : '#A32D2D' }}>
                             {filtroSocios === 'activo' ? 'Aprobado' : 'Rechazado'} por {nombresPorEmail[socio.aprobado_por] || socio.aprobado_por}
                             {socio.aprobado_at && (
                               <span style={{ fontWeight: 400, color: '#9ca3af' }}>

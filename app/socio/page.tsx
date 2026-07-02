@@ -28,7 +28,7 @@ export default function SocioDashboard() {
   }, [])
 
   const estadoColor: Record<string, string> = {
-    'despachado': '#185FA5', 'entregado': '#3B6D11', 'preparando': '#BA7517', 'pagado': '#3B6D11',
+    'despachado': '#185FA5', 'entregado': '#0369a1', 'preparando': '#BA7517', 'pagado': '#0369a1',
   }
   const estadoLabel: Record<string, string> = {
     'pagado': 'Pagado', 'preparando': 'Preparando', 'despachado': 'En camino', 'entregado': 'Entregado',
@@ -96,7 +96,7 @@ export default function SocioDashboard() {
             <h1 style={{ fontSize:18, fontWeight:600, marginBottom:3 }}>Bienvenido, {socio.nombre.split(' ')[0]}</h1>
             <p style={{ fontSize:13, color:'#6b7280' }}>{new Date().toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</p>
           </div>
-          <Link href="/socio/dispensacion" style={{ padding:'9px 18px', background:'#3B6D11', borderRadius:8, fontSize:13, color:'#EAF3DE', fontWeight:600, textDecoration:'none', display:'flex', alignItems:'center', gap:6, alignSelf: isMobile ? 'stretch' : 'auto', justifyContent: isMobile ? 'center' : 'flex-start' }}>
+          <Link href="/socio/dispensacion" style={{ padding:'9px 18px', background:'#0369a1', borderRadius:8, fontSize:13, color:'#e0f2fe', fontWeight:600, textDecoration:'none', display:'flex', alignItems:'center', gap:6, alignSelf: isMobile ? 'stretch' : 'auto', justifyContent: isMobile ? 'center' : 'flex-start' }}>
             🌿 Nueva dispensación
           </Link>
         </div>
@@ -108,7 +108,7 @@ export default function SocioDashboard() {
           const diasRestantes = venc ? Math.floor((venc.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24)) : null
           const alerta = diasRestantes !== null && diasRestantes <= 60
           return (
-            <div style={{ background: alerta ? '#FFF0F0' : '#EAF3DE', border: `1px solid ${alerta ? '#F5C5C5' : '#97C459'}`, borderRadius:8, padding:'10px 14px', fontSize:12, color: alerta ? '#A32D2D' : '#3B6D11', marginBottom:20 }}>
+            <div style={{ background: alerta ? '#FFF0F0' : '#e0f2fe', border: `1px solid ${alerta ? '#F5C5C5' : '#7dd3fc'}`, borderRadius:8, padding:'10px 14px', fontSize:12, color: alerta ? '#A32D2D' : '#0369a1', marginBottom:20 }}>
               {alerta ? '⚠️' : '✓'} Socio activo
               {venc && ` · Receta vigente hasta ${venc.toLocaleDateString('es-CL',{month:'long',year:'numeric'})}`}
               {alerta && diasRestantes !== null && ` · Vence en ${diasRestantes} día${diasRestantes !== 1 ? 's' : ''} — renueva tu receta`}
@@ -122,7 +122,7 @@ export default function SocioDashboard() {
         <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4,1fr)', gap:10, marginBottom:20 }}>
           {[
             { label:'Cuota mensual', value: cuota > 0 ? `${cuota} gr` : 'Sin asignar', sub:'delegados a GreenTech' },
-            { label:`Dispensado en ${new Date().toLocaleString('es-CL',{month:'long'})}`, value:`${dispensadoMes} gr`, sub:`${dispensaciones.filter(d => { const m = new Date(d.created_at).getMonth()+1; return m === new Date().getMonth()+1 }).length} dispensaciones`, color: dispensadoMes > 0 ? '#3B6D11' : undefined },
+            { label:`Dispensado en ${new Date().toLocaleString('es-CL',{month:'long'})}`, value:`${dispensadoMes} gr`, sub:`${dispensaciones.filter(d => { const m = new Date(d.created_at).getMonth()+1; return m === new Date().getMonth()+1 }).length} dispensaciones`, color: dispensadoMes > 0 ? '#0369a1' : undefined },
             { label:'Disponible este mes', value: cuota > 0 ? `${disponible} gr` : '—', sub:`hasta el ${new Date(new Date().getFullYear(),new Date().getMonth()+1,0).getDate()} ${new Date().toLocaleString('es-CL',{month:'short'})}` },
             { label:`Total dispensado ${new Date().getFullYear()}`, value:`${dispensaciones.reduce((a,d)=>a+d.gramos,0)} gr`, sub:'histórico del año' },
           ].map((m,i) => (
@@ -142,7 +142,7 @@ export default function SocioDashboard() {
             <span>{dispensadoMes} / {cuota} gr ({pct}%)</span>
           </div>
           <div style={{ height:10, background:'#f3f4f6', borderRadius:20, overflow:'hidden' }}>
-            <div style={{ height:'100%', width:`${pct}%`, background: pct >= 90 ? '#A32D2D' : '#3B6D11', borderRadius:20, transition:'0.3s' }}/>
+            <div style={{ height:'100%', width:`${pct}%`, background: pct >= 90 ? '#A32D2D' : '#0369a1', borderRadius:20, transition:'0.3s' }}/>
           </div>
         </div>
 
@@ -152,12 +152,12 @@ export default function SocioDashboard() {
           <div style={{ border:'1px solid #e5e7eb', borderRadius:12, padding:16 }}>
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
               <span style={{ fontSize:13, fontWeight:600 }}>Últimas dispensaciones</span>
-              <Link href="/socio/historial" style={{ fontSize:11, color:'#3B6D11', textDecoration:'none' }}>Ver todo →</Link>
+              <Link href="/socio/historial" style={{ fontSize:11, color:'#0369a1', textDecoration:'none' }}>Ver todo →</Link>
             </div>
             {dispensaciones.length === 0 ? (
               <div style={{ fontSize:13, color:'#9ca3af', padding:'20px 0', textAlign:'center' }}>
                 Sin dispensaciones aún.<br/>
-                <Link href="/socio/dispensacion" style={{ color:'#3B6D11', fontSize:12 }}>Hacer primera dispensación →</Link>
+                <Link href="/socio/dispensacion" style={{ color:'#0369a1', fontSize:12 }}>Hacer primera dispensación →</Link>
               </div>
             ) : dispensaciones.slice(0,3).map((d,i) => (
               <div key={d.id} style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 0', borderBottom:i<2?'1px solid #f3f4f6':'none' }}>

@@ -349,7 +349,7 @@ export default function Inscripcion() {
     field: {display:'flex',flexDirection:'column' as const,gap:4},
     hint: {fontSize:11,color:'#9ca3af',marginTop:2},
     grid2: {display:'grid',gridTemplateColumns:'1fr 1fr',gap:12},
-    btnPrimary: {background:'#3B6D11',color:'#EAF3DE',border:'none',borderRadius:8,padding:'9px 20px',fontSize:13,fontWeight:600,cursor:'pointer'},
+    btnPrimary: {background:'#0369a1',color:'#e0f2fe',border:'none',borderRadius:8,padding:'9px 20px',fontSize:13,fontWeight:600,cursor:'pointer'},
     btnOutline: {background:'transparent',color:'#111',border:'1px solid #d1d5db',borderRadius:8,padding:'9px 20px',fontSize:13,cursor:'pointer'},
   }
 
@@ -364,7 +364,7 @@ export default function Inscripcion() {
       `}</style>
       <nav className="gt-nav" style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 32px',borderBottom:'1px solid #e5e7eb',background:'#fff'}}>
         <Link href="/" style={{display:'flex',alignItems:'center',gap:10,textDecoration:'none',color:'#111'}}>
-          <div style={{width:32,height:32,background:'#EAF3DE',borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center'}}>🌿</div>
+          <div style={{width:32,height:32,background:'#e0f2fe',borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center'}}>🌿</div>
           <span style={{fontSize:15,fontWeight:600}}>GreenTech</span>
         </Link>
         <Link href="/" style={{fontSize:13,color:'#6b7280',textDecoration:'none'}}>← Volver al inicio</Link>
@@ -378,7 +378,7 @@ export default function Inscripcion() {
           <div style={{display:'flex',marginBottom:28}}>
             {pasos.map((p,i) => {
               const n=i+1; const done=paso>n; const active=paso===n
-              return <div key={p} style={{flex:1,textAlign:'center',padding:'7px 4px',fontSize:11,borderBottom:`2px solid ${done?'#639922':active?'#3B6D11':'#e5e7eb'}`,color:done?'#639922':active?'#3B6D11':'#9ca3af',fontWeight:active?600:400}}>{done?'✓ ':''}{p}</div>
+              return <div key={p} style={{flex:1,textAlign:'center',padding:'7px 4px',fontSize:11,borderBottom:`2px solid ${done?'#639922':active?'#0369a1':'#e5e7eb'}`,color:done?'#639922':active?'#0369a1':'#9ca3af',fontWeight:active?600:400}}>{done?'✓ ':''}{p}</div>
             })}
           </div>
         )}
@@ -389,7 +389,7 @@ export default function Inscripcion() {
           {loading && (
             <div style={{textAlign:'center',padding:'40px 20px'}}>
               <div style={{fontSize:48,marginBottom:16,animation:'spin 1.5s linear infinite',display:'inline-block'}}>⏳</div>
-              <h2 style={{fontSize:18,fontWeight:700,color:'#3B6D11',marginBottom:8}}>Enviando tu solicitud...</h2>
+              <h2 style={{fontSize:18,fontWeight:700,color:'#0369a1',marginBottom:8}}>Enviando tu solicitud...</h2>
               <p style={{fontSize:13,color:'#6b7280',marginBottom:32}}>Por favor no cierres ni recargues esta página.</p>
               <div style={{maxWidth:360,margin:'0 auto',display:'flex',flexDirection:'column',gap:10,textAlign:'left'}}>
                 {[
@@ -399,7 +399,7 @@ export default function Inscripcion() {
                   '📧 Enviando correo de confirmación',
                 ].map((paso,i) => (
                   <div key={i} style={{display:'flex',alignItems:'center',gap:10,padding:'10px 14px',background:'#f9fafb',borderRadius:8,border:'1px solid #e5e7eb',fontSize:12,color:'#374151'}}>
-                    <span style={{width:18,height:18,borderRadius:'50%',border:'2px solid #97C459',borderTopColor:'#3B6D11',display:'inline-block',flexShrink:0,animation:`spin ${1+i*0.3}s linear infinite`}}/>
+                    <span style={{width:18,height:18,borderRadius:'50%',border:'2px solid #7dd3fc',borderTopColor:'#0369a1',display:'inline-block',flexShrink:0,animation:`spin ${1+i*0.3}s linear infinite`}}/>
                     {paso}
                   </div>
                 ))}
@@ -414,15 +414,15 @@ export default function Inscripcion() {
               {/* Encabezado */}
               <div style={{textAlign:'center',marginBottom:28}}>
                 <div style={{fontSize:48,marginBottom:12}}>🌿</div>
-                <h2 style={{fontSize:18,fontWeight:700,color:'#3B6D11',marginBottom:6}}>Bienvenido/a al proceso de incorporación</h2>
+                <h2 style={{fontSize:18,fontWeight:700,color:'#0369a1',marginBottom:6}}>Bienvenido/a al proceso de incorporación</h2>
                 <p style={{fontSize:13,color:'#6b7280',lineHeight:1.7,maxWidth:480,margin:'0 auto'}}>
                   Antes de comenzar, revisa el resumen del trámite, lo que necesitas tener a mano y los documentos que deberás aceptar.
                 </p>
               </div>
 
               {/* Resumen del proceso */}
-              <div style={{border:'1px solid #97C459',borderRadius:12,padding:16,background:'#EAF3DE',marginBottom:16}}>
-                <div style={{fontSize:13,fontWeight:600,color:'#3B6D11',marginBottom:10}}>📋 Resumen del proceso</div>
+              <div style={{border:'1px solid #7dd3fc',borderRadius:12,padding:16,background:'#e0f2fe',marginBottom:16}}>
+                <div style={{fontSize:13,fontWeight:600,color:'#0369a1',marginBottom:10}}>📋 Resumen del proceso</div>
                 <div style={{fontSize:12,color:'#374151',lineHeight:1.9}}>
                   {montoIncorporacion > 0 && (
                     <div style={{display:'flex',alignItems:'flex-start',gap:8,marginBottom:6}}><span>1.</span><span>Realizas el pago de incorporación de <strong>${montoIncorporacion.toLocaleString('es-CL')}</strong>.</span></div>
@@ -445,10 +445,10 @@ export default function Inscripcion() {
                   </div>
                 </div>
               ) : (
-                <div style={{border:'1px solid #97C459',borderRadius:12,padding:16,background:'#EAF3DE',marginBottom:16,display:'flex',alignItems:'center',gap:14}}>
+                <div style={{border:'1px solid #7dd3fc',borderRadius:12,padding:16,background:'#e0f2fe',marginBottom:16,display:'flex',alignItems:'center',gap:14}}>
                   <div style={{fontSize:32}}>🎉</div>
                   <div>
-                    <div style={{fontSize:13,fontWeight:600,color:'#3B6D11',marginBottom:2}}>Incorporación sin costo</div>
+                    <div style={{fontSize:13,fontWeight:600,color:'#0369a1',marginBottom:2}}>Incorporación sin costo</div>
                     <div style={{fontSize:12,color:'#374151'}}>El proceso de incorporación es actualmente gratuito.</div>
                   </div>
                 </div>
@@ -515,7 +515,7 @@ export default function Inscripcion() {
                         {ciudadExpandida===ciudad && (
                           <div style={{padding:'10px 14px',background:'#fff',display:'flex',flexWrap:'wrap',gap:6}}>
                             {coberturaCompleta[ciudad].map(comuna => (
-                              <span key={comuna} style={{fontSize:11,padding:'3px 10px',background:'#EAF3DE',color:'#3B6D11',borderRadius:20,border:'1px solid #97C459'}}>{comuna}</span>
+                              <span key={comuna} style={{fontSize:11,padding:'3px 10px',background:'#e0f2fe',color:'#0369a1',borderRadius:20,border:'1px solid #7dd3fc'}}>{comuna}</span>
                             ))}
                           </div>
                         )}
@@ -523,7 +523,7 @@ export default function Inscripcion() {
                     ))}
                   </div>
                 )}
-                <p style={{fontSize:11,color:'#6b7280',marginTop:10}}>¿Tu comuna no aparece? Contáctanos a <a href="mailto:contacto@asociaciongreentech.cl" style={{color:'#3B6D11'}}>contacto@asociaciongreentech.cl</a> antes de continuar.</p>
+                <p style={{fontSize:11,color:'#6b7280',marginTop:10}}>¿Tu comuna no aparece? Contáctanos a <a href="mailto:contacto@asociaciongreentech.cl" style={{color:'#0369a1'}}>contacto@asociaciongreentech.cl</a> antes de continuar.</p>
               </div>
 
               <div style={{display:'flex',justifyContent:'flex-end'}}>
@@ -590,11 +590,11 @@ export default function Inscripcion() {
                       </div>
                       <div style={{display:'flex',justifyContent:'space-between',fontSize:15,fontWeight:700,padding:'10px 0 4px',marginTop:4,borderTop:'2px solid #e5e7eb'}}>
                         <span>Total a pagar</span>
-                        <span style={{color:'#3B6D11'}}>${montoIncorporacion.toLocaleString('es-CL')}</span>
+                        <span style={{color:'#0369a1'}}>${montoIncorporacion.toLocaleString('es-CL')}</span>
                       </div>
                     </div>
                   </div>
-                  <div style={{background:'#EAF3DE',border:'1px solid #97C459',borderRadius:10,padding:'12px 14px',fontSize:12,color:'#3B6D11',marginBottom:24,lineHeight:1.7}}>
+                  <div style={{background:'#e0f2fe',border:'1px solid #7dd3fc',borderRadius:10,padding:'12px 14px',fontSize:12,color:'#0369a1',marginBottom:24,lineHeight:1.7}}>
                     <strong>¿Qué incluye este pago?</strong><br/>
                     ✓ Revisión de tu solicitud por la directiva<br/>
                     ✓ Generación de contratos personalizados con tus datos<br/>
@@ -603,13 +603,13 @@ export default function Inscripcion() {
                   </div>
                 </>
               ) : (
-                <div style={{background:'#EAF3DE',border:'1px solid #97C459',borderRadius:10,padding:'12px 14px',fontSize:12,color:'#3B6D11',marginBottom:24,lineHeight:1.7}}>
+                <div style={{background:'#e0f2fe',border:'1px solid #7dd3fc',borderRadius:10,padding:'12px 14px',fontSize:12,color:'#0369a1',marginBottom:24,lineHeight:1.7}}>
                   🎉 <strong>Incorporación gratuita</strong> — No se requiere pago. Completa tus datos para continuar con el proceso.
                 </div>
               )}
               {error && <div style={{background:'#FCEBEB',border:'1px solid #F5C5C5',borderRadius:8,padding:'10px 12px',fontSize:12,color:'#A32D2D',marginBottom:14}}>⚠️ {error}</div>}
               <button onClick={handlePagoMP} disabled={mpLoading}
-                style={{width:'100%',padding:'14px',border:'none',borderRadius:12,background:mpLoading?'#9ca3af':montoIncorporacion>0?'#009ee3':'#3B6D11',color:'#fff',fontSize:15,fontWeight:700,cursor:mpLoading?'not-allowed':'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:10,marginBottom:10}}>
+                style={{width:'100%',padding:'14px',border:'none',borderRadius:12,background:mpLoading?'#9ca3af':montoIncorporacion>0?'#009ee3':'#0369a1',color:'#fff',fontSize:15,fontWeight:700,cursor:mpLoading?'not-allowed':'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:10,marginBottom:10}}>
                 {mpLoading
                   ? '⏳ Procesando...'
                   : montoIncorporacion > 0
@@ -643,7 +643,7 @@ export default function Inscripcion() {
                 </div>
                 <div style={s.field}>
                   <label style={s.label}>RUT (sin puntos, con guión) <span style={s.req}>*</span></label>
-                  <input style={{...s.input, borderColor: retomandoInscripcion ? '#d1d5db' : rutValido === false ? '#A32D2D' : rutValido === true ? '#3B6D11' : '#d1d5db', ...(retomandoInscripcion ? {background:'#f3f4f6',color:'#6b7280',cursor:'not-allowed'} : {})}}
+                  <input style={{...s.input, borderColor: retomandoInscripcion ? '#d1d5db' : rutValido === false ? '#A32D2D' : rutValido === true ? '#0369a1' : '#d1d5db', ...(retomandoInscripcion ? {background:'#f3f4f6',color:'#6b7280',cursor:'not-allowed'} : {})}}
                     value={form.rut}
                     onChange={e => {
                       if (retomandoInscripcion) return
@@ -658,7 +658,7 @@ export default function Inscripcion() {
                     readOnly={retomandoInscripcion}
                     placeholder="12345678-9"/>
                   {!retomandoInscripcion && rutValido === false && <span style={{fontSize:11, color:'#A32D2D'}}>⚠️ RUT inválido — verifica el dígito verificador</span>}
-                  {!retomandoInscripcion && rutValido === true && <span style={{fontSize:11, color:'#3B6D11'}}>✓ RUT válido</span>}
+                  {!retomandoInscripcion && rutValido === true && <span style={{fontSize:11, color:'#0369a1'}}>✓ RUT válido</span>}
                 </div>
                 <div style={s.field}><label style={s.label}>Fecha de nacimiento <span style={s.req}>*</span></label><input style={s.input} type="date" value={form.fecha_nacimiento} max={(() => { const d = new Date(); d.setFullYear(d.getFullYear() - 18); return d.toISOString().split('T')[0] })()} onChange={e=>update('fecha_nacimiento',e.target.value)}/></div>
                 <div style={s.field}><label style={s.label}>Estado civil <span style={s.req}>*</span></label>
@@ -750,7 +750,7 @@ export default function Inscripcion() {
                 <div style={s.field}><label style={s.label}>Nombre del médico tratante <span style={s.req}>*</span></label><input style={s.input} value={form.medico_nombre} onChange={e=>update('medico_nombre',e.target.value)} placeholder="Nombre del médico tratante"/></div>
                 <div style={s.field}>
                   <label style={s.label}>RUT del médico <span style={s.req}>*</span></label>
-                  <input style={{...s.input, borderColor: rutMedicoValido === false ? '#A32D2D' : rutMedicoValido === true ? '#3B6D11' : '#d1d5db'}}
+                  <input style={{...s.input, borderColor: rutMedicoValido === false ? '#A32D2D' : rutMedicoValido === true ? '#0369a1' : '#d1d5db'}}
                     value={form.medico_rut}
                     onChange={e => {
                       const formateado = formatearRut(e.target.value)
@@ -763,26 +763,26 @@ export default function Inscripcion() {
                     }}
                     placeholder="12345678-9"/>
                   {rutMedicoValido === false && <span style={{fontSize:11, color:'#A32D2D'}}>⚠️ RUT inválido</span>}
-                  {rutMedicoValido === true && <span style={{fontSize:11, color:'#3B6D11'}}>✓ RUT válido</span>}
+                  {rutMedicoValido === true && <span style={{fontSize:11, color:'#0369a1'}}>✓ RUT válido</span>}
                 </div>
                 <div style={s.field}><label style={s.label}>Folio receta médica <span style={s.req}>*</span></label><input style={s.input} value={form.folio_receta} onChange={e=>update('folio_receta',e.target.value)} placeholder="Número de folio"/></div>
                 <div style={s.field}><label style={s.label}>Vencimiento de la receta <span style={s.req}>*</span></label><input style={s.input} type="date" value={form.vencimiento_receta} min={new Date().toISOString().split('T')[0]} onChange={e=>update('vencimiento_receta',e.target.value)}/></div>
               </div>
-              <div style={{border:'1px solid #97C459',borderRadius:12,padding:16,background:'#EAF3DE',marginBottom:12}}>
-                <div style={{fontSize:13,fontWeight:600,color:'#3B6D11',marginBottom:12}}>🌱 Delegación al cultivo colectivo — límite mensual de dispensación</div>
+              <div style={{border:'1px solid #7dd3fc',borderRadius:12,padding:16,background:'#e0f2fe',marginBottom:12}}>
+                <div style={{fontSize:13,fontWeight:600,color:'#0369a1',marginBottom:12}}>🌱 Delegación al cultivo colectivo — límite mensual de dispensación</div>
                 <div className="gt-grid2" style={s.grid2}>
                   <div style={s.field}>
-                    <label style={{...s.label,color:'#3B6D11'}}>Gramos autorizados en receta (máximo) <span style={s.req}>*</span></label>
-                    <input style={{...s.input,borderColor:'#97C459'}} type="number" min="0.5" step="0.5" value={form.cuota_mensual} onChange={e=>update('cuota_mensual',e.target.value)} placeholder="Ej: 30"/>
-                    <span style={{...s.hint,color:'#3B6D11'}}>Cantidad máxima indicada por tu médico</span>
+                    <label style={{...s.label,color:'#0369a1'}}>Gramos autorizados en receta (máximo) <span style={s.req}>*</span></label>
+                    <input style={{...s.input,borderColor:'#7dd3fc'}} type="number" min="0.5" step="0.5" value={form.cuota_mensual} onChange={e=>update('cuota_mensual',e.target.value)} placeholder="Ej: 30"/>
+                    <span style={{...s.hint,color:'#0369a1'}}>Cantidad máxima indicada por tu médico</span>
                   </div>
                   <div style={s.field}>
-                    <label style={{...s.label,color:'#3B6D11'}}>Gramos que delegas a GreenTech (mensual) <span style={s.req}>*</span></label>
-                    <input style={{...s.input,borderColor:'#97C459'}} type="number" min="0.5" step="0.5" max={parseFloat(form.cuota_mensual)||999} value={form.gramos_delegados} onChange={e=>update('gramos_delegados',e.target.value)} placeholder="Ej: 30"/>
-                    <span style={{...s.hint,color:'#3B6D11'}}>Este será tu límite máximo de dispensación mensual</span>
+                    <label style={{...s.label,color:'#0369a1'}}>Gramos que delegas a GreenTech (mensual) <span style={s.req}>*</span></label>
+                    <input style={{...s.input,borderColor:'#7dd3fc'}} type="number" min="0.5" step="0.5" max={parseFloat(form.cuota_mensual)||999} value={form.gramos_delegados} onChange={e=>update('gramos_delegados',e.target.value)} placeholder="Ej: 30"/>
+                    <span style={{...s.hint,color:'#0369a1'}}>Este será tu límite máximo de dispensación mensual</span>
                   </div>
                 </div>
-                {gramosEnDomicilio>0&&<div style={{marginTop:10,fontSize:12,color:'#3B6D11',background:'#fff',borderRadius:8,padding:'8px 12px'}}>ℹ️ Cultivarás <strong>{gramosEnDomicilio} gr</strong> en domicilio</div>}
+                {gramosEnDomicilio>0&&<div style={{marginTop:10,fontSize:12,color:'#0369a1',background:'#fff',borderRadius:8,padding:'8px 12px'}}>ℹ️ Cultivarás <strong>{gramosEnDomicilio} gr</strong> en domicilio</div>}
                 <div style={{marginTop:10,background:'#FAEEDA',border:'1px solid #EF9F27',borderRadius:8,padding:'8px 12px',fontSize:11,color:'#633806'}}>⚠️ El sistema bloqueará automáticamente cualquier dispensación que supere los gramos delegados.</div>
               </div>
               <div style={s.field}><label style={s.label}>Observaciones médicas</label><textarea style={{...s.input,height:70,resize:'none'}} value={form.observaciones} onChange={e=>update('observaciones',e.target.value)} placeholder="Observaciones relevantes (opcional)"/></div>
@@ -808,10 +808,10 @@ export default function Inscripcion() {
                 {key:'receta',label:'Receta médica vigente',req:true},
                 {key:'antecedentes',label:'Certificado de antecedentes penales',req:true},
               ].map(doc=>(
-                <div key={doc.key} style={{display:'flex',alignItems:'center',gap:10,padding:'10px 14px',background:archivos[doc.key as keyof typeof archivos]?'#EAF3DE':'#fff',border:`1px solid ${archivos[doc.key as keyof typeof archivos]?'#97C459':'#e5e7eb'}`,borderRadius:10,marginBottom:8}}>
+                <div key={doc.key} style={{display:'flex',alignItems:'center',gap:10,padding:'10px 14px',background:archivos[doc.key as keyof typeof archivos]?'#e0f2fe':'#fff',border:`1px solid ${archivos[doc.key as keyof typeof archivos]?'#7dd3fc':'#e5e7eb'}`,borderRadius:10,marginBottom:8}}>
                   <span style={{fontSize:16}}>{archivos[doc.key as keyof typeof archivos]?'✅':'📄'}</span>
                   <span style={{flex:1,fontSize:13}}>{doc.label}</span>
-                  <label style={{fontSize:11,padding:'4px 10px',border:'1px solid #3B6D11',borderRadius:8,color:'#3B6D11',cursor:'pointer'}}>
+                  <label style={{fontSize:11,padding:'4px 10px',border:'1px solid #0369a1',borderRadius:8,color:'#0369a1',cursor:'pointer'}}>
                     {archivos[doc.key as keyof typeof archivos]?'Cambiar':'Seleccionar'}
                     <input type="file" accept=".pdf,.jpg,.jpeg,.png" style={{display:'none'}} onChange={e=>{if(e.target.files?.[0])setArchivos(prev=>({...prev,[doc.key]:e.target.files![0]}))}}/>
                   </label>
@@ -917,16 +917,16 @@ export default function Inscripcion() {
                 if (data?.signedUrl) {
                   window.open(data.signedUrl, '_blank')
                 }
-              }} style={{display:'flex',alignItems:'center',gap:8,background:'transparent',border:'1px solid #3B6D11',borderRadius:8,padding:'7px 14px',fontSize:12,color:'#3B6D11',cursor:'pointer',marginBottom:14}}>
+              }} style={{display:'flex',alignItems:'center',gap:8,background:'transparent',border:'1px solid #0369a1',borderRadius:8,padding:'7px 14px',fontSize:12,color:'#0369a1',cursor:'pointer',marginBottom:14}}>
                 📥 Descargar Reglamento Interno completo
               </button>
               <div style={{display:'flex',alignItems:'flex-start',gap:10,background:'#f9fafb',borderRadius:10,padding:14,opacity:reglamentoLeido?1:0.4}}>
-                <input type="checkbox" id="acepta" checked={reglamentoAceptado} onChange={e=>reglamentoLeido&&setReglamentoAceptado(e.target.checked)} disabled={!reglamentoLeido} style={{width:16,height:16,marginTop:2,accentColor:'#3B6D11'}}/>
+                <input type="checkbox" id="acepta" checked={reglamentoAceptado} onChange={e=>reglamentoLeido&&setReglamentoAceptado(e.target.checked)} disabled={!reglamentoLeido} style={{width:16,height:16,marginTop:2,accentColor:'#0369a1'}}/>
                 <label htmlFor="acepta" style={{fontSize:12,lineHeight:1.6,cursor:reglamentoLeido?'pointer':'not-allowed'}}>
                   He leído y entendido en su totalidad el <strong>Reglamento Interno de la Asociación GreenTech</strong>. Me comprometo a cumplirlo desde el momento de mi incorporación. Entiendo que el incumplimiento puede derivar en <strong>suspensión o expulsión</strong>.
                 </label>
               </div>
-              {reglamentoAceptado&&<div style={{marginTop:8,background:'#EAF3DE',border:'1px solid #97C459',borderRadius:8,padding:'8px 12px',fontSize:11,color:'#3B6D11'}}>✓ Aceptación registrada con fecha, hora e IP en tu expediente.</div>}
+              {reglamentoAceptado&&<div style={{marginTop:8,background:'#e0f2fe',border:'1px solid #7dd3fc',borderRadius:8,padding:'8px 12px',fontSize:11,color:'#0369a1'}}>✓ Aceptación registrada con fecha, hora e IP en tu expediente.</div>}
               <div style={{display:'flex',justifyContent:'space-between',marginTop:20}}>
                 <button style={s.btnOutline} onClick={()=>setPaso(5)}>← Anterior</button>
                 <button style={{...s.btnPrimary,opacity:reglamentoAceptado?1:0.5,cursor:reglamentoAceptado?'pointer':'not-allowed'}} onClick={()=>reglamentoAceptado&&(setError(''),setPaso(7))}>Siguiente →</button>
@@ -968,12 +968,12 @@ export default function Inscripcion() {
 
                 {!contratoLeido && <div style={{fontSize:11,color:'#9ca3af',marginBottom:10,textAlign:'center'}}>↓ Desplázate hasta el final para activar la casilla</div>}
                 <div style={{display:'flex',alignItems:'flex-start',gap:10,background:'#f9fafb',borderRadius:10,padding:14,opacity:contratoLeido?1:0.4,marginBottom:8}}>
-                  <input type="checkbox" id="acepta-contrato" checked={contratoAceptado} onChange={e=>contratoLeido&&setContratoAceptado(e.target.checked)} disabled={!contratoLeido} style={{width:16,height:16,marginTop:2,accentColor:'#3B6D11'}}/>
+                  <input type="checkbox" id="acepta-contrato" checked={contratoAceptado} onChange={e=>contratoLeido&&setContratoAceptado(e.target.checked)} disabled={!contratoLeido} style={{width:16,height:16,marginTop:2,accentColor:'#0369a1'}}/>
                   <label htmlFor="acepta-contrato" style={{fontSize:12,lineHeight:1.6,cursor:contratoLeido?'pointer':'not-allowed'}}>
                     He leído y acepto el <strong>Contrato de Previsión y Delegación de Cultivo</strong>. Entiendo que al completar el proceso recibiré este documento para firma electrónica avanzada.
                   </label>
                 </div>
-                {contratoAceptado && <div style={{marginTop:4,background:'#EAF3DE',border:'1px solid #97C459',borderRadius:8,padding:'8px 12px',fontSize:11,color:'#3B6D11',marginBottom:8}}>✓ Aceptación registrada.</div>}
+                {contratoAceptado && <div style={{marginTop:4,background:'#e0f2fe',border:'1px solid #7dd3fc',borderRadius:8,padding:'8px 12px',fontSize:11,color:'#0369a1',marginBottom:8}}>✓ Aceptación registrada.</div>}
 
                 <div style={{display:'flex',justifyContent:'space-between',marginTop:16}}>
                   <button style={s.btnOutline} onClick={()=>setPaso(6)}>← Anterior</button>
@@ -1025,12 +1025,12 @@ export default function Inscripcion() {
 
                 {!declaracionLeida && <div style={{fontSize:11,color:'#9ca3af',marginBottom:10,textAlign:'center'}}>↓ Desplázate hasta el final para activar la casilla</div>}
                 <div style={{display:'flex',alignItems:'flex-start',gap:10,background:'#f9fafb',borderRadius:10,padding:14,opacity:declaracionLeida?1:0.4,marginBottom:8}}>
-                  <input type="checkbox" id="acepta-declaracion" checked={declaracionAceptada} onChange={e=>declaracionLeida&&setDeclaracionAceptada(e.target.checked)} disabled={!declaracionLeida} style={{width:16,height:16,marginTop:2,accentColor:'#3B6D11'}}/>
+                  <input type="checkbox" id="acepta-declaracion" checked={declaracionAceptada} onChange={e=>declaracionLeida&&setDeclaracionAceptada(e.target.checked)} disabled={!declaracionLeida} style={{width:16,height:16,marginTop:2,accentColor:'#0369a1'}}/>
                   <label htmlFor="acepta-declaracion" style={{fontSize:12,lineHeight:1.6,cursor:declaracionLeida?'pointer':'not-allowed'}}>
                     He leído y acepto la <strong>Declaración Jurada Especial de Ingreso</strong>. Entiendo que al completar el proceso recibiré este documento para firma electrónica avanzada.
                   </label>
                 </div>
-                {declaracionAceptada && <div style={{marginTop:4,background:'#EAF3DE',border:'1px solid #97C459',borderRadius:8,padding:'8px 12px',fontSize:11,color:'#3B6D11',marginBottom:8}}>✓ Aceptación registrada.</div>}
+                {declaracionAceptada && <div style={{marginTop:4,background:'#e0f2fe',border:'1px solid #7dd3fc',borderRadius:8,padding:'8px 12px',fontSize:11,color:'#0369a1',marginBottom:8}}>✓ Aceptación registrada.</div>}
 
                 <div style={{display:'flex',justifyContent:'space-between',marginTop:16}}>
                   <button style={s.btnOutline} onClick={()=>setPaso(7)}>← Anterior</button>
@@ -1060,7 +1060,7 @@ export default function Inscripcion() {
                   </div>
                 ))}
               </div>
-              <div style={{background:'#EAF3DE',border:'1px solid #97C459',borderRadius:10,padding:14,fontSize:12,color:'#3B6D11',marginBottom:14,display:'flex',flexDirection:'column',gap:6}}>
+              <div style={{background:'#e0f2fe',border:'1px solid #7dd3fc',borderRadius:10,padding:14,fontSize:12,color:'#0369a1',marginBottom:14,display:'flex',flexDirection:'column',gap:6}}>
                 <div style={{display:'flex',alignItems:'center',gap:8}}>💳 <span><strong>Pago de incorporación ${montoIncorporacion.toLocaleString('es-CL')}</strong> — Confirmado ✓</span></div>
                 <div style={{display:'flex',alignItems:'center',gap:8}}>📄 <span><strong>Contrato de Previsión y Delegación de Cultivo</strong> — Aceptado ✓</span></div>
                 <div style={{display:'flex',alignItems:'center',gap:8}}>📄 <span><strong>Declaración Jurada Especial de Ingreso</strong> — Aceptada ✓</span></div>
@@ -1080,10 +1080,10 @@ export default function Inscripcion() {
           {paso===10 && (
             <div style={{textAlign:'center',padding:'32px 0'}}>
               <div style={{fontSize:56,marginBottom:16}}>🎉</div>
-              <h2 style={{fontSize:20,fontWeight:600,marginBottom:8,color:'#3B6D11'}}>¡Solicitud enviada correctamente!</h2>
+              <h2 style={{fontSize:20,fontWeight:600,marginBottom:8,color:'#0369a1'}}>¡Solicitud enviada correctamente!</h2>
               <p style={{fontSize:14,color:'#6b7280',marginBottom:6,lineHeight:1.7}}>Tu solicitud fue recibida. La directiva la revisará en un plazo máximo de <strong>5 días hábiles</strong>.</p>
               <p style={{fontSize:13,color:'#6b7280',marginBottom:28}}>Recibirás un correo en <strong>{form.email}</strong> con el resultado.</p>
-              <div style={{background:'#EAF3DE',border:'1px solid #97C459',borderRadius:12,padding:16,marginBottom:12,textAlign:'left',fontSize:12,color:'#3B6D11',lineHeight:1.7}}>
+              <div style={{background:'#e0f2fe',border:'1px solid #7dd3fc',borderRadius:12,padding:16,marginBottom:12,textAlign:'left',fontSize:12,color:'#0369a1',lineHeight:1.7}}>
                 <strong>¿Qué sigue?</strong><br/>
                 1. La directiva revisará tus documentos y antecedentes.<br/>
                 2. Si es aprobada, recibirás tus credenciales de acceso por correo.<br/>

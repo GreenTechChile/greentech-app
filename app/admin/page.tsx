@@ -94,7 +94,7 @@ export default function AdminDashboard() {
             { label:'Socios activos', value: loading ? '...' : `${stats.sociosActivos}`, sub: stats.solicitudesPendientes > 0 ? `${stats.solicitudesPendientes} solicitud${stats.solicitudesPendientes>1?'es':''} pendiente${stats.solicitudesPendientes>1?'s':''}` : 'sin solicitudes pendientes', color: stats.solicitudesPendientes > 0 ? '#EF9F27' : undefined },
             { label:'Despachos pendientes', value: loading ? '...' : `${stats.despachosPendientes}`, sub:'pago confirmado', color: stats.despachosPendientes > 0 ? '#A32D2D' : undefined },
             { label:'Stock flores secas', value: loading ? '...' : `${stats.stockTotal} gr`, sub:`${stats.cepasConStock} cepas disponibles` },
-            { label:`Ingresos ${new Date().toLocaleString('es-CL',{month:'long'})}`, value: loading ? '...' : `$${stats.ingresosMes.toLocaleString('es-CL')}`, sub:`${stats.dispensacionesMes} dispensaciones`, color: stats.ingresosMes > 0 ? '#3B6D11' : undefined },
+            { label:`Ingresos ${new Date().toLocaleString('es-CL',{month:'long'})}`, value: loading ? '...' : `$${stats.ingresosMes.toLocaleString('es-CL')}`, sub:`${stats.dispensacionesMes} dispensaciones`, color: stats.ingresosMes > 0 ? '#0369a1' : undefined },
           ].map((m,i) => (
             <div key={i} style={{ background:'#f9fafb', border:'1px solid #e5e7eb', borderRadius:12, padding:14 }}>
               <div style={{ fontSize:11, color:'#6b7280', marginBottom:5 }}>{m.label}</div>
@@ -182,7 +182,7 @@ export default function AdminDashboard() {
                 </Link>
               )}
               {stats.solicitudesPendientes === 0 && stats.despachosPendientes === 0 && stats.renovacionesPendientes === 0 && stats.delegacionesPendientes === 0 && stats.pagosIncompletos === 0 && stats.bajasPendientes === 0 && stats.stockTotal > 0 && (
-                <div style={{ fontSize:13, color:'#3B6D11', padding:'10px 14px', background:'#EAF3DE', borderRadius:8 }}>
+                <div style={{ fontSize:13, color:'#0369a1', padding:'10px 14px', background:'#e0f2fe', borderRadius:8 }}>
                   ✅ Todo al día — sin tareas pendientes
                 </div>
               )}
@@ -216,7 +216,7 @@ export default function AdminDashboard() {
                       <td style={{ padding:'7px 8px', fontWeight:500 }}>{d.cepa}</td>
                       <td style={{ padding:'7px 8px' }}>{d.gramos}</td>
                       <td style={{ padding:'7px 8px' }}>
-                        <Link href="/admin/despachos" style={{ fontSize:10, padding:'2px 8px', background:'#EAF3DE', color:'#3B6D11', borderRadius:20, textDecoration:'none' }}>Despachar</Link>
+                        <Link href="/admin/despachos" style={{ fontSize:10, padding:'2px 8px', background:'#e0f2fe', color:'#0369a1', borderRadius:20, textDecoration:'none' }}>Despachar</Link>
                       </td>
                     </tr>
                   ))}
@@ -239,7 +239,7 @@ export default function AdminDashboard() {
               <div key={c.id} style={{ display:'flex', alignItems:'center', gap:10, marginBottom:10 }}>
                 <span style={{ fontSize:12, flex:1, fontWeight:500 }}>{c.nombre}</span>
                 <div style={{ flex:2, height:8, background:'#f3f4f6', borderRadius:20, overflow:'hidden' }}>
-                  <div style={{ height:'100%', width:`${Math.min(100,(c.stock_gramos/100)*100)}%`, background: c.stock_gramos===0?'#F5C5C5':c.stock_gramos<20?'#EF9F27':'#3B6D11', borderRadius:20 }}/>
+                  <div style={{ height:'100%', width:`${Math.min(100,(c.stock_gramos/100)*100)}%`, background: c.stock_gramos===0?'#F5C5C5':c.stock_gramos<20?'#EF9F27':'#0369a1', borderRadius:20 }}/>
                 </div>
                 <span style={{ fontSize:12, fontWeight:600, minWidth:45, textAlign:'right', color:c.stock_gramos===0?'#A32D2D':c.stock_gramos<20?'#EF9F27':'#111' }}>{c.stock_gramos} gr</span>
               </div>

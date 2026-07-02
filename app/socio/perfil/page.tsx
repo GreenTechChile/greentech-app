@@ -129,7 +129,7 @@ export default function MiPerfil() {
   }
 
   const Toggle = ({ on, onChange }: { on: boolean, onChange: () => void }) => (
-    <div onClick={onChange} style={{ width: 36, height: 20, borderRadius: 10, background: on ? '#3B6D11' : '#d1d5db', position: 'relative', cursor: 'pointer', flexShrink: 0, transition: '0.2s' }}>
+    <div onClick={onChange} style={{ width: 36, height: 20, borderRadius: 10, background: on ? '#0369a1' : '#d1d5db', position: 'relative', cursor: 'pointer', flexShrink: 0, transition: '0.2s' }}>
       <div style={{ width: 16, height: 16, background: '#fff', borderRadius: '50%', position: 'absolute', top: 2, left: on ? 18 : 2, transition: '0.2s' }} />
     </div>
   )
@@ -152,21 +152,21 @@ export default function MiPerfil() {
         </div>
 
         {mensaje && (
-          <div style={{ background: mensaje.startsWith('✅') ? '#EAF3DE' : '#FCEBEB', border: `1px solid ${mensaje.startsWith('✅') ? '#97C459' : '#F5C5C5'}`, borderRadius: 8, padding: '10px 14px', fontSize: 12, color: mensaje.startsWith('✅') ? '#3B6D11' : '#A32D2D', marginBottom: 16 }}>
+          <div style={{ background: mensaje.startsWith('✅') ? '#e0f2fe' : '#FCEBEB', border: `1px solid ${mensaje.startsWith('✅') ? '#7dd3fc' : '#F5C5C5'}`, borderRadius: 8, padding: '10px 14px', fontSize: 12, color: mensaje.startsWith('✅') ? '#0369a1' : '#A32D2D', marginBottom: 16 }}>
             {mensaje}
           </div>
         )}
 
         {/* Avatar y resumen */}
         <div style={{ ...s.card, display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div style={{ width: 64, height: 64, borderRadius: '50%', background: '#EAF3DE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 700, color: '#3B6D11', flexShrink: 0 }}>
+          <div style={{ width: 64, height: 64, borderRadius: '50%', background: '#e0f2fe', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 700, color: '#0369a1', flexShrink: 0 }}>
             {iniciales}
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 17, fontWeight: 600, marginBottom: 4 }}>{socio.nombre}</div>
             <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 8 }}>RUT {socio.rut} · {socio.email} · Socio desde {fechaIncorporacion}</div>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' as const }}>
-              <span style={{ fontSize: 10, background: '#EAF3DE', color: '#3B6D11', padding: '2px 8px', borderRadius: 20 }}>● Activo</span>
+              <span style={{ fontSize: 10, background: '#e0f2fe', color: '#0369a1', padding: '2px 8px', borderRadius: 20 }}>● Activo</span>
               <span style={{ fontSize: 10, background: '#E6F1FB', color: '#185FA5', padding: '2px 8px', borderRadius: 20 }}>Socio</span>
               {(socio.rol === 'admin' || socio.rol === 'ambos') && (
                 <span style={{ fontSize: 10, background: '#EEEDFE', color: '#534AB7', padding: '2px 8px', borderRadius: 20 }}>Administrador</span>
@@ -181,7 +181,7 @@ export default function MiPerfil() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
             <span style={{ fontSize: 13, fontWeight: 600 }}>Datos personales</span>
             <button onClick={() => setEditando(editando === 'personal' ? null : 'personal')}
-              style={{ fontSize: 12, color: '#3B6D11', background: 'none', border: 'none', cursor: 'pointer' }}>
+              style={{ fontSize: 12, color: '#0369a1', background: 'none', border: 'none', cursor: 'pointer' }}>
               ✏️ {editando === 'personal' ? 'Cancelar' : 'Editar'}
             </button>
           </div>
@@ -206,7 +206,7 @@ export default function MiPerfil() {
           {editando === 'personal' && (
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12 }}>
               <button onClick={guardarPerfil} disabled={guardando}
-                style={{ padding: '7px 18px', background: guardando ? '#9ca3af' : '#3B6D11', color: '#EAF3DE', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+                style={{ padding: '7px 18px', background: guardando ? '#9ca3af' : '#0369a1', color: '#e0f2fe', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
                 {guardando ? 'Guardando...' : 'Guardar cambios'}
               </button>
             </div>
@@ -218,7 +218,7 @@ export default function MiPerfil() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
             <span style={{ fontSize: 13, fontWeight: 600 }}>Domicilio</span>
             <button onClick={() => setEditando(editando === 'domicilio' ? null : 'domicilio')}
-              style={{ fontSize: 12, color: '#3B6D11', background: 'none', border: 'none', cursor: 'pointer' }}>
+              style={{ fontSize: 12, color: '#0369a1', background: 'none', border: 'none', cursor: 'pointer' }}>
               ✏️ {editando === 'domicilio' ? 'Cancelar' : 'Editar'}
             </button>
           </div>
@@ -243,7 +243,7 @@ export default function MiPerfil() {
           {editando === 'domicilio' && (
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12 }}>
               <button onClick={guardarPerfil} disabled={guardando}
-                style={{ padding: '7px 18px', background: guardando ? '#9ca3af' : '#3B6D11', color: '#EAF3DE', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+                style={{ padding: '7px 18px', background: guardando ? '#9ca3af' : '#0369a1', color: '#e0f2fe', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
                 {guardando ? 'Guardando...' : 'Guardar cambios'}
               </button>
             </div>

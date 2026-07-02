@@ -19,14 +19,14 @@ export default function PagoFallido() {
         </div>
         <Link
           href="/inscripcion"
-          style={{ display: 'inline-block', background: '#3B6D11', color: '#EAF3DE', borderRadius: 10, padding: '13px 28px', fontSize: 15, fontWeight: 700, textDecoration: 'none', marginBottom: 14, width: '100%', boxSizing: 'border-box' as const }}
+          style={{ display: 'inline-block', background: '#0369a1', color: '#e0f2fe', borderRadius: 10, padding: '13px 28px', fontSize: 15, fontWeight: 700, textDecoration: 'none', marginBottom: 14, width: '100%', boxSizing: 'border-box' as const }}
         >
           Intentar nuevamente →
         </Link>
         <br />
         <p style={{ fontSize: 12, color: '#9ca3af', marginTop: 8 }}>
           ¿Sigues teniendo problemas?{' '}
-          <a href="mailto:contacto@asociaciongreentech.cl" style={{ color: '#3B6D11' }}>Contáctanos</a>
+          <a href="mailto:contacto@asociaciongreentech.cl" style={{ color: '#0369a1' }}>Contáctanos</a>
         </p>
       </div>
     </div>

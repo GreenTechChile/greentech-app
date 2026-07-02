@@ -1065,27 +1065,27 @@ export default function LandingPage() {
           <div style={{display: "flex", alignItems: "center", gap: "11px", padding: "11px", background: "var(--blanco)", borderRadius: "9px", fontSize: "13px", fontFamily: "'Segoe UI', sans-serif"}}>
             <span>🪪</span>
             <span style={{fontWeight: 600, flex: 1, color: "var(--texto-oscuro)"}}>Cédula de identidad</span>
-            <span style={{fontSize: "10px", color: "var(--oliva-oscuro)", fontWeight: 600, background: "#eaf0d8", padding: "2px 8px", borderRadius: "100px"}}>Verificado</span>
+            <span style={{fontSize: "10px", color: "var(--oliva-oscuro)", fontWeight: 600, background: "#e0f2fe", padding: "2px 8px", borderRadius: "100px"}}>Verificado</span>
           </div>
           <div style={{display: "flex", alignItems: "center", gap: "11px", padding: "11px", background: "var(--blanco)", borderRadius: "9px", fontSize: "13px", fontFamily: "'Segoe UI', sans-serif"}}>
             <span>💊</span>
             <span style={{fontWeight: 600, flex: 1, color: "var(--texto-oscuro)"}}>Receta médica vigente</span>
-            <span style={{fontSize: "10px", color: "var(--oliva-oscuro)", fontWeight: 600, background: "#eaf0d8", padding: "2px 8px", borderRadius: "100px"}}>Actualizada</span>
+            <span style={{fontSize: "10px", color: "var(--oliva-oscuro)", fontWeight: 600, background: "#e0f2fe", padding: "2px 8px", borderRadius: "100px"}}>Actualizada</span>
           </div>
           <div style={{display: "flex", alignItems: "center", gap: "11px", padding: "11px", background: "var(--blanco)", borderRadius: "9px", fontSize: "13px", fontFamily: "'Segoe UI', sans-serif"}}>
             <span>📝</span>
             <span style={{fontWeight: 600, flex: 1, color: "var(--texto-oscuro)"}}>Contrato de delegación firmado</span>
-            <span style={{fontSize: "10px", color: "var(--oliva-oscuro)", fontWeight: 600, background: "#eaf0d8", padding: "2px 8px", borderRadius: "100px"}}>Firmado</span>
+            <span style={{fontSize: "10px", color: "var(--oliva-oscuro)", fontWeight: 600, background: "#e0f2fe", padding: "2px 8px", borderRadius: "100px"}}>Firmado</span>
           </div>
           <div style={{display: "flex", alignItems: "center", gap: "11px", padding: "11px", background: "var(--blanco)", borderRadius: "9px", fontSize: "13px", fontFamily: "'Segoe UI', sans-serif"}}>
             <span>🤝</span>
             <span style={{fontWeight: 600, flex: 1, color: "var(--texto-oscuro)"}}>Declaración jurada firmada</span>
-            <span style={{fontSize: "10px", color: "var(--oliva-oscuro)", fontWeight: 600, background: "#eaf0d8", padding: "2px 8px", borderRadius: "100px"}}>Firmada</span>
+            <span style={{fontSize: "10px", color: "var(--oliva-oscuro)", fontWeight: 600, background: "#e0f2fe", padding: "2px 8px", borderRadius: "100px"}}>Firmada</span>
           </div>
           <div style={{display: "flex", alignItems: "center", gap: "11px", padding: "11px", background: "var(--blanco)", borderRadius: "9px", fontSize: "13px", fontFamily: "'Segoe UI', sans-serif"}}>
             <span>📜</span>
             <span style={{fontWeight: 600, flex: 1, color: "var(--texto-oscuro)"}}>Certificado de antecedentes</span>
-            <span style={{fontSize: "10px", color: "var(--oliva-oscuro)", fontWeight: 600, background: "#eaf0d8", padding: "2px 8px", borderRadius: "100px"}}>Adjunto</span>
+            <span style={{fontSize: "10px", color: "var(--oliva-oscuro)", fontWeight: 600, background: "#e0f2fe", padding: "2px 8px", borderRadius: "100px"}}>Adjunto</span>
           </div>
           <div style={{marginTop: "6px", padding: "13px", background: "var(--tierra-calido)", borderRadius: "9px", color: "var(--crema)", fontSize: "13px", fontWeight: 600, textAlign: "center", fontFamily: "'Segoe UI', sans-serif"}}>
             🛡️ Expediente exportable ante cualquier fiscalización

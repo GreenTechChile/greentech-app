@@ -431,7 +431,7 @@ export default function Configuracion() {
         </div>
 
         {mensaje && (
-          <div style={{ background: mensaje.startsWith('✅') ? '#EAF3DE' : '#FCEBEB', border: `1px solid ${mensaje.startsWith('✅') ? '#97C459' : '#F5C5C5'}`, borderRadius: 8, padding: '10px 14px', fontSize: 12, color: mensaje.startsWith('✅') ? '#3B6D11' : '#A32D2D', marginBottom: 16 }}>
+          <div style={{ background: mensaje.startsWith('✅') ? '#e0f2fe' : '#FCEBEB', border: `1px solid ${mensaje.startsWith('✅') ? '#7dd3fc' : '#F5C5C5'}`, borderRadius: 8, padding: '10px 14px', fontSize: 12, color: mensaje.startsWith('✅') ? '#0369a1' : '#A32D2D', marginBottom: 16 }}>
             {mensaje}
           </div>
         )}
@@ -486,7 +486,7 @@ export default function Configuracion() {
                 {editando ? (
                   <>
                     <input
-                      style={{ ...s.input(true), borderColor: rutError ? '#E24B4A' : corp.rut && validarRut(corp.rut) ? '#97C459' : '#d1d5db' }}
+                      style={{ ...s.input(true), borderColor: rutError ? '#E24B4A' : corp.rut && validarRut(corp.rut) ? '#7dd3fc' : '#d1d5db' }}
                       value={corp.rut}
                       placeholder="Ej: 65271661-K"
                       onChange={e => {
@@ -498,7 +498,7 @@ export default function Configuracion() {
                       onBlur={() => setRutError(corp.rut && !validarRut(corp.rut) ? 'RUT inválido. Verifica el dígito verificador.' : '')}
                     />
                     {rutError && <span style={{ fontSize:11, color:'#E24B4A', marginTop:2 }}>{rutError}</span>}
-                    {!rutError && corp.rut && validarRut(corp.rut) && <span style={{ fontSize:11, color:'#3B6D11', marginTop:2 }}>✓ RUT válido</span>}
+                    {!rutError && corp.rut && validarRut(corp.rut) && <span style={{ fontSize:11, color:'#0369a1', marginTop:2 }}>✓ RUT válido</span>}
                     {!corp.rut && <span style={{ fontSize:11, color:'#9ca3af', marginTop:2 }}>Dejar vacío si aún está en trámite</span>}
                   </>
                 ) : (
@@ -584,11 +584,11 @@ export default function Configuracion() {
               </div>
               <div style={{ display:'flex', alignItems:'center', gap:16 }}>
                 <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                  <div style={{ position:'relative', width:44, height:24, borderRadius:12, background: envioGratis.activo ? '#3B6D11' : '#d1d5db', cursor: editandoEnvio ? 'pointer' : 'default', transition:'0.2s' }}
+                  <div style={{ position:'relative', width:44, height:24, borderRadius:12, background: envioGratis.activo ? '#0369a1' : '#d1d5db', cursor: editandoEnvio ? 'pointer' : 'default', transition:'0.2s' }}
                     onClick={() => editandoEnvio && setEnvioGratis(prev => ({ ...prev, activo: !prev.activo }))}>
                     <div style={{ position:'absolute', top:2, left: envioGratis.activo ? 22 : 2, width:20, height:20, borderRadius:'50%', background:'#fff', transition:'0.2s' }}/>
                   </div>
-                  <span style={{ fontSize:13, fontWeight:500, color: envioGratis.activo ? '#3B6D11' : '#6b7280' }}>
+                  <span style={{ fontSize:13, fontWeight:500, color: envioGratis.activo ? '#0369a1' : '#6b7280' }}>
                     {envioGratis.activo ? 'Activado' : 'Desactivado'}
                   </span>
                 </div>
@@ -603,7 +603,7 @@ export default function Configuracion() {
                       <span style={{ fontSize:11, color:'#9ca3af' }}>CLP</span>
                     </div>
                   ) : (
-                    <div style={{ fontSize:15, fontWeight:600, color: envioGratis.activo ? '#3B6D11' : '#9ca3af' }}>
+                    <div style={{ fontSize:15, fontWeight:600, color: envioGratis.activo ? '#0369a1' : '#9ca3af' }}>
                       ${envioGratis.monto_minimo.toLocaleString('es-CL')}
                       {!envioGratis.activo && <span style={{ fontSize:11, fontWeight:400, marginLeft:8 }}>(inactivo)</span>}
                     </div>
@@ -650,12 +650,12 @@ export default function Configuracion() {
                       <span style={{ fontSize:11, color:'#9ca3af' }}>CLP</span>
                     </div>
                   ) : (
-                    <div style={{ fontSize:20, fontWeight:700, color:'#3B6D11' }}>
+                    <div style={{ fontSize:20, fontWeight:700, color:'#0369a1' }}>
                       ${pagoIncorporacion.monto.toLocaleString('es-CL')} CLP
                     </div>
                   )}
                 </div>
-                <div style={{ background:'#EAF3DE', border:'1px solid #97C459', borderRadius:8, padding:'8px 14px', fontSize:11, color:'#3B6D11', textAlign:'center', flexShrink:0 }}>
+                <div style={{ background:'#e0f2fe', border:'1px solid #7dd3fc', borderRadius:8, padding:'8px 14px', fontSize:11, color:'#0369a1', textAlign:'center', flexShrink:0 }}>
                   <div style={{ fontWeight:600 }}>Pago único</div>
                   <div>por incorporación</div>
                 </div>
@@ -715,13 +715,13 @@ export default function Configuracion() {
         {tabActiva === 'documentos' && (
           <div>
             {/* Resumen cumplimiento */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16, background: subidosRequeridos === requeridos.length ? '#EAF3DE' : '#FAEEDA', border: `1px solid ${subidosRequeridos === requeridos.length ? '#97C459' : '#FAC775'}`, borderRadius: 10, padding: '12px 16px', marginBottom: 24 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, background: subidosRequeridos === requeridos.length ? '#e0f2fe' : '#FAEEDA', border: `1px solid ${subidosRequeridos === requeridos.length ? '#7dd3fc' : '#FAC775'}`, borderRadius: 10, padding: '12px 16px', marginBottom: 24 }}>
               <div style={{ fontSize: 28 }}>{subidosRequeridos === requeridos.length ? '✅' : '⚠️'}</div>
               <div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: subidosRequeridos === requeridos.length ? '#3B6D11' : '#633806' }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: subidosRequeridos === requeridos.length ? '#0369a1' : '#633806' }}>
                   {subidosRequeridos}/{requeridos.length} documentos obligatorios subidos
                 </div>
-                <div style={{ fontSize: 11, color: subidosRequeridos === requeridos.length ? '#3B6D11' : '#633806', marginTop: 2 }}>
+                <div style={{ fontSize: 11, color: subidosRequeridos === requeridos.length ? '#0369a1' : '#633806', marginTop: 2 }}>
                   {subidosRequeridos === requeridos.length
                     ? 'Carpeta institucional completa'
                     : 'Faltan documentos requeridos para la operación legal de la corporación'}
@@ -739,20 +739,20 @@ export default function Configuracion() {
                 const subido = docsSubidos[doc.key]
                 const cargando = subiendo === doc.key
                 return (
-                  <div key={doc.key} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', border: `1px solid ${subido ? '#97C459' : doc.requerido ? '#FAC775' : '#e5e7eb'}`, borderRadius: 10, background: subido ? '#f6fdf0' : '#fff' }}>
+                  <div key={doc.key} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', border: `1px solid ${subido ? '#7dd3fc' : doc.requerido ? '#FAC775' : '#e5e7eb'}`, borderRadius: 10, background: subido ? '#f6fdf0' : '#fff' }}>
                     <div style={{ fontSize: 24, flexShrink: 0 }}>{doc.icono}</div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
                         <span style={{ fontSize: 13, fontWeight: 600 }}>{doc.label}</span>
                         {doc.requerido && (
-                          <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 20, background: subido ? '#EAF3DE' : '#FAEEDA', color: subido ? '#3B6D11' : '#633806' }}>
+                          <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 20, background: subido ? '#e0f2fe' : '#FAEEDA', color: subido ? '#0369a1' : '#633806' }}>
                             {subido ? 'Requerido ✓' : 'Requerido'}
                           </span>
                         )}
                       </div>
                       <div style={{ fontSize: 11, color: '#6b7280' }}>{doc.descripcion}</div>
                       {subido && (
-                        <div style={{ fontSize: 11, color: '#3B6D11', marginTop: 4, display: 'flex', gap: 10, alignItems: 'center' }}>
+                        <div style={{ fontSize: 11, color: '#0369a1', marginTop: 4, display: 'flex', gap: 10, alignItems: 'center' }}>
                           <span>📎 {subido.name}</span>
                           <span style={{ color: '#9ca3af' }}>·</span>
                           <span>{formatBytes(subido.size)}</span>
@@ -767,7 +767,7 @@ export default function Configuracion() {
                       {subido && (
                         <>
                           <a href={subido.url} target="_blank" rel="noopener noreferrer"
-                            style={{ fontSize: 12, padding: '6px 12px', border: '1px solid #97C459', borderRadius: 7, background: '#EAF3DE', color: '#3B6D11', textDecoration: 'none', fontWeight: 500 }}>
+                            style={{ fontSize: 12, padding: '6px 12px', border: '1px solid #7dd3fc', borderRadius: 7, background: '#e0f2fe', color: '#0369a1', textDecoration: 'none', fontWeight: 500 }}>
                             👁 Ver
                           </a>
                           <a href={subido.url} download
@@ -919,7 +919,7 @@ export default function Configuracion() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       <div style={{ flex: 1, cursor: 'pointer' }} onClick={() => setCiudadSeleccionada(ciudad)}>
                         <div style={{ fontSize: 13, fontWeight: ciudadSeleccionada === ciudad ? 600 : 400, color: ciudadSeleccionada === ciudad ? '#185FA5' : '#111' }}>{ciudad}</div>
-                        <div style={{ fontSize: 10, color: comunasActivas(ciudad) > 0 ? '#3B6D11' : '#9ca3af' }}>
+                        <div style={{ fontSize: 10, color: comunasActivas(ciudad) > 0 ? '#0369a1' : '#9ca3af' }}>
                           {comunasActivas(ciudad)}/{totalComunas(ciudad)} comunas activas
                         </div>
                       </div>
@@ -959,7 +959,7 @@ export default function Configuracion() {
                         <span style={{ fontSize: 12, fontWeight: 400, color: '#6b7280', marginLeft: 8 }}>{comunasEnDB.filter(c => c.activa).length} de {comunasEnDB.length} activas</span>
                       </div>
                       <div style={{ display: 'flex', gap: 8 }}>
-                        <button onClick={() => selectAll(ciudadSeleccionada, true)} style={{ fontSize: 11, padding: '5px 10px', border: '1px solid #3B6D11', borderRadius: 6, background: 'transparent', color: '#3B6D11', cursor: 'pointer' }}>Activar todas</button>
+                        <button onClick={() => selectAll(ciudadSeleccionada, true)} style={{ fontSize: 11, padding: '5px 10px', border: '1px solid #0369a1', borderRadius: 6, background: 'transparent', color: '#0369a1', cursor: 'pointer' }}>Activar todas</button>
                         <button onClick={() => selectAll(ciudadSeleccionada, false)} style={{ fontSize: 11, padding: '5px 10px', border: '1px solid #d1d5db', borderRadius: 6, background: 'transparent', color: '#6b7280', cursor: 'pointer' }}>Desactivar todas</button>
                       </div>
                     </div>
@@ -969,9 +969,9 @@ export default function Configuracion() {
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: 8 }}>
                         {comunasEnDB.map(item => (
                           <div key={item.id} onClick={() => toggleComuna(item)}
-                            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderRadius: 8, border: `1px solid ${item.activa ? '#97C459' : '#e5e7eb'}`, background: item.activa ? '#EAF3DE' : '#fff', cursor: 'pointer', userSelect: 'none' as const }}>
-                            <input type="checkbox" checked={item.activa} onChange={() => {}} style={{ accentColor: '#3B6D11', width: 14, height: 14, flexShrink: 0 }} />
-                            <span style={{ fontSize: 12, color: item.activa ? '#3B6D11' : '#374151', fontWeight: item.activa ? 500 : 400 }}>{item.comuna}</span>
+                            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderRadius: 8, border: `1px solid ${item.activa ? '#7dd3fc' : '#e5e7eb'}`, background: item.activa ? '#e0f2fe' : '#fff', cursor: 'pointer', userSelect: 'none' as const }}>
+                            <input type="checkbox" checked={item.activa} onChange={() => {}} style={{ accentColor: '#0369a1', width: 14, height: 14, flexShrink: 0 }} />
+                            <span style={{ fontSize: 12, color: item.activa ? '#0369a1' : '#374151', fontWeight: item.activa ? 500 : 400 }}>{item.comuna}</span>
                           </div>
                         ))}
                       </div>
@@ -1007,7 +1007,7 @@ export default function Configuracion() {
                   <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>{n.desc}</div>
                 </div>
                 <div onClick={() => setNotifs(prev => ({ ...prev, [n.key]: !prev[n.key as keyof typeof prev] }))}
-                  style={{ width: 36, height: 20, borderRadius: 10, background: notifs[n.key as keyof typeof notifs] ? '#3B6D11' : '#d1d5db', position: 'relative', cursor: 'pointer', flexShrink: 0, transition: '0.2s' }}>
+                  style={{ width: 36, height: 20, borderRadius: 10, background: notifs[n.key as keyof typeof notifs] ? '#0369a1' : '#d1d5db', position: 'relative', cursor: 'pointer', flexShrink: 0, transition: '0.2s' }}>
                   <div style={{ width: 16, height: 16, background: '#fff', borderRadius: '50%', position: 'absolute', top: 2, left: notifs[n.key as keyof typeof notifs] ? 18 : 2, transition: '0.2s' }} />
                 </div>
               </div>

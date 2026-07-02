@@ -73,7 +73,7 @@ export default function Trazabilidad() {
     evento: `Dispensación confirmada · Orden #${d.orden_numero}`,
     detalle: `${d.cepa} · ${d.gramos} gr · $${d.monto.toLocaleString('es-CL')} · ${d.medio_pago||'—'}`,
     fecha: d.created_at,
-    badgeBg: '#EAF3DE', badgeColor: '#3B6D11', badgeLabel: 'Dispensación',
+    badgeBg: '#e0f2fe', badgeColor: '#0369a1', badgeLabel: 'Dispensación',
   }))
 
   const logFiltrado = logItems.filter(l => {
@@ -85,7 +85,7 @@ export default function Trazabilidad() {
   const estadoStyle: Record<string, {bg:string,color:string}> = {
     entregado: {bg:'#f3f4f6',color:'#374151'},
     despachado: {bg:'#E6F1FB',color:'#185FA5'},
-    pagado: {bg:'#EAF3DE',color:'#3B6D11'},
+    pagado: {bg:'#e0f2fe',color:'#0369a1'},
     preparando: {bg:'#FAEEDA',color:'#633806'},
     pendiente: {bg:'#FAEEDA',color:'#633806'},
   }
@@ -116,8 +116,8 @@ export default function Trazabilidad() {
           {[
             { label:'Dispensaciones trazadas', value:`${dispensaciones.length}`, sub:'registro completo' },
             { label:'Socios registrados', value:`${socios.length}`, sub:'en el sistema' },
-            { label:'Socios activos', value:`${socios.filter(s=>s.estado==='activo').length}`, sub:'con acceso', color:'#3B6D11' },
-            { label:'Alertas de seguridad', value:'0', sub:'sin incidentes', color:'#3B6D11' },
+            { label:'Socios activos', value:`${socios.filter(s=>s.estado==='activo').length}`, sub:'con acceso', color:'#0369a1' },
+            { label:'Alertas de seguridad', value:'0', sub:'sin incidentes', color:'#0369a1' },
           ].map((m,i) => (
             <div key={i} style={{ background:'#f9fafb', border:'1px solid #e5e7eb', borderRadius:12, padding:14 }}>
               <div style={{ fontSize:11, color:'#6b7280', marginBottom:5 }}>{m.label}</div>
@@ -231,12 +231,12 @@ export default function Trazabilidad() {
                         <td style="padding:7px 12px;text-align:right">${d.gramos} gr</td>
                         <td style="padding:7px 12px;text-align:right">$${d.monto.toLocaleString('es-CL')}</td>
                         <td style="padding:7px 12px">${d.medio_pago||'—'}</td>
-                        <td style="padding:7px 12px"><span style="background:${d.estado==='entregado'||d.estado==='pagado'?'#EAF3DE':'#FAEEDA'};color:${d.estado==='entregado'||d.estado==='pagado'?'#3B6D11':'#633806'};padding:2px 8px;border-radius:20px;font-size:10px">${d.estado}</span></td>
+                        <td style="padding:7px 12px"><span style="background:${d.estado==='entregado'||d.estado==='pagado'?'#e0f2fe':'#FAEEDA'};color:${d.estado==='entregado'||d.estado==='pagado'?'#0369a1':'#633806'};padding:2px 8px;border-radius:20px;font-size:10px">${d.estado}</span></td>
                       </tr>`).join('')
                     return `<div style="margin-bottom:32px">
-                      <div style="background:#EAF3DE;border:1px solid #97C459;border-radius:8px 8px 0 0;padding:10px 14px">
+                      <div style="background:#e0f2fe;border:1px solid #7dd3fc;border-radius:8px 8px 0 0;padding:10px 14px">
                         <div style="font-size:14px;font-weight:700">${s.nombre}</div>
-                        <div style="font-size:11px;color:#3B6D11">RUT ${s.rut} · ${totalGr} gr · $${totalMonto.toLocaleString('es-CL')}</div>
+                        <div style="font-size:11px;color:#0369a1">RUT ${s.rut} · ${totalGr} gr · $${totalMonto.toLocaleString('es-CL')}</div>
                       </div>
                       <table style="border:1px solid #e5e7eb;border-top:none;width:100%;border-collapse:collapse">
                         <thead><tr style="background:#f9fafb"><th style="padding:7px 12px;font-size:11px;color:#9ca3af;font-weight:500;text-align:left">#</th><th style="padding:7px 12px;font-size:11px;color:#9ca3af;font-weight:500;text-align:left">Fecha</th><th style="padding:7px 12px;font-size:11px;color:#9ca3af;font-weight:500;text-align:left">Orden</th><th style="padding:7px 12px;font-size:11px;color:#9ca3af;font-weight:500;text-align:left">Cepa</th><th style="padding:7px 12px;font-size:11px;color:#9ca3af;font-weight:500;text-align:right">Gr</th><th style="padding:7px 12px;font-size:11px;color:#9ca3af;font-weight:500;text-align:right">Monto</th><th style="padding:7px 12px;font-size:11px;color:#9ca3af;font-weight:500;text-align:left">Pago</th><th style="padding:7px 12px;font-size:11px;color:#9ca3af;font-weight:500;text-align:left">Estado</th></tr></thead>
@@ -274,7 +274,7 @@ export default function Trazabilidad() {
                   <div onClick={() => cargarExpediente(s)} style={{ flex:1, minWidth:0 }}>
                     <div style={{ fontSize:12, fontWeight:600, color:socioSeleccionado?.id===s.id?'#185FA5':'#111' }}>{s.nombre.split(' ').slice(0,2).join(' ')}</div>
                     <div style={{ fontSize:10, color:'#9ca3af' }}>{s.rut}</div>
-                    <span style={{ fontSize:9, background:s.estado==='activo'?'#EAF3DE':'#f3f4f6', color:s.estado==='activo'?'#3B6D11':'#9ca3af', padding:'1px 6px', borderRadius:20 }}>
+                    <span style={{ fontSize:9, background:s.estado==='activo'?'#e0f2fe':'#f3f4f6', color:s.estado==='activo'?'#0369a1':'#9ca3af', padding:'1px 6px', borderRadius:20 }}>
                       {s.estado}
                     </span>
                   </div>
@@ -291,7 +291,7 @@ export default function Trazabilidad() {
               ) : (
                 <>
                   <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:16, padding:14, background:'#f9fafb', borderRadius:12, border:'1px solid #e5e7eb' }}>
-                    <div style={{ width:40, height:40, borderRadius:'50%', background:'#EAF3DE', display:'flex', alignItems:'center', justifyContent:'center', fontSize:13, fontWeight:700, color:'#3B6D11', flexShrink:0 }}>
+                    <div style={{ width:40, height:40, borderRadius:'50%', background:'#e0f2fe', display:'flex', alignItems:'center', justifyContent:'center', fontSize:13, fontWeight:700, color:'#0369a1', flexShrink:0 }}>
                       {socioSeleccionado.nombre.split(' ').map(n=>n[0]).join('').slice(0,2)}
                     </div>
                     <div style={{ flex:1 }}>
@@ -327,7 +327,7 @@ export default function Trazabilidad() {
                           <div style={{ fontWeight:500 }}>{d.cepa} · {d.gramos} gr</div>
                           <div style={{ fontSize:10, color:'#9ca3af' }}>#{d.orden_numero} · {MESES[d.mes-1]} {d.año} · {d.medio_pago||'—'}</div>
                         </div>
-                        <div style={{ fontWeight:600, color:'#3B6D11' }}>${d.monto.toLocaleString('es-CL')}</div>
+                        <div style={{ fontWeight:600, color:'#0369a1' }}>${d.monto.toLocaleString('es-CL')}</div>
                         <span style={{ fontSize:10, padding:'2px 7px', borderRadius:20, background:est.bg, color:est.color }}>{d.estado}</span>
                       </div>
                     )
@@ -350,9 +350,9 @@ export default function Trazabilidad() {
           })
 
           const ACCION_LABELS: Record<string, {label:string; bg:string; color:string}> = {
-            aprobar_socio:     { label:'Aprobar socio',      bg:'#EAF3DE', color:'#3B6D11' },
+            aprobar_socio:     { label:'Aprobar socio',      bg:'#e0f2fe', color:'#0369a1' },
             rechazar_socio:    { label:'Rechazar socio',     bg:'#FEE2E2', color:'#991B1B' },
-            aprobar_receta:    { label:'Aprobar receta',     bg:'#EAF3DE', color:'#3B6D11' },
+            aprobar_receta:    { label:'Aprobar receta',     bg:'#e0f2fe', color:'#0369a1' },
             rechazar_receta:   { label:'Rechazar receta',    bg:'#FEE2E2', color:'#991B1B' },
             firmar_delegacion: { label:'Firmar delegación',  bg:'#E6F1FB', color:'#185FA5' },
             enviar_link_retorno: { label:'Enviar link',      bg:'#F5F3FF', color:'#5B21B6' },
@@ -465,9 +465,9 @@ export default function Trazabilidad() {
 
             {/* Exportar por socio */}
             <div style={{ border:'1px solid #e5e7eb', borderRadius:12, overflow:'hidden' }}>
-              <div style={{ padding:'14px 16px', background:'#EAF3DE', borderBottom:'1px solid #97C459' }}>
-                <div style={{ fontSize:13, fontWeight:600, color:'#3B6D11', marginBottom:2 }}>👤 Expediente por socio</div>
-                <div style={{ fontSize:11, color:'#3B6D11', opacity:0.8 }}>Selecciona uno o más socios para exportar sus expedientes individuales</div>
+              <div style={{ padding:'14px 16px', background:'#e0f2fe', borderBottom:'1px solid #7dd3fc' }}>
+                <div style={{ fontSize:13, fontWeight:600, color:'#0369a1', marginBottom:2 }}>👤 Expediente por socio</div>
+                <div style={{ fontSize:11, color:'#0369a1', opacity:0.8 }}>Selecciona uno o más socios para exportar sus expedientes individuales</div>
               </div>
               <div style={{ padding:14 }}>
                 <input
@@ -493,7 +493,7 @@ export default function Trazabilidad() {
                   <div key={s.id} onClick={() => toggleExportSocio(s.id)}
                     style={{ display:'flex', alignItems:'center', gap:8, padding:'7px 10px', borderRadius:8, marginBottom:4, cursor:'pointer', background:exportSocios.includes(s.id)?'#E6F1FB':'#fff', border:`1px solid ${exportSocios.includes(s.id)?'#185FA5':'#e5e7eb'}` }}>
                     <input type="checkbox" checked={exportSocios.includes(s.id)} onChange={()=>toggleExportSocio(s.id)} style={{ accentColor:'#185FA5', width:13, height:13 }}/>
-                    <div style={{ width:24, height:24, borderRadius:'50%', background:'#EAF3DE', display:'flex', alignItems:'center', justifyContent:'center', fontSize:10, fontWeight:600, color:'#3B6D11', flexShrink:0 }}>
+                    <div style={{ width:24, height:24, borderRadius:'50%', background:'#e0f2fe', display:'flex', alignItems:'center', justifyContent:'center', fontSize:10, fontWeight:600, color:'#0369a1', flexShrink:0 }}>
                       {s.nombre.split(' ').map(n=>n[0]).join('').slice(0,2)}
                     </div>
                     <div style={{ flex:1 }}>
@@ -587,15 +587,15 @@ export default function Trazabilidad() {
                         return `<tr style="border-bottom:1px solid #f3f4f6"><td style="padding:7px 10px;vertical-align:top">📄 ${doc.label}</td><td style="padding:7px 10px">${esImg ? `<img src="${result.b64}" style="max-width:420px;max-height:280px;border-radius:4px;border:1px solid #e5e7eb"/>` : `<object data="${result.b64}" type="application/pdf" width="100%" height="400px" style="border:1px solid #e5e7eb;border-radius:4px"><a href="${result.b64}" download style="color:#185FA5">Descargar PDF</a></object>`}</td></tr>`
                       }).join('')
                       return `<div style="margin-bottom:40px;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;page-break-inside:avoid">
-                        <div style="background:#EAF3DE;padding:12px 16px;border-bottom:1px solid #97C459">
+                        <div style="background:#e0f2fe;padding:12px 16px;border-bottom:1px solid #7dd3fc">
                           <div style="font-size:14px;font-weight:700">${s.nombre}</div>
-                          <div style="font-size:12px;color:#3B6D11">RUT ${s.rut} · ${s.email} · ${s.estado}</div>
-                          <div style="font-size:12px;color:#3B6D11;margin-top:4px">Cuota: ${s.cuota_mensual||0} gr/mes · Delegados: ${s.gramos_delegados||0} gr/mes · Receta vence: ${s.vencimiento_receta||'—'}</div>
+                          <div style="font-size:12px;color:#0369a1">RUT ${s.rut} · ${s.email} · ${s.estado}</div>
+                          <div style="font-size:12px;color:#0369a1;margin-top:4px">Cuota: ${s.cuota_mensual||0} gr/mes · Delegados: ${s.gramos_delegados||0} gr/mes · Receta vence: ${s.vencimiento_receta||'—'}</div>
                         </div>
                         <div style="padding:12px 16px">
                           <div style="font-size:11px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">Documentos</div>
                           <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:16px">
-                            <tbody>${docsHtml}<tr><td style="padding:7px 10px">✅ Reglamento interno</td><td style="padding:7px 10px"><span style="background:#EAF3DE;color:#3B6D11;padding:2px 8px;border-radius:20px;font-size:10px">Aceptado en línea</span></td></tr></tbody>
+                            <tbody>${docsHtml}<tr><td style="padding:7px 10px">✅ Reglamento interno</td><td style="padding:7px 10px"><span style="background:#e0f2fe;color:#0369a1;padding:2px 8px;border-radius:20px;font-size:10px">Aceptado en línea</span></td></tr></tbody>
                           </table>
                           <div style="font-size:11px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">Dispensaciones (${ds.length} · ${totalGr} gr · $${totalMonto.toLocaleString('es-CL')})</div>
                           ${ds.length === 0 ? '<p style="color:#9ca3af;font-size:12px">Sin dispensaciones registradas</p>' : `
@@ -627,7 +627,7 @@ export default function Trazabilidad() {
                     URL.revokeObjectURL(url)
                     } finally { setExportando(false) }
                   }}
-                    style={{ padding:'7px 16px', border:'none', borderRadius:8, background:exportSocios.length>0&&!exportando?'#3B6D11':'#9ca3af', color:'#EAF3DE', fontSize:12, fontWeight:600, cursor:exportSocios.length>0&&!exportando?'pointer':'not-allowed' }}>
+                    style={{ padding:'7px 16px', border:'none', borderRadius:8, background:exportSocios.length>0&&!exportando?'#0369a1':'#9ca3af', color:'#e0f2fe', fontSize:12, fontWeight:600, cursor:exportSocios.length>0&&!exportando?'pointer':'not-allowed' }}>
                     {exportando ? '⏳ Generando expedientes...' : '📥 Exportar seleccionados'}
                   </button>
                 </div>
@@ -822,15 +822,15 @@ export default function Trazabilidad() {
                       ? new Date(s.reglamento_aceptado_at).toLocaleString('es-CL', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'})
                       : '—'
                     const regIp = s.reglamento_ip || '—'
-                    docEntries.push(`<tr style="border-bottom:1px solid #f3f4f6"><td style="padding:7px 10px;width:220px">✅ Reglamento interno</td><td style="padding:7px 10px"><span style="background:#EAF3DE;color:#3B6D11;padding:2px 8px;border-radius:20px;font-size:11px">Aceptado digitalmente</span><div style="margin-top:5px;font-size:11px;color:#6b7280"><strong>Fecha/hora:</strong> ${regAt} &nbsp;·&nbsp; <strong>IP:</strong> <code style="background:#f3f4f6;padding:1px 5px;border-radius:3px">${regIp}</code></div></td></tr>`)
+                    docEntries.push(`<tr style="border-bottom:1px solid #f3f4f6"><td style="padding:7px 10px;width:220px">✅ Reglamento interno</td><td style="padding:7px 10px"><span style="background:#e0f2fe;color:#0369a1;padding:2px 8px;border-radius:20px;font-size:11px">Aceptado digitalmente</span><div style="margin-top:5px;font-size:11px;color:#6b7280"><strong>Fecha/hora:</strong> ${regAt} &nbsp;·&nbsp; <strong>IP:</strong> <code style="background:#f3f4f6;padding:1px 5px;border-radius:3px">${regIp}</code></div></td></tr>`)
                     return `<div style="margin-bottom:32px;padding:16px;border:1px solid #e5e7eb;border-radius:10px;${si%2===0?'':'background:#fafafa'}">
                       <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid #e5e7eb">
-                        <div style="width:34px;height:34px;border-radius:50%;background:#EAF3DE;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#3B6D11;flex-shrink:0">
+                        <div style="width:34px;height:34px;border-radius:50%;background:#e0f2fe;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#0369a1;flex-shrink:0">
                           ${s.nombre.split(' ').map((n: string) => n[0]).join('').slice(0,2)}
                         </div>
                         <div>
                           <div style="font-size:13px;font-weight:700">${s.nombre}</div>
-                          <div style="font-size:11px;color:#6b7280">RUT ${s.rut} · ${s.email} · <span style="background:${s.estado==='activo'?'#EAF3DE':'#f3f4f6'};color:${s.estado==='activo'?'#3B6D11':'#9ca3af'};padding:1px 7px;border-radius:20px;">${s.estado}</span></div>
+                          <div style="font-size:11px;color:#6b7280">RUT ${s.rut} · ${s.email} · <span style="background:${s.estado==='activo'?'#e0f2fe':'#f3f4f6'};color:${s.estado==='activo'?'#0369a1':'#9ca3af'};padding:1px 7px;border-radius:20px;">${s.estado}</span></div>
                         </div>
                       </div>
                       <table style="width:100%;border-collapse:collapse">${docEntries.join('')}</table>
@@ -852,7 +852,7 @@ export default function Trazabilidad() {
                       <td style="padding:7px 10px;font-weight:500">${s.nombre}</td>
                       <td style="padding:7px 10px;color:#6b7280">${s.rut}</td>
                       <td style="padding:7px 10px">${s.email}</td>
-                      <td style="padding:7px 10px;text-align:center"><span style="background:${s.estado==='activo'?'#EAF3DE':'#f3f4f6'};color:${s.estado==='activo'?'#3B6D11':'#9ca3af'};padding:2px 8px;border-radius:20px;font-size:11px">${s.estado}</span></td>
+                      <td style="padding:7px 10px;text-align:center"><span style="background:${s.estado==='activo'?'#e0f2fe':'#f3f4f6'};color:${s.estado==='activo'?'#0369a1':'#9ca3af'};padding:2px 8px;border-radius:20px;font-size:11px">${s.estado}</span></td>
                       <td style="padding:7px 10px;text-align:right">${dispSocio.length}</td>
                       <td style="padding:7px 10px;text-align:right">${totalGr} gr</td>
                       <td style="padding:7px 10px;text-align:right;color:#185FA5;font-weight:500">$${totalMonto.toLocaleString('es-CL')}</td>
@@ -870,7 +870,7 @@ export default function Trazabilidad() {
                       <td style="padding:7px 10px;text-align:right">${d.gramos} gr</td>
                       <td style="padding:7px 10px;text-align:right">$${d.monto.toLocaleString('es-CL')}</td>
                       <td style="padding:7px 10px">${d.medio_pago||'—'}</td>
-                      <td style="padding:7px 10px;text-align:center"><span style="background:${d.estado==='entregado'||d.estado==='pagado'?'#EAF3DE':'#FAEEDA'};color:${d.estado==='entregado'||d.estado==='pagado'?'#3B6D11':'#633806'};padding:2px 8px;border-radius:20px;font-size:10px">${d.estado}</span></td>
+                      <td style="padding:7px 10px;text-align:center"><span style="background:${d.estado==='entregado'||d.estado==='pagado'?'#e0f2fe':'#FAEEDA'};color:${d.estado==='entregado'||d.estado==='pagado'?'#0369a1':'#633806'};padding:2px 8px;border-radius:20px;font-size:10px">${d.estado}</span></td>
                     </tr>`
                   }).join('')
 
@@ -900,7 +900,7 @@ export default function Trazabilidad() {
                   </head><body>
                     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
                       <div>
-                        <div style="font-size:13px;color:#3B6D11;font-weight:600;margin-bottom:6px">🌿 Asociación de Usuarios de Plantas Medicinales GreenTech</div>
+                        <div style="font-size:13px;color:#0369a1;font-weight:600;margin-bottom:6px">🌿 Asociación de Usuarios de Plantas Medicinales GreenTech</div>
                         <h1>Informe Corporativo Completo</h1>
                         <div class="sub">Para uso ante autoridades fiscalizadoras · Registro Nº 390054</div>
                       </div>

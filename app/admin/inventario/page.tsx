@@ -10,7 +10,7 @@ interface Cepa {
 }
 
 const tipoColor: Record<string, {bg:string,color:string}> = {
-  sativa:  { bg:'#EAF3DE', color:'#3B6D11' },
+  sativa:  { bg:'#e0f2fe', color:'#0369a1' },
   indica:  { bg:'#EEEDFE', color:'#534AB7' },
   hibrida: { bg:'#E6F1FB', color:'#185FA5' },
   cbd:     { bg:'#FDF5E6', color:'#BA7517' },
@@ -135,7 +135,7 @@ export default function Inventario() {
           </div>
           <div style={{ display:'flex', gap:8 }}>
             <button onClick={() => window.location.href='/admin/cultivo'}
-              style={{ padding:'8px 14px', border:'1px solid #3B6D11', borderRadius:8, background:'transparent', color:'#3B6D11', fontSize:13, cursor:'pointer' }}>
+              style={{ padding:'8px 14px', border:'1px solid #0369a1', borderRadius:8, background:'transparent', color:'#0369a1', fontSize:13, cursor:'pointer' }}>
               🌱 Ir a cultivo
             </button>
             <button onClick={() => setMostrarAjuste(!mostrarAjuste)}
@@ -146,7 +146,7 @@ export default function Inventario() {
         </div>
 
         {mensaje && (
-          <div style={{ background:mensaje.startsWith('✅')?'#EAF3DE':'#FCEBEB', border:`1px solid ${mensaje.startsWith('✅')?'#97C459':'#F5C5C5'}`, borderRadius:8, padding:'10px 14px', fontSize:12, color:mensaje.startsWith('✅')?'#3B6D11':'#A32D2D', marginBottom:16 }}>
+          <div style={{ background:mensaje.startsWith('✅')?'#e0f2fe':'#FCEBEB', border:`1px solid ${mensaje.startsWith('✅')?'#7dd3fc':'#F5C5C5'}`, borderRadius:8, padding:'10px 14px', fontSize:12, color:mensaje.startsWith('✅')?'#0369a1':'#A32D2D', marginBottom:16 }}>
             {mensaje}
           </div>
         )}
@@ -154,7 +154,7 @@ export default function Inventario() {
         {/* Métricas */}
         <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:10, marginBottom:20 }}>
           {[
-            { label:'Stock total disponible', value:`${stockTotal} gr`, sub:`${cepasConStock} cepas con stock`, color: stockTotal > 0 ? '#3B6D11' : '#A32D2D' },
+            { label:'Stock total disponible', value:`${stockTotal} gr`, sub:`${cepasConStock} cepas con stock`, color: stockTotal > 0 ? '#0369a1' : '#A32D2D' },
             { label:'Cepas activas', value:`${cepas.filter(c=>c.visible).length}`, sub:'visibles en catálogo' },
             { label:'Stock bajo', value:`${cepasStockBajo}`, sub:'menos de 20 gr', color: cepasStockBajo > 0 ? '#EF9F27' : '#9ca3af' },
             { label:'Cepas sin stock', value:`${cepas.filter(c=>c.stock_gramos===0).length}`, sub:'requieren reposición', color: cepas.filter(c=>c.stock_gramos===0).length > 0 ? '#A32D2D' : '#9ca3af' },
@@ -224,7 +224,7 @@ export default function Inventario() {
             {cepas.map(cepa => {
               const tc = tipoColor[cepa.tipo] || tipoColor.sativa
               const pct = Math.min(100, (cepa.stock_gramos / 100) * 100)
-              const stockColor = cepa.stock_gramos === 0 ? '#A32D2D' : cepa.stock_gramos < 20 ? '#EF9F27' : '#3B6D11'
+              const stockColor = cepa.stock_gramos === 0 ? '#A32D2D' : cepa.stock_gramos < 20 ? '#EF9F27' : '#0369a1'
               const paquetes = [
                 { gr:3, precio:cepa.precio_3gr },
                 { gr:7, precio:cepa.precio_7gr },
@@ -267,7 +267,7 @@ export default function Inventario() {
                       {cepa.visible ? '👁 Visible en catálogo' : '🙈 Oculto en catálogo'}
                     </span>
                     <div onClick={() => toggleVisible(cepa)}
-                      style={{ width:36, height:20, borderRadius:10, background:cepa.visible?'#3B6D11':'#d1d5db', position:'relative', cursor:'pointer' }}>
+                      style={{ width:36, height:20, borderRadius:10, background:cepa.visible?'#0369a1':'#d1d5db', position:'relative', cursor:'pointer' }}>
                       <div style={{ width:16, height:16, background:'#fff', borderRadius:'50%', position:'absolute', top:2, left:cepa.visible?18:2, transition:'0.2s' }}/>
                     </div>
                   </div>

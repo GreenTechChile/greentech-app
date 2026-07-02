@@ -247,7 +247,7 @@ export default function Finanzas() {
         </div>
 
         {mensaje && (
-          <div style={{ background:mensaje.startsWith('✅')?'#EAF3DE':'#FCEBEB', border:`1px solid ${mensaje.startsWith('✅')?'#97C459':'#F5C5C5'}`, borderRadius:8, padding:'10px 14px', fontSize:12, color:mensaje.startsWith('✅')?'#3B6D11':'#A32D2D', marginBottom:16 }}>
+          <div style={{ background:mensaje.startsWith('✅')?'#e0f2fe':'#FCEBEB', border:`1px solid ${mensaje.startsWith('✅')?'#7dd3fc':'#F5C5C5'}`, borderRadius:8, padding:'10px 14px', fontSize:12, color:mensaje.startsWith('✅')?'#0369a1':'#A32D2D', marginBottom:16 }}>
             {mensaje}
           </div>
         )}
@@ -255,7 +255,7 @@ export default function Finanzas() {
         {/* Métricas */}
         <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:10, marginBottom:20 }}>
           {[
-            { label:`Ingresos ${filtroAño}`, value:`$${totalIngresos.toLocaleString('es-CL')}`, sub:`${dispensaciones.length} disp. · ${ingresosIncorporacion.length} incorp. · ${aportesExt.length} aportes ext.`, color:'#3B6D11' },
+            { label:`Ingresos ${filtroAño}`, value:`$${totalIngresos.toLocaleString('es-CL')}`, sub:`${dispensaciones.length} disp. · ${ingresosIncorporacion.length} incorp. · ${aportesExt.length} aportes ext.`, color:'#0369a1' },
             { label:`Costos ${filtroAño}`, value:`$${totalCostos.toLocaleString('es-CL')}`, sub:`${costos.length} registros`, color:'#A32D2D' },
             { label:'Superávit acumulado', value:`$${Math.abs(superavit).toLocaleString('es-CL')}`, sub:superavit >= 0 ? 'balance positivo ✓' : 'balance negativo ⚠️', color: superavit >= 0 ? '#185FA5' : '#A32D2D' },
             { label:`Promedio mensual`, value:`$${mesesConActividad.length>0 ? Math.round(totalIngresos/mesesConActividad.length).toLocaleString('es-CL') : 0}`, sub:'en ingresos' },
@@ -285,7 +285,7 @@ export default function Finanzas() {
             <div style={{ border:'1px solid #e5e7eb', borderRadius:12, padding:16, marginBottom:16 }}>
               <div style={{ fontSize:13, fontWeight:600, marginBottom:14 }}>Ingresos vs Costos — {filtroAño}</div>
               <div style={{ display:'flex', gap:12, marginBottom:12 }}>
-                <div style={{ display:'flex', alignItems:'center', gap:5, fontSize:11, color:'#6b7280' }}><div style={{ width:10, height:10, borderRadius:2, background:'#3B6D11' }}/> Ingresos</div>
+                <div style={{ display:'flex', alignItems:'center', gap:5, fontSize:11, color:'#6b7280' }}><div style={{ width:10, height:10, borderRadius:2, background:'#0369a1' }}/> Ingresos</div>
                 <div style={{ display:'flex', alignItems:'center', gap:5, fontSize:11, color:'#6b7280' }}><div style={{ width:10, height:10, borderRadius:2, background:'#FCEBEB', border:'1px solid #F5C5C5' }}/> Costos</div>
               </div>
               {mesesConActividad.length === 0 ? (
@@ -302,7 +302,7 @@ export default function Finanzas() {
                     return (
                       <div key={m} style={{ flex:1, textAlign:'center' }}>
                         <div style={{ display:'flex', gap:2, justifyContent:'center', alignItems:'flex-end', height:80, marginBottom:4 }}>
-                          <div style={{ width:10, borderRadius:'3px 3px 0 0', background: activo ? '#3B6D11' : '#f3f4f6', height:`${Math.max(hIng, activo?3:0)}px` }}/>
+                          <div style={{ width:10, borderRadius:'3px 3px 0 0', background: activo ? '#0369a1' : '#f3f4f6', height:`${Math.max(hIng, activo?3:0)}px` }}/>
                           <div style={{ width:10, borderRadius:'3px 3px 0 0', background: cos > 0 ? '#F5C5C5' : '#f3f4f6', border: cos > 0 ? '1px solid #F5C5C5' : 'none', height:`${Math.max(hCos, cos>0?3:0)}px` }}/>
                         </div>
                         <div style={{ fontSize:9, color: activo ? '#374151' : '#d1d5db' }}>{mes}</div>
@@ -319,7 +319,7 @@ export default function Finanzas() {
               {(() => {
                 const maxRef = Math.max(totalIngresos, totalCostos, ingresoFuturoPotencial, 1)
                 const filas: { label: string; value: number; color: string; sub?: string }[] = [
-                  { label: 'Total ingresos', value: totalIngresos, color: '#3B6D11' },
+                  { label: 'Total ingresos', value: totalIngresos, color: '#0369a1' },
                   { label: 'Total costos', value: totalCostos, color: '#A32D2D' },
                   { label: 'Fondo de reserva', value: superavit, color: superavit >= 0 ? '#185FA5' : '#A32D2D' },
                   { label: 'Ingreso potencial stock', value: ingresoFuturoPotencial, color: '#B45309', sub: 'Stock actual × precio/gramo' },
@@ -410,7 +410,7 @@ export default function Finanzas() {
             <div style={{ border:'1px solid #e5e7eb', borderRadius:12, overflow:'hidden' }}>
               <div style={{ padding:'12px 16px', borderBottom:'1px solid #e5e7eb', display:'flex', justifyContent:'space-between', background:'#f9fafb', fontSize:13, fontWeight:600 }}>
                 <span>Aportes de socios — {MESES_FULL[mesFiltro-1]} {filtroAño}</span>
-                <span style={{ color:'#3B6D11' }}>${dispensaciones.filter(d=>d.mes===mesFiltro).reduce((a,d)=>a+d.monto,0).toLocaleString('es-CL')}</span>
+                <span style={{ color:'#0369a1' }}>${dispensaciones.filter(d=>d.mes===mesFiltro).reduce((a,d)=>a+d.monto,0).toLocaleString('es-CL')}</span>
               </div>
               {loading ? (
                 <div style={{ padding:20, fontSize:13, color:'#9ca3af', textAlign:'center' }}>Cargando...</div>
@@ -430,14 +430,14 @@ export default function Finanzas() {
                       <tr key={d.id} style={{ borderBottom:'1px solid #f3f4f6' }}>
                         <td style={{ padding:'9px 14px', color:'#9ca3af' }}>{i+1}</td>
                         <td style={{ padding:'9px 14px' }}>Dispensación</td>
-                        <td style={{ padding:'9px 14px' }}><span style={{ fontSize:10, background:'#EAF3DE', color:'#3B6D11', padding:'2px 8px', borderRadius:20 }}>Ordinario</span></td>
-                        <td style={{ padding:'9px 14px', fontWeight:600, color:'#3B6D11' }}>${d.monto.toLocaleString('es-CL')}</td>
+                        <td style={{ padding:'9px 14px' }}><span style={{ fontSize:10, background:'#e0f2fe', color:'#0369a1', padding:'2px 8px', borderRadius:20 }}>Ordinario</span></td>
+                        <td style={{ padding:'9px 14px', fontWeight:600, color:'#0369a1' }}>${d.monto.toLocaleString('es-CL')}</td>
                         <td style={{ padding:'9px 14px' }}><button onClick={() => setDispModal(d)} style={{ fontSize:11, padding:'3px 8px', border:'1px solid #e5e7eb', borderRadius:6, background:'#fff', cursor:'pointer', color:'#6b7280' }}>Ver</button></td>
                       </tr>
                     ))}
                     <tr style={{ background:'#f9fafb', borderTop:'1px solid #e5e7eb' }}>
                       <td colSpan={3} style={{ padding:'9px 14px', fontWeight:600 }}>Total {MESES_FULL[mesFiltro-1]}</td>
-                      <td style={{ padding:'9px 14px', fontWeight:700, color:'#3B6D11', fontSize:14 }}>${dispensaciones.filter(d=>d.mes===mesFiltro).reduce((a,d)=>a+d.monto,0).toLocaleString('es-CL')}</td>
+                      <td style={{ padding:'9px 14px', fontWeight:700, color:'#0369a1', fontSize:14 }}>${dispensaciones.filter(d=>d.mes===mesFiltro).reduce((a,d)=>a+d.monto,0).toLocaleString('es-CL')}</td>
                       <td/>
                     </tr>
                   </tbody>
@@ -453,7 +453,7 @@ export default function Finanzas() {
             <div style={{ border:'1px solid #e5e7eb', borderRadius:12, overflow:'hidden' }}>
               <div style={{ padding:'12px 16px', borderBottom:'1px solid #e5e7eb', display:'flex', justifyContent:'space-between', background:'#f9fafb', fontSize:13, fontWeight:600 }}>
                 <span>Pagos de incorporación — {filtroAño}</span>
-                <span style={{ color:'#3B6D11' }}>${totalIngresoIncorporaciones.toLocaleString('es-CL')}</span>
+                <span style={{ color:'#0369a1' }}>${totalIngresoIncorporaciones.toLocaleString('es-CL')}</span>
               </div>
               {loading ? (
                 <div style={{ padding:20, fontSize:13, color:'#9ca3af', textAlign:'center' }}>Cargando...</div>
@@ -479,12 +479,12 @@ export default function Finanzas() {
                           <span style={{ fontSize:10, background:'#E6F1FB', color:'#185FA5', padding:'2px 8px', borderRadius:20 }}>{m.categoria}</span>
                         </td>
                         <td style={{ padding:'9px 14px', color:'#6b7280' }}>{MESES_FULL[m.mes - 1]}</td>
-                        <td style={{ padding:'9px 14px', fontWeight:600, color:'#3B6D11' }}>${m.monto.toLocaleString('es-CL')}</td>
+                        <td style={{ padding:'9px 14px', fontWeight:600, color:'#0369a1' }}>${m.monto.toLocaleString('es-CL')}</td>
                       </tr>
                     ))}
                     <tr style={{ background:'#f9fafb', borderTop:'1px solid #e5e7eb' }}>
                       <td colSpan={4} style={{ padding:'9px 14px', fontWeight:600 }}>Total incorporaciones {filtroAño}</td>
-                      <td style={{ padding:'9px 14px', fontWeight:700, color:'#3B6D11', fontSize:14 }}>${totalIngresoIncorporaciones.toLocaleString('es-CL')}</td>
+                      <td style={{ padding:'9px 14px', fontWeight:700, color:'#0369a1', fontSize:14 }}>${totalIngresoIncorporaciones.toLocaleString('es-CL')}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -496,8 +496,8 @@ export default function Finanzas() {
         {/* TAB COSTOS */}
         {tab === 'extraordinarios' && (
           <div>
-            <div style={{ background:'#FAFFF5', border:'1px solid #97C459', borderRadius:10, padding:16, marginBottom:20 }}>
-              <div style={{ fontSize:13, fontWeight:600, color:'#3B6D11', marginBottom:14 }}>⭐ Registrar aporte extraordinario</div>
+            <div style={{ background:'#FAFFF5', border:'1px solid #7dd3fc', borderRadius:10, padding:16, marginBottom:20 }}>
+              <div style={{ fontSize:13, fontWeight:600, color:'#0369a1', marginBottom:14 }}>⭐ Registrar aporte extraordinario</div>
               <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr 1fr 1fr', gap:12, marginBottom:12 }}>
                 <div style={{ display:'flex', flexDirection:'column' as const, gap:4 }}>
                   <label style={{ fontSize:11, color:'#6b7280' }}>Concepto *</label>
@@ -531,7 +531,7 @@ export default function Finanzas() {
                 </div>
               </div>
               <button onClick={agregarAporteExtraordinario} disabled={guardandoAporte || !nuevoAporteConcepto || !nuevoAporteMonto}
-                style={{ padding:'8px 20px', background: guardandoAporte || !nuevoAporteConcepto || !nuevoAporteMonto ? '#9ca3af' : '#3B6D11', color:'#fff', border:'none', borderRadius:8, fontSize:13, fontWeight:600, cursor:'pointer' }}>
+                style={{ padding:'8px 20px', background: guardandoAporte || !nuevoAporteConcepto || !nuevoAporteMonto ? '#9ca3af' : '#0369a1', color:'#fff', border:'none', borderRadius:8, fontSize:13, fontWeight:600, cursor:'pointer' }}>
                 {guardandoAporte ? 'Guardando...' : 'Registrar aporte'}
               </button>
             </div>
@@ -555,7 +555,7 @@ export default function Finanzas() {
                     <span style={{ fontSize:12, color:'#6b7280' }}>
                       {['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][a.mes-1]}
                     </span>
-                    <span style={{ fontWeight:600, color:'#3B6D11' }}>${a.monto.toLocaleString('es-CL')}</span>
+                    <span style={{ fontWeight:600, color:'#0369a1' }}>${a.monto.toLocaleString('es-CL')}</span>
                     <span>
                       {a.comprobante_url
                         ? <button onClick={() => window.open(a.comprobante_url, '_blank')}
@@ -567,7 +567,7 @@ export default function Finanzas() {
                 ))}
                 <div style={{ padding:'10px 16px', display:'flex', justifyContent:'space-between', background:'#f9fafb', fontSize:13, fontWeight:600 }}>
                   <span>Total aportes extraordinarios {filtroAño}</span>
-                  <span style={{ color:'#3B6D11' }}>${aportesExt.reduce((a: number, e: any) => a + e.monto, 0).toLocaleString('es-CL')}</span>
+                  <span style={{ color:'#0369a1' }}>${aportesExt.reduce((a: number, e: any) => a + e.monto, 0).toLocaleString('es-CL')}</span>
                 </div>
               </div>
             )}
@@ -618,9 +618,9 @@ export default function Finanzas() {
                     type="button"
                     onClick={() => comprobanteRef.current?.click()}
                     style={{
-                      padding:'7px 10px', border:`1px solid ${ncComprobante ? '#97C459' : '#d1d5db'}`,
-                      borderRadius:8, cursor:'pointer', background: ncComprobante ? '#EAF3DE' : '#fff',
-                      fontSize:12, color: ncComprobante ? '#3B6D11' : '#9ca3af',
+                      padding:'7px 10px', border:`1px solid ${ncComprobante ? '#7dd3fc' : '#d1d5db'}`,
+                      borderRadius:8, cursor:'pointer', background: ncComprobante ? '#e0f2fe' : '#fff',
+                      fontSize:12, color: ncComprobante ? '#0369a1' : '#9ca3af',
                       textAlign:'left' as const, whiteSpace:'nowrap' as const, overflow:'hidden',
                       textOverflow:'ellipsis', maxWidth:160
                     }}>

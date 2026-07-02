@@ -184,8 +184,8 @@ export default function SidebarAdmin() {
         <div style={{ padding: '8px 10px', borderTop: '1px solid #e5e7eb' }}>
           <Link href="/socio" onClick={onClickLink} style={{
             display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px',
-            background: '#EAF3DE', borderRadius: 8, textDecoration: 'none',
-            fontSize: 12, color: '#3B6D11', fontWeight: 600,
+            background: '#e0f2fe', borderRadius: 8, textDecoration: 'none',
+            fontSize: 12, color: '#0369a1', fontWeight: 600,
           }}>
             <span>🌿</span>
             <span>Mi portal de socio</span>

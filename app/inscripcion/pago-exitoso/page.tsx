@@ -70,9 +70,9 @@ function PagoExitosoContent() {
           <h1 style={{ fontSize: 20, fontWeight: 700, color: '#A32D2D', marginBottom: 8 }}>Estado de pago no confirmado</h1>
           <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 24, lineHeight: 1.7 }}>
             No pudimos confirmar tu pago automáticamente. Si realizaste el pago, guarda tu número de transacción y contáctanos a{' '}
-            <a href="mailto:contacto@asociaciongreentech.cl" style={{ color: '#3B6D11' }}>contacto@asociaciongreentech.cl</a>.
+            <a href="mailto:contacto@asociaciongreentech.cl" style={{ color: '#0369a1' }}>contacto@asociaciongreentech.cl</a>.
           </p>
-          <Link href="/inscripcion" style={{ display: 'inline-block', background: '#3B6D11', color: '#fff', borderRadius: 8, padding: '10px 24px', fontSize: 14, fontWeight: 600, textDecoration: 'none' }}>
+          <Link href="/inscripcion" style={{ display: 'inline-block', background: '#0369a1', color: '#fff', borderRadius: 8, padding: '10px 24px', fontSize: 14, fontWeight: 600, textDecoration: 'none' }}>
             Intentar nuevamente →
           </Link>
         </div>
@@ -84,12 +84,12 @@ function PagoExitosoContent() {
     <div style={{ minHeight: '100vh', background: '#f9fafb', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, fontFamily: 'system-ui,sans-serif' }}>
       <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 16, padding: 40, maxWidth: 480, width: '100%', textAlign: 'center' }}>
         <div style={{ fontSize: 64, marginBottom: 16 }}>✅</div>
-        <h1 style={{ fontSize: 22, fontWeight: 700, color: '#3B6D11', marginBottom: 8 }}>¡Pago aprobado!</h1>
+        <h1 style={{ fontSize: 22, fontWeight: 700, color: '#0369a1', marginBottom: 8 }}>¡Pago aprobado!</h1>
         <p style={{ fontSize: 14, color: '#6b7280', marginBottom: 24, lineHeight: 1.7 }}>
           {userData?.nombre ? `Hola ${userData.nombre.split(' ')[0]}, t` : 'T'}u pago de incorporación fue procesado correctamente.<br />
           <strong>Ahora completa el resto del formulario para enviar tu solicitud.</strong>
         </p>
-        <div style={{ background: '#EAF3DE', border: '1px solid #97C459', borderRadius: 12, padding: 16, marginBottom: 28, textAlign: 'left', fontSize: 13, color: '#3B6D11', lineHeight: 1.9 }}>
+        <div style={{ background: '#e0f2fe', border: '1px solid #7dd3fc', borderRadius: 12, padding: 16, marginBottom: 28, textAlign: 'left', fontSize: 13, color: '#0369a1', lineHeight: 1.9 }}>
           <strong>Estado de tu proceso:</strong><br />
           ✅ Pago de incorporación — Confirmado<br />
           ⏳ Datos personales y domicilio — Pendiente<br />
@@ -99,7 +99,7 @@ function PagoExitosoContent() {
         </div>
         <a
           href={`/inscripcion?retomar=1&rut=${encodeURIComponent(userData?.rut || '')}&nombre=${encodeURIComponent(userData?.nombre || '')}&email=${encodeURIComponent(userData?.email || '')}`}
-          style={{ display: 'inline-block', background: '#3B6D11', color: '#EAF3DE', borderRadius: 10, padding: '13px 28px', fontSize: 15, fontWeight: 700, textDecoration: 'none', marginBottom: 14, width: '100%', boxSizing: 'border-box' as const }}
+          style={{ display: 'inline-block', background: '#0369a1', color: '#e0f2fe', borderRadius: 10, padding: '13px 28px', fontSize: 15, fontWeight: 700, textDecoration: 'none', marginBottom: 14, width: '100%', boxSizing: 'border-box' as const }}
         >
           Continuar con el formulario →
         </a>

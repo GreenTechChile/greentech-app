@@ -163,14 +163,14 @@ export default function Cumplimiento() {
               <p style={{ fontSize: 12, color: '#6b7280', marginTop: 4, marginBottom: 0 }}>GreenTech · RUT 65.271.661-K · Registro N° 390054</p>
             </div>
             <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: 28, fontWeight: 700, color: '#15803d' }}>{pct}%</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: '#0369a1' }}>{pct}%</div>
               <div style={{ fontSize: 11, color: '#6b7280' }}>{completadas} de {total} completadas</div>
               {vencenProximo > 0 && <div style={{ fontSize: 11, color: '#dc2626', fontWeight: 600, marginTop: 2 }}>⚠️ {vencenProximo} vencen en 30 días</div>}
             </div>
           </div>
 
           <div style={{ width: '100%', background: '#e5e7eb', borderRadius: 999, height: 8, marginBottom: 16 }}>
-            <div style={{ width: `${pct}%`, background: '#16a34a', height: 8, borderRadius: 999, transition: 'width 0.5s' }} />
+            <div style={{ width: `${pct}%`, background: '#0ea5e9', height: 8, borderRadius: 999, transition: 'width 0.5s' }} />
           </div>
 
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -186,7 +186,7 @@ export default function Cumplimiento() {
               {CATEGORIAS.map(c => <option key={c}>{c}</option>)}
             </select>
           </div>
-          {mensaje && <div style={{ marginTop: 8, fontSize: 12, color: '#16a34a', fontWeight: 600 }}>{mensaje}</div>}
+          {mensaje && <div style={{ marginTop: 8, fontSize: 12, color: '#0369a1', fontWeight: 600 }}>{mensaje}</div>}
         </div>
 
         <div style={{ padding: 24, maxWidth: 900, margin: '0 auto' }}>
@@ -219,7 +219,7 @@ export default function Cumplimiento() {
           )}
 
           {filtrocat !== 'Todas' && (
-            <button onClick={() => setFiltrocat('Todas')} style={{ marginBottom: 16, fontSize: 13, color: '#16a34a', background: 'none', border: 'none', cursor: 'pointer' }}>
+            <button onClick={() => setFiltrocat('Todas')} style={{ marginBottom: 16, fontSize: 13, color: '#0369a1', background: 'none', border: 'none', cursor: 'pointer' }}>
               ← Todas las categorías
             </button>
           )}
@@ -255,7 +255,7 @@ export default function Cumplimiento() {
                         <div style={{ padding: '12px 16px', display: 'flex', alignItems: 'flex-start', gap: 12 }}>
                           {/* Checkbox */}
                           <button onClick={() => toggleTarea(t.id)} disabled={cargandoEsta}
-                            style={{ marginTop: 2, width: 20, height: 20, borderRadius: '50%', border: completada ? 'none' : '2px solid #d1d5db', background: completada ? '#16a34a' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, opacity: cargandoEsta ? 0.5 : 1 }}>
+                            style={{ marginTop: 2, width: 20, height: 20, borderRadius: '50%', border: completada ? 'none' : '2px solid #d1d5db', background: completada ? '#0369a1' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, opacity: cargandoEsta ? 0.5 : 1 }}>
                             {completada && <span style={{ color: '#fff', fontSize: 10, fontWeight: 700 }}>✓</span>}
                           </button>
 
@@ -294,7 +294,7 @@ export default function Cumplimiento() {
                                     <textarea value={notaTemp} onChange={e => setNotaTemp(e.target.value)} placeholder="Escribe una nota..."
                                       style={{ flex: 1, fontSize: 12, border: '1px solid #e5e7eb', borderRadius: 8, padding: 8, resize: 'none', height: 64, outline: 'none' }} />
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                                      <button onClick={() => guardarNota(t.id)} style={{ fontSize: 12, background: '#16a34a', color: '#fff', border: 'none', borderRadius: 8, padding: '6px 12px', cursor: 'pointer', fontWeight: 500 }}>Guardar</button>
+                                      <button onClick={() => guardarNota(t.id)} style={{ fontSize: 12, background: '#0369a1', color: '#fff', border: 'none', borderRadius: 8, padding: '6px 12px', cursor: 'pointer', fontWeight: 500 }}>Guardar</button>
                                       <button onClick={() => setEditandoNota(null)} style={{ fontSize: 12, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer' }}>Cancelar</button>
                                     </div>
                                   </div>

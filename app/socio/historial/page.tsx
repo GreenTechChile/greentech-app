@@ -36,7 +36,7 @@ interface ModalCepa {
 const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
 
 const estadoStyle: Record<string, {bg: string, color: string, label: string}> = {
-  pagado:     { bg: '#EAF3DE', color: '#3B6D11', label: 'Pagado' },
+  pagado:     { bg: '#e0f2fe', color: '#0369a1', label: 'Pagado' },
   preparando: { bg: '#FAEEDA', color: '#633806', label: 'Preparando' },
   despachado: { bg: '#E6F1FB', color: '#185FA5', label: 'En camino' },
   entregado:  { bg: '#f3f4f6', color: '#374151', label: 'Entregado' },
@@ -44,7 +44,7 @@ const estadoStyle: Record<string, {bg: string, color: string, label: string}> = 
 }
 
 const colorTipo: Record<string, {bg: string, color: string}> = {
-  sativa:        { bg: '#EAF3DE', color: '#3B6D11' },
+  sativa:        { bg: '#e0f2fe', color: '#0369a1' },
   indica:        { bg: '#EEEDFE', color: '#534AB7' },
   hibrida:       { bg: '#E6F1FB', color: '#185FA5' },
   cbd:           { bg: '#FDF5E6', color: '#BA7517' },
@@ -302,7 +302,7 @@ export default function Historial() {
                     onClick={guardandoCalif ? undefined : calificar}
                   />
                   {modalCepa.miCalif > 0 && !guardandoCalif && (
-                    <div style={{ fontSize: 11, color: '#3B6D11', marginTop: 6 }}>
+                    <div style={{ fontSize: 11, color: '#0369a1', marginTop: 6 }}>
                       Tu calificación: {modalCepa.miCalif} ★
                     </div>
                   )}
@@ -371,7 +371,7 @@ export default function Historial() {
                     <span style={{ fontSize: 14, fontWeight: 600 }}>{MESES[mes - 1]} {filtroAño}</span>
                     <div style={{ display: 'flex', gap: 12, fontSize: 12, color: '#6b7280' }}>
                       <span>{totalMes} gr dispensados</span>
-                      <span style={{ fontWeight: 600, color: '#3B6D11' }}>${montoMes.toLocaleString('es-CL')}</span>
+                      <span style={{ fontWeight: 600, color: '#0369a1' }}>${montoMes.toLocaleString('es-CL')}</span>
                     </div>
                   </div>
                   {items.map((d) => {
@@ -379,7 +379,7 @@ export default function Historial() {
                     const fecha = new Date(d.created_at).toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: 'numeric' })
                     return (
                       <div key={d.id} style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, padding: '12px 14px', marginBottom: 8 }}>
-                        <div style={{ width: 36, height: 36, borderRadius: 8, background: '#EAF3DE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>🌿</div>
+                        <div style={{ width: 36, height: 36, borderRadius: 8, background: '#e0f2fe', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>🌿</div>
                         <div style={{ flex: 1 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
                             <span style={{ fontSize: 13, fontWeight: 500 }}>{d.cepa} · {d.gramos} gr</span>
@@ -394,7 +394,7 @@ export default function Historial() {
                           </div>
                         </div>
                         <div style={{ textAlign: 'right' as const }}>
-                          <div style={{ fontSize: 14, fontWeight: 600, color: '#3B6D11', marginBottom: 4 }}>
+                          <div style={{ fontSize: 14, fontWeight: 600, color: '#0369a1', marginBottom: 4 }}>
                             ${d.monto.toLocaleString('es-CL')}
                           </div>
                           <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, background: est.bg, color: est.color }}>

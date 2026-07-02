@@ -32,7 +32,7 @@ interface OrdenAgrupada {
 }
 
 const estadoConfig: Record<string, {label:string, bg:string, color:string, next:string, nextLabel:string}> = {
-  pagado:     { label:'💳 Pago confirmado', bg:'#EAF3DE', color:'#3B6D11', next:'preparando', nextLabel:'Iniciar preparación' },
+  pagado:     { label:'💳 Pago confirmado', bg:'#e0f2fe', color:'#0369a1', next:'preparando', nextLabel:'Iniciar preparación' },
   preparando: { label:'📦 Preparando',      bg:'#FAEEDA', color:'#633806', next:'despachado', nextLabel:'Marcar despachado' },
   despachado: { label:'🚚 En camino',       bg:'#E6F1FB', color:'#185FA5', next:'entregado',  nextLabel:'Confirmar entrega' },
   entregado:  { label:'✅ Entregado',       bg:'#f3f4f6', color:'#374151', next:'',           nextLabel:'' },
@@ -51,7 +51,7 @@ const imprimirEtiqueta = (o: OrdenAgrupada) => {
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Etiqueta ${o.ordenBase}</title>
     <style>* { margin:0; padding:0; box-sizing:border-box; } body { font-family: Arial, sans-serif; padding: 20px; }
     .etiqueta { border: 2px solid #000; padding: 16px; max-width: 400px; margin: 0 auto; }
-    .logo { font-size: 18px; font-weight: bold; color: #3B6D11; margin-bottom: 12px; border-bottom: 1px solid #ccc; padding-bottom: 8px; }
+    .logo { font-size: 18px; font-weight: bold; color: #0369a1; margin-bottom: 12px; border-bottom: 1px solid #ccc; padding-bottom: 8px; }
     .logo span { font-size: 12px; color: #666; font-weight: normal; display: block; }
     .orden { font-size: 22px; font-weight: bold; letter-spacing: 1px; margin: 10px 0; }
     .seccion { margin-top: 10px; } .seccion-titulo { font-size: 9px; text-transform: uppercase; color: #999; letter-spacing: 1px; margin-bottom: 4px; }
@@ -146,7 +146,7 @@ const imprimirComprobante = (o: OrdenAgrupada) => {
       <div class="logo">🌿 GreenTech<span>Asociación de Usuarios de Plantas Medicinales</span></div>
       <div class="titulo">COMPROBANTE DE PAGO</div>
       <div class="orden">#${o.ordenBase}</div>
-      <div style="text-align:center;margin-bottom:12px;"><span style="padding:4px 14px;background:#EAF3DE;border-radius:20px;font-size:12px;font-weight:600;color:#3B6D11;">✅ Pago confirmado</span></div>
+      <div style="text-align:center;margin-bottom:12px;"><span style="padding:4px 14px;background:#e0f2fe;border-radius:20px;font-size:12px;font-weight:600;color:#0369a1;">✅ Pago confirmado</span></div>
       <div class="monto">$${o.montoTotal.toLocaleString('es-CL')}</div>
       <div style="font-size:11px;text-align:center;color:#666;margin-bottom:12px;">${o.medio_pago || 'Webpay Plus'} · ${fecha}</div>
       <div class="sep"></div>
@@ -395,12 +395,12 @@ export default function Despachos() {
         </div>
 
         {mensaje && (
-          <div style={{ background:'#EAF3DE', border:'1px solid #97C459', borderRadius:8, padding:'10px 14px', fontSize:12, color:'#3B6D11', marginBottom:16 }}>{mensaje}</div>
+          <div style={{ background:'#e0f2fe', border:'1px solid #7dd3fc', borderRadius:8, padding:'10px 14px', fontSize:12, color:'#0369a1', marginBottom:16 }}>{mensaje}</div>
         )}
 
         <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:10, marginBottom:20 }}>
           {[
-            { label:'Pagos por preparar', value:conteo.pagado,    color:'#3B6D11', icon:'💳' },
+            { label:'Pagos por preparar', value:conteo.pagado,    color:'#0369a1', icon:'💳' },
             { label:'En preparación',     value:conteo.preparando, color:'#633806', icon:'📦' },
             { label:'En camino',          value:conteo.despachado, color:'#185FA5', icon:'🚚' },
             { label:'Entregados',         value:conteo.entregado,  color:'#9ca3af', icon:'✅' },
@@ -433,7 +433,7 @@ export default function Despachos() {
           ordenesFiltradas.map(o => {
             const cfg = estadoConfig[o.estado] || estadoConfig.pagado
             const abierto = expandido === o.ordenBase
-            const borderColor = o.estado==='pagado'?'#97C459':o.estado==='preparando'?'#EF9F27':o.estado==='despachado'?'#A8CBF0':'#e5e7eb'
+            const borderColor = o.estado==='pagado'?'#7dd3fc':o.estado==='preparando'?'#EF9F27':o.estado==='despachado'?'#A8CBF0':'#e5e7eb'
             return (
               <div key={o.ordenBase} style={{ border:`1px solid ${borderColor}`, borderRadius:12, marginBottom:10, overflow:'hidden' }}>
 
@@ -453,7 +453,7 @@ export default function Despachos() {
                     )}
                   </div>
                   <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-                    <span style={{ fontSize:13, fontWeight:600, color:'#3B6D11' }}>${o.montoTotal.toLocaleString('es-CL')}</span>
+                    <span style={{ fontSize:13, fontWeight:600, color:'#0369a1' }}>${o.montoTotal.toLocaleString('es-CL')}</span>
                     <span style={{ fontSize:10, padding:'3px 9px', borderRadius:20, background:cfg.bg, color:cfg.color, fontWeight:500 }}>{cfg.label}</span>
                     <span style={{ fontSize:12, color:'#9ca3af' }}>{abierto?'▲':'▼'}</span>
                   </div>
@@ -474,7 +474,7 @@ export default function Despachos() {
                         ))}
                         <div style={{ display:'flex', justifyContent:'space-between', fontSize:13, fontWeight:600, paddingTop:8, marginTop:4, borderTop:'1px solid #e5e7eb' }}>
                           <span>Total</span>
-                          <span style={{ color:'#3B6D11' }}>{o.gramosTotal} gr · ${o.montoTotal.toLocaleString('es-CL')}</span>
+                          <span style={{ color:'#0369a1' }}>{o.gramosTotal} gr · ${o.montoTotal.toLocaleString('es-CL')}</span>
                         </div>
                         <div style={{ fontSize:11, color:'#9ca3af', marginTop:8 }}>
                           {new Date(o.created_at).toLocaleDateString('es-CL',{day:'2-digit',month:'short',year:'numeric'})} · {o.medio_pago||'—'}
@@ -545,11 +545,11 @@ export default function Despachos() {
                         )}
                         {o.estado === 'entregado' && (
                           <div>
-                            <div style={{ background:'#EAF3DE', border:'1px solid #97C459', borderRadius:8, padding:'10px 12px', fontSize:12, color:'#3B6D11', marginBottom:10 }}>
+                            <div style={{ background:'#e0f2fe', border:'1px solid #7dd3fc', borderRadius:8, padding:'10px 12px', fontSize:12, color:'#0369a1', marginBottom:10 }}>
                               ✅ Entregado correctamente. Registro completo.
                             </div>
                             <button onClick={() => verFotoEntrega(o)} disabled={buscandoFoto === o.ordenBase}
-                              style={{ width:'100%', padding:'9px 14px', border:'1px solid #97C459', borderRadius:8, background:'#fff', color:'#3B6D11', fontSize:12, fontWeight:600, cursor: buscandoFoto === o.ordenBase ? 'not-allowed' : 'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:6 }}>
+                              style={{ width:'100%', padding:'9px 14px', border:'1px solid #7dd3fc', borderRadius:8, background:'#fff', color:'#0369a1', fontSize:12, fontWeight:600, cursor: buscandoFoto === o.ordenBase ? 'not-allowed' : 'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:6 }}>
                               {buscandoFoto === o.ordenBase ? '🔍 Buscando...' : '📷 Ver foto de entrega'}
                             </button>
                           </div>
@@ -625,7 +625,7 @@ export default function Despachos() {
             <div style={{ fontSize:18, fontWeight:700, color:'#185FA5', marginBottom:4 }}>✅ Confirmar entrega</div>
             <div style={{ fontSize:13, color:'#6b7280', marginBottom:20 }}>Orden #{modalFotoEntrega.ordenBase} · {modalFotoEntrega.socio_nombre}</div>
 
-            <div style={{ background:'#f9fafb', border:`2px dashed ${fotoPreview ? '#97C459' : '#EF9F27'}`, borderRadius:12, padding:20, textAlign:'center', marginBottom:16, cursor:'pointer' }}
+            <div style={{ background:'#f9fafb', border:`2px dashed ${fotoPreview ? '#7dd3fc' : '#EF9F27'}`, borderRadius:12, padding:20, textAlign:'center', marginBottom:16, cursor:'pointer' }}
               onClick={() => document.getElementById('input-foto-entrega')?.click()}>
               {fotoPreview ? (
                 <img src={fotoPreview} alt="preview" style={{ maxHeight:200, maxWidth:'100%', borderRadius:8, objectFit:'contain' }} />

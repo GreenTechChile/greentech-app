@@ -15,7 +15,7 @@ const documentosEsperados = [
 ]
 
 const tipoColor: Record<string,string> = {
-  contrato:'#E6F1FB', declaracion:'#EEEDFE', reglamento:'#EAF3DE', cedula:'#FDF5E6', receta:'#FCEBEB',
+  contrato:'#E6F1FB', declaracion:'#EEEDFE', reglamento:'#e0f2fe', cedula:'#FDF5E6', receta:'#FCEBEB',
 }
 
 interface DocEstado { existe: boolean; path: string | null; fecha: string | null }
@@ -155,7 +155,7 @@ export default function MisDocumentos() {
     const dias = Math.ceil((vence.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24))
     if (dias <= 30) return { color: '#A32D2D', alerta: `🔴 Vence en ${dias} días — renueva urgente` }
     if (dias <= 60) return { color: '#BA7517', alerta: `⚠️ Vence en ${dias} días — renueva pronto` }
-    return { color: '#3B6D11', alerta: null }
+    return { color: '#0369a1', alerta: null }
   }
   const recetaStatus = getRecetaStatus()
   const fechaVencimientoLabel = vencimientoReceta
@@ -382,7 +382,7 @@ export default function MisDocumentos() {
         </div>
 
         {mensaje && (
-          <div style={{ background:mensaje.startsWith('✅')?'#EAF3DE':'#FCEBEB', border:`1px solid ${mensaje.startsWith('✅')?'#97C459':'#F5C5C5'}`, borderRadius:8, padding:'10px 14px', fontSize:12, color:mensaje.startsWith('✅')?'#3B6D11':'#A32D2D', marginBottom:16 }}>
+          <div style={{ background:mensaje.startsWith('✅')?'#e0f2fe':'#FCEBEB', border:`1px solid ${mensaje.startsWith('✅')?'#7dd3fc':'#F5C5C5'}`, borderRadius:8, padding:'10px 14px', fontSize:12, color:mensaje.startsWith('✅')?'#0369a1':'#A32D2D', marginBottom:16 }}>
             {mensaje}
           </div>
         )}
@@ -391,7 +391,7 @@ export default function MisDocumentos() {
           {[
             { label:'Documentos presentes', value: cargandoDocs ? '...' : `${docsPresentes} / ${documentosEsperados.length}`, sub:'en tu expediente' },
             { label:'Receta médica', value: fechaVencimientoLabel ? `Vence ${fechaVencimientoLabel}` : '—', sub: recetaStatus.alerta || (fechaVencimientoLabel ? 'Vigente' : 'Cargando...'), color: recetaStatus.color },
-            { label:'Estado', value: docsPresentes === documentosEsperados.length ? 'Completo ✓' : `Faltan ${documentosEsperados.length - docsPresentes}`, sub:'socio activo', color: docsPresentes === documentosEsperados.length ? '#3B6D11' : '#BA7517' },
+            { label:'Estado', value: docsPresentes === documentosEsperados.length ? 'Completo ✓' : `Faltan ${documentosEsperados.length - docsPresentes}`, sub:'socio activo', color: docsPresentes === documentosEsperados.length ? '#0369a1' : '#BA7517' },
           ].map((m,i) => (
             <div key={i} style={{ background:'#fff', border:'1px solid #e5e7eb', borderRadius:12, padding:14 }}>
               <div style={{ fontSize:11, color:'#6b7280', marginBottom:5 }}>{m.label}</div>
@@ -438,7 +438,7 @@ export default function MisDocumentos() {
                 <div style={{ display:'flex', alignItems:'center', gap:8, flexShrink:0 }}>
                   <span style={{ fontSize:11, color:'#9ca3af' }}>{fecha}</span>
                   {existe ? (
-                    <span style={{ fontSize:10, padding:'2px 8px', borderRadius:20, background:'#EAF3DE', color:'#3B6D11', whiteSpace:'nowrap' }}>✓ Firmado</span>
+                    <span style={{ fontSize:10, padding:'2px 8px', borderRadius:20, background:'#e0f2fe', color:'#0369a1', whiteSpace:'nowrap' }}>✓ Firmado</span>
                   ) : (doc as any).firmaKey ? (
                     <span style={{ fontSize:10, padding:'2px 8px', borderRadius:20, background:'#FDF5E6', color:'#BA7517', whiteSpace:'nowrap' }}>⏳ Pendiente firma</span>
                   ) : (
@@ -487,7 +487,7 @@ export default function MisDocumentos() {
             </div>
           ) : !subiendoReceta ? (
             <button onClick={() => setSubiendoReceta(true)}
-              style={{ padding:'8px 18px', border:'1px solid #3B6D11', borderRadius:8, background:'transparent', color:'#3B6D11', fontSize:13, cursor:'pointer' }}>
+              style={{ padding:'8px 18px', border:'1px solid #0369a1', borderRadius:8, background:'transparent', color:'#0369a1', fontSize:13, cursor:'pointer' }}>
               + Actualizar receta médica
             </button>
           ) : (
@@ -522,7 +522,7 @@ export default function MisDocumentos() {
                     placeholder="12345678-9"
                     style={{ width:'100%', padding:'8px 10px', border:`1px solid ${rutMedicoValido === false ? '#f87171' : rutMedicoValido === true ? '#4ade80' : '#d1d5db'}`, borderRadius:7, fontSize:13, boxSizing:'border-box' as const }} />
                   {rutMedicoValido === false && <div style={{ fontSize:11, color:'#ef4444', marginTop:3 }}>RUT no válido</div>}
-                  {rutMedicoValido === true && <div style={{ fontSize:11, color:'#16a34a', marginTop:3 }}>✓ RUT válido</div>}
+                  {rutMedicoValido === true && <div style={{ fontSize:11, color:'#0ea5e9', marginTop:3 }}>✓ RUT válido</div>}
                 </div>
                 <div>
                   <label style={{ fontSize:11, color:'#6b7280', display:'block', marginBottom:4 }}>Folio de receta <span style={{ color:'#A32D2D' }}>*</span></label>
@@ -599,7 +599,7 @@ export default function MisDocumentos() {
                           </button>
                         </div>
                       ) : (
-                        <div style={{ fontSize:12, color:'#3B6D11', fontWeight:500 }}>✅ Solicitud enviada — la directiva gestionará la firma del nuevo contrato.</div>
+                        <div style={{ fontSize:12, color:'#0369a1', fontWeight:500 }}>✅ Solicitud enviada — la directiva gestionará la firma del nuevo contrato.</div>
                       )}
                     </div>
                   </div>
@@ -612,7 +612,7 @@ export default function MisDocumentos() {
                 <div style={{ border:'1px dashed #d1d5db', borderRadius:8, padding:16, textAlign:'center' as const, background:'#fff', cursor:'pointer' }}
                   onClick={() => document.getElementById('file-receta-nueva')?.click()}>
                   {archivoNuevo
-                    ? <div><div style={{ fontSize:22 }}>📄</div><div style={{ fontSize:13, color:'#3B6D11', fontWeight:500 }}>{archivoNuevo.name}</div></div>
+                    ? <div><div style={{ fontSize:22 }}>📄</div><div style={{ fontSize:13, color:'#0369a1', fontWeight:500 }}>{archivoNuevo.name}</div></div>
                     : <div><div style={{ fontSize:22 }}>☁️</div><div style={{ fontSize:12, color:'#6b7280' }}>Haz clic para seleccionar</div><div style={{ fontSize:11, color:'#9ca3af' }}>PDF, JPG, JPEG · máx. 10 MB</div></div>
                   }
                   <input id="file-receta-nueva" type="file" accept=".pdf,.jpg,.jpeg,.png" style={{ display:'none' }}
@@ -629,8 +629,8 @@ export default function MisDocumentos() {
                   disabled={enviando || !archivoNuevo || (delegacionObligatoria && !delegacionSolicitada)}
                   title={delegacionObligatoria && !delegacionSolicitada ? 'Debes actualizar el contrato de delegación primero' : undefined}
                   style={{ padding:'7px 16px', border:'none', borderRadius:8,
-                    background:(enviando||!archivoNuevo||(delegacionObligatoria&&!delegacionSolicitada))?'#9ca3af':'#3B6D11',
-                    color:'#EAF3DE', fontSize:13, fontWeight:600,
+                    background:(enviando||!archivoNuevo||(delegacionObligatoria&&!delegacionSolicitada))?'#9ca3af':'#0369a1',
+                    color:'#e0f2fe', fontSize:13, fontWeight:600,
                     cursor:(enviando||!archivoNuevo||(delegacionObligatoria&&!delegacionSolicitada))?'not-allowed':'pointer' }}>
                   {enviando ? '⏳ Enviando...' : 'Enviar para revisión →'}
                 </button>

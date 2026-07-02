@@ -310,7 +310,7 @@ export default function Dispensacion() {
   }
 
   const colorTipo: Record<string, {bg: string, color: string}> = {
-    sativa:        { bg: '#EAF3DE', color: '#3B6D11' },
+    sativa:        { bg: '#e0f2fe', color: '#0369a1' },
     indica:        { bg: '#EEEDFE', color: '#534AB7' },
     hibrida:       { bg: '#E6F1FB', color: '#185FA5' },
     cbd:           { bg: '#FDF5E6', color: '#BA7517' },
@@ -375,10 +375,10 @@ export default function Dispensacion() {
                 <p style={{ fontSize: 13, color: '#6b7280' }}>Indica los gramos que necesitas. No puedes superar tu cuota mensual.</p>
               </div>
               <button onClick={() => totalItems > 0 && setPaso('checkout')} disabled={totalItems === 0 || recetaVencida}
-                style={{ background: totalItems > 0 ? '#3B6D11' : '#e5e7eb', color: totalItems > 0 ? '#EAF3DE' : '#9ca3af', border: 'none', borderRadius: 10, padding: '10px 20px', fontSize: 13, fontWeight: 600, cursor: totalItems > 0 ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', gap: 8, minWidth: 160 }}>
+                style={{ background: totalItems > 0 ? '#0369a1' : '#e5e7eb', color: totalItems > 0 ? '#e0f2fe' : '#9ca3af', border: 'none', borderRadius: 10, padding: '10px 20px', fontSize: 13, fontWeight: 600, cursor: totalItems > 0 ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', gap: 8, minWidth: 160 }}>
                 Checkout
                 {totalItems > 0 && (
-                  <span style={{ background: '#EAF3DE', color: '#3B6D11', borderRadius: 20, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>
+                  <span style={{ background: '#e0f2fe', color: '#0369a1', borderRadius: 20, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>
                     {totalItems} items - ${(totalMonto - COSTO_DESPACHO).toLocaleString('es-CL')}
                   </span>
                 )}
@@ -407,14 +407,14 @@ export default function Dispensacion() {
                 <span style={{ fontWeight: 600 }}>Cuota mensual - {mesNombre} {new Date().getFullYear()}</span>
                 <span style={{ color: '#6b7280' }}>
                   {dispensadoMes + totalCarrito} / {cuota} gr usados
-                  {totalCarrito > 0 && <span style={{ color: '#3B6D11', marginLeft: 6 }}>(+{totalCarrito} gr en carrito)</span>}
+                  {totalCarrito > 0 && <span style={{ color: '#0369a1', marginLeft: 6 }}>(+{totalCarrito} gr en carrito)</span>}
                 </span>
               </div>
               <div style={{ height: 10, background: '#f3f4f6', borderRadius: 20, overflow: 'hidden' }}>
-                <div style={{ height: '100%', width: Math.min(100, ((dispensadoMes + totalCarrito) / cuota) * 100) + '%', background: '#3B6D11', borderRadius: 20, transition: '0.3s' }} />
+                <div style={{ height: '100%', width: Math.min(100, ((dispensadoMes + totalCarrito) / cuota) * 100) + '%', background: '#0369a1', borderRadius: 20, transition: '0.3s' }} />
               </div>
               {totalCarrito > 0 && (
-                <div style={{ fontSize: 11, color: '#3B6D11', marginTop: 6 }}>
+                <div style={{ fontSize: 11, color: '#0369a1', marginTop: 6 }}>
                   Despues de este pedido te quedaran {disponibleRestante} gr disponibles este mes
                 </div>
               )}
@@ -451,7 +451,7 @@ export default function Dispensacion() {
                             </span>
                           ) : null}
                           {gramsEnCarrito > 0 && (
-                            <span style={{ position: 'absolute', bottom: 10, right: 10, fontSize: 10, background: '#3B6D11', color: '#fff', padding: '3px 8px', borderRadius: 20, fontWeight: 600 }}>
+                            <span style={{ position: 'absolute', bottom: 10, right: 10, fontSize: 10, background: '#0369a1', color: '#fff', padding: '3px 8px', borderRadius: 20, fontWeight: 600 }}>
                               {gramsEnCarrito} gr en carrito
                             </span>
                           )}
@@ -461,7 +461,7 @@ export default function Dispensacion() {
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                             {cepa.descripcion && (
                               <button onClick={e => { e.stopPropagation(); setCepaDescripcion({ nombre: cepa.nombre, descripcion: cepa.descripcion! }) }}
-                                style={{ fontSize: 11, background: '#EAF3DE', border: '1px solid #97C459', borderRadius: 20, padding: '2px 10px', color: '#3B6D11', cursor: 'pointer', fontWeight: 500 }}>
+                                style={{ fontSize: 11, background: '#e0f2fe', border: '1px solid #7dd3fc', borderRadius: 20, padding: '2px 10px', color: '#0369a1', cursor: 'pointer', fontWeight: 500 }}>
                                 ℹ️ Info
                               </button>
                             )}
@@ -518,7 +518,7 @@ export default function Dispensacion() {
                                 />
                                 <span style={{ position: 'absolute' as const, right: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 11, color: '#9ca3af', pointerEvents: 'none' as const }}>gr</span>
                               </div>
-                              <span style={{ fontSize: 14, fontWeight: 700, color: precioPreview > 0 ? '#3B6D11' : '#9ca3af', minWidth: 100, textAlign: 'right' as const }}>
+                              <span style={{ fontSize: 14, fontWeight: 700, color: precioPreview > 0 ? '#0369a1' : '#9ca3af', minWidth: 100, textAlign: 'right' as const }}>
                                 {precioPreview > 0 ? '$' + precioPreview.toLocaleString('es-CL') : '—'}
                               </span>
                             </div>
@@ -547,7 +547,7 @@ export default function Dispensacion() {
                             )}
 
                             <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 6 }}>
-                              Cuota restante: <strong style={{ color: disponibleRestante <= 0 ? '#A32D2D' : '#3B6D11' }}>{disponibleRestante} gr</strong>
+                              Cuota restante: <strong style={{ color: disponibleRestante <= 0 ? '#A32D2D' : '#0369a1' }}>{disponibleRestante} gr</strong>
                             </div>
                           </div>
                         </div>
@@ -593,10 +593,10 @@ export default function Dispensacion() {
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, fontSize: 14, paddingTop: 10, borderTop: '1px solid #e5e7eb', marginTop: 4 }}>
                 <span>Total ({totalCarrito} gr)</span>
-                <span style={{ color: '#3B6D11' }}>${totalMonto.toLocaleString('es-CL')}</span>
+                <span style={{ color: '#0369a1' }}>${totalMonto.toLocaleString('es-CL')}</span>
               </div>
             </div>
-            <div style={{ background: '#EAF3DE', border: '1px solid #97C459', borderRadius: 10, padding: '10px 14px', marginBottom: 16, fontSize: 12, color: '#3B6D11' }}>
+            <div style={{ background: '#e0f2fe', border: '1px solid #7dd3fc', borderRadius: 10, padding: '10px 14px', marginBottom: 16, fontSize: 12, color: '#0369a1' }}>
               Dentro de tu cuota: usaras {dispensadoMes + totalCarrito} de {cuota} gr este mes
             </div>
             <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: 16, marginBottom: 16 }}>
@@ -638,7 +638,7 @@ export default function Dispensacion() {
         {paso === 'confirmacion' && (
           <div style={{ maxWidth: 560, margin: '0 auto', textAlign: 'center' as const, paddingTop: 20 }}>
             <div style={{ fontSize: 56, marginBottom: 16 }}>✅</div>
-            <h1 style={{ fontSize: 20, fontWeight: 600, marginBottom: 8, color: '#3B6D11' }}>Pago confirmado</h1>
+            <h1 style={{ fontSize: 20, fontWeight: 600, marginBottom: 8, color: '#0369a1' }}>Pago confirmado</h1>
             <p style={{ fontSize: 14, color: '#6b7280', marginBottom: 4 }}>Tu pedido fue recibido y sera preparado por la corporacion.</p>
             <div style={{ fontSize: 12, color: '#9ca3af', marginBottom: 24 }}>
               Orden <strong>{ordenNumero}</strong> · 💙 MercadoPago
@@ -651,13 +651,13 @@ export default function Dispensacion() {
                   <span style={{ fontWeight: 600 }}>${item.precio.toLocaleString('es-CL')}</span>
                 </div>
               ))}
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, fontWeight: 600, paddingTop: 8, color: '#3B6D11' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, fontWeight: 600, paddingTop: 8, color: '#0369a1' }}>
                 <span>Total pagado</span><span>${totalMonto.toLocaleString('es-CL')}</span>
               </div>
             </div>
             <div style={{ display: 'flex', gap: 10 }}>
               <button onClick={() => { setCarrito([]); setPaso('catalogo') }}
-                style={{ flex: 1, background: '#3B6D11', color: '#EAF3DE', border: 'none', borderRadius: 8, padding: 11, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+                style={{ flex: 1, background: '#0369a1', color: '#e0f2fe', border: 'none', borderRadius: 8, padding: 11, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
                 Nueva dispensacion
               </button>
               <a href="/socio/historial" style={{ flex: 1, background: '#fff', color: '#374151', border: '1px solid #e5e7eb', borderRadius: 8, padding: 11, fontSize: 13, fontWeight: 500, textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

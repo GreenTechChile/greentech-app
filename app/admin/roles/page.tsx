@@ -19,7 +19,7 @@ interface Socio {
 type RolKey = 'rol_socio' | 'rol_admin' | 'rol_cultivador' | 'rol_despachador'
 
 const roles: { key: RolKey; label: string; icon: string; bg: string; color: string; desc: string }[] = [
-  { key: 'rol_socio',       label: 'Socio',       icon: '🌿', bg: '#EAF3DE', color: '#3B6D11', desc: 'Puede dispensar, ver historial, documentos y perfil.' },
+  { key: 'rol_socio',       label: 'Socio',       icon: '🌿', bg: '#e0f2fe', color: '#0369a1', desc: 'Puede dispensar, ver historial, documentos y perfil.' },
   { key: 'rol_admin',       label: 'Admin',       icon: '🛡️', bg: '#E6F1FB', color: '#185FA5', desc: 'Acceso completo al panel de administración.' },
   { key: 'rol_cultivador',  label: 'Cultivador',  icon: '🌱', bg: '#FDF5E6', color: '#BA7517', desc: 'Acceso al módulo de cultivo: plantas, gramaje húmedo y seco.' },
   { key: 'rol_despachador', label: 'Despachador', icon: '📦', bg: '#FDE8F0', color: '#A32D6B', desc: 'Acceso al módulo de despachos y seguimiento de envíos.' },
@@ -88,7 +88,7 @@ export default function Roles() {
         </div>
 
         {mensaje && (
-          <div style={{ background: mensaje.startsWith('✅') ? '#EAF3DE' : '#FCEBEB', border: `1px solid ${mensaje.startsWith('✅') ? '#97C459' : '#F5C5C5'}`, borderRadius: 8, padding: '10px 14px', fontSize: 12, color: mensaje.startsWith('✅') ? '#3B6D11' : '#A32D2D', marginBottom: 16 }}>
+          <div style={{ background: mensaje.startsWith('✅') ? '#e0f2fe' : '#FCEBEB', border: `1px solid ${mensaje.startsWith('✅') ? '#7dd3fc' : '#F5C5C5'}`, borderRadius: 8, padding: '10px 14px', fontSize: 12, color: mensaje.startsWith('✅') ? '#0369a1' : '#A32D2D', marginBottom: 16 }}>
             {mensaje}
           </div>
         )}
@@ -97,7 +97,7 @@ export default function Roles() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 10, marginBottom: 20 }}>
           {[
             { label: 'Total usuarios',  value: socios.length,                                    sub: 'registrados',        color: '#111'    },
-            { label: 'Socios',          value: socios.filter(s => s.rol_socio).length,           sub: 'pueden dispensar',   color: '#3B6D11' },
+            { label: 'Socios',          value: socios.filter(s => s.rol_socio).length,           sub: 'pueden dispensar',   color: '#0369a1' },
             { label: 'Administradores', value: socios.filter(s => s.rol_admin).length,           sub: 'acceso admin',       color: '#185FA5' },
             { label: 'Cultivadores',    value: socios.filter(s => s.rol_cultivador).length,      sub: 'acceso a cultivo',   color: '#BA7517' },
             { label: 'Despachadores',   value: socios.filter(s => s.rol_despachador).length,     sub: 'acceso a despachos', color: '#A32D6B' },
@@ -154,7 +154,7 @@ export default function Roles() {
                     {/* Usuario */}
                     <td style={{ padding: '12px 14px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <div style={{ width: 34, height: 34, borderRadius: '50%', background: '#EAF3DE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#3B6D11', flexShrink: 0 }}>
+                        <div style={{ width: 34, height: 34, borderRadius: '50%', background: '#e0f2fe', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#0369a1', flexShrink: 0 }}>
                           {socio.nombre.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                         </div>
                         <div>
@@ -169,7 +169,7 @@ export default function Roles() {
 
                     {/* Estado */}
                     <td style={{ padding: '12px 14px' }}>
-                      <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, background: socio.estado === 'activo' ? '#EAF3DE' : '#f3f4f6', color: socio.estado === 'activo' ? '#3B6D11' : '#9ca3af' }}>
+                      <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, background: socio.estado === 'activo' ? '#e0f2fe' : '#f3f4f6', color: socio.estado === 'activo' ? '#0369a1' : '#9ca3af' }}>
                         {socio.estado === 'activo' ? '● Activo' : socio.estado}
                       </span>
                     </td>

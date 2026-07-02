@@ -26,7 +26,7 @@ interface Cepa {
 const tipoOpciones = ['sativa', 'indica', 'hibrida', 'cbd']
 
 const colorTipo: Record<string, { bg: string; color: string; border: string }> = {
-  sativa:        { bg: '#EAF3DE', color: '#3B6D11', border: '#97C459' },
+  sativa:        { bg: '#e0f2fe', color: '#0369a1', border: '#7dd3fc' },
   indica:        { bg: '#EEEDFE', color: '#534AB7', border: '#A89FF0' },
   hibrida:       { bg: '#E6F1FB', color: '#185FA5', border: '#A8CBF0' },
   cbd:           { bg: '#FDF5E6', color: '#BA7517', border: '#EFC97A' },
@@ -200,7 +200,7 @@ export default function Cepas() {
 
   const imprimirEtiqueta = (cepa: Cepa) => {
     const colores: Record<string, { bg: string; color: string }> = {
-      sativa:  { bg: '#EAF3DE', color: '#3B6D11' },
+      sativa:  { bg: '#e0f2fe', color: '#0369a1' },
       indica:  { bg: '#EEEDFE', color: '#534AB7' },
       hibrida: { bg: '#E6F1FB', color: '#185FA5' },
       cbd:     { bg: '#FDF5E6', color: '#BA7517' },
@@ -228,7 +228,7 @@ export default function Cepas() {
       display: flex; flex-direction: column; justify-content: space-between;
     }
     .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-    .logo { font-size: 9px; color: #3B6D11; font-weight: 700; letter-spacing: 0.3px; }
+    .logo { font-size: 9px; color: #0369a1; font-weight: 700; letter-spacing: 0.3px; }
     .badge {
       font-size: 8px; font-weight: 700; padding: 2px 7px; border-radius: 20px;
       background: ${col.bg}; color: ${col.color}; text-transform: uppercase; letter-spacing: 0.5px;
@@ -308,7 +308,7 @@ export default function Cepas() {
         </div>
 
         {mensaje && (
-          <div style={{ background: mensaje.startsWith('✅') ? '#EAF3DE' : mensaje.startsWith('🗑️') ? '#f3f4f6' : '#FCEBEB', border: `1px solid ${mensaje.startsWith('✅') ? '#97C459' : mensaje.startsWith('🗑️') ? '#d1d5db' : '#F5C5C5'}`, borderRadius: 8, padding: '10px 14px', fontSize: 12, color: mensaje.startsWith('✅') ? '#3B6D11' : mensaje.startsWith('🗑️') ? '#374151' : '#A32D2D', marginBottom: 16 }}>
+          <div style={{ background: mensaje.startsWith('✅') ? '#e0f2fe' : mensaje.startsWith('🗑️') ? '#f3f4f6' : '#FCEBEB', border: `1px solid ${mensaje.startsWith('✅') ? '#7dd3fc' : mensaje.startsWith('🗑️') ? '#d1d5db' : '#F5C5C5'}`, borderRadius: 8, padding: '10px 14px', fontSize: 12, color: mensaje.startsWith('✅') ? '#0369a1' : mensaje.startsWith('🗑️') ? '#374151' : '#A32D2D', marginBottom: 16 }}>
             {mensaje}
           </div>
         )}
@@ -359,7 +359,7 @@ export default function Cepas() {
                     {ncImagen ? 'Cambiar imagen' : 'Subir imagen'}
                   </button>
                   <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 4 }}>JPG, PNG · máx. 5 MB</div>
-                  {ncImagen && <div style={{ fontSize: 11, color: '#3B6D11', marginTop: 2 }}>✓ {ncImagen.name}</div>}
+                  {ncImagen && <div style={{ fontSize: 11, color: '#0369a1', marginTop: 2 }}>✓ {ncImagen.name}</div>}
                 </div>
                 <input id="nc-imagen" type="file" accept="image/*" style={{ display: 'none' }}
                   onChange={e => { const file = e.target.files?.[0]; if (file) { setNcImagen(file); const reader = new FileReader(); reader.onload = ev => setNcImagenPreview(ev.target?.result as string); reader.readAsDataURL(file) } }} />
@@ -412,7 +412,7 @@ export default function Cepas() {
                         <span>THC {cepa.thc_pct}% · CBD {cepa.cbd_pct}%</span>
                         {cepa.pct_indica ? <span>Indica {cepa.pct_indica}%</span> : null}
                         {cepa.pct_sativa ? <span>Sativa {cepa.pct_sativa}%</span> : null}
-                        <span style={{ color: cepa.stock_gramos > 0 ? '#3B6D11' : '#A32D2D', fontWeight: 500 }}>Stock: {cepa.stock_gramos} gr</span>
+                        <span style={{ color: cepa.stock_gramos > 0 ? '#0369a1' : '#A32D2D', fontWeight: 500 }}>Stock: {cepa.stock_gramos} gr</span>
                       </div>
                     </div>
                     {/* Precio por gramo destacado */}
@@ -426,7 +426,7 @@ export default function Cepas() {
                         🏷️
                       </button>
                       <button onClick={() => toggleVisibilidad(cepa)} title={cepa.visible ? 'Ocultar' : 'Mostrar'}
-                        style={{ padding: '6px 10px', border: `1px solid ${cepa.visible ? '#97C459' : '#d1d5db'}`, borderRadius: 8, background: cepa.visible ? '#EAF3DE' : '#f9fafb', color: cepa.visible ? '#3B6D11' : '#6b7280', fontSize: 13, cursor: 'pointer' }}>
+                        style={{ padding: '6px 10px', border: `1px solid ${cepa.visible ? '#7dd3fc' : '#d1d5db'}`, borderRadius: 8, background: cepa.visible ? '#e0f2fe' : '#f9fafb', color: cepa.visible ? '#0369a1' : '#6b7280', fontSize: 13, cursor: 'pointer' }}>
                         {cepa.visible ? '👁️' : '🙈'}
                       </button>
                       <button onClick={() => estaEditando ? cancelarEdicion() : iniciarEdicion(cepa)}
@@ -505,7 +505,7 @@ export default function Cepas() {
                               style={{ padding: '6px 14px', border: `1px solid ${cfg.border}`, borderRadius: 8, background: 'transparent', color: cfg.color, fontSize: 12, cursor: 'pointer' }}>
                               {imagenNueva ? 'Cambiar imagen' : 'Subir nueva imagen'}
                             </button>
-                            {imagenNueva && <div style={{ fontSize: 11, color: '#3B6D11', marginTop: 4 }}>✓ {imagenNueva.name}</div>}
+                            {imagenNueva && <div style={{ fontSize: 11, color: '#0369a1', marginTop: 4 }}>✓ {imagenNueva.name}</div>}
                           </div>
                           <input id={`img-${cepa.id}`} type="file" accept="image/*" style={{ display: 'none' }}
                             onChange={e => { const file = e.target.files?.[0]; if (file) { setImagenNueva(file); const reader = new FileReader(); reader.onload = ev => setImagenPreview(ev.target?.result as string); reader.readAsDataURL(file) } }} />
@@ -513,9 +513,9 @@ export default function Cepas() {
                       </div>
 
                       {/* Visibilidad */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16, padding: '10px 14px', background: form.visible ? '#EAF3DE' : '#f9fafb', border: `1px solid ${form.visible ? '#97C459' : '#e5e7eb'}`, borderRadius: 8 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16, padding: '10px 14px', background: form.visible ? '#e0f2fe' : '#f9fafb', border: `1px solid ${form.visible ? '#7dd3fc' : '#e5e7eb'}`, borderRadius: 8 }}>
                         <input type="checkbox" id={`vis-${cepa.id}`} checked={!!form.visible} onChange={e => f('visible', e.target.checked)} style={{ width: 16, height: 16, cursor: 'pointer' }} />
-                        <label htmlFor={`vis-${cepa.id}`} style={{ fontSize: 13, cursor: 'pointer', color: form.visible ? '#3B6D11' : '#6b7280', fontWeight: 500 }}>
+                        <label htmlFor={`vis-${cepa.id}`} style={{ fontSize: 13, cursor: 'pointer', color: form.visible ? '#0369a1' : '#6b7280', fontWeight: 500 }}>
                           {form.visible ? '👁️ Visible en el catálogo de dispensación' : '🙈 Oculta — no aparece en el catálogo'}
                         </label>
                       </div>

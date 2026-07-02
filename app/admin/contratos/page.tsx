@@ -253,7 +253,7 @@ export default function Contratos() {
         {/* Header */}
         <div style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 16px', background:'#f9fafb', borderBottom: abierto ? '1px solid #e5e7eb' : 'none', cursor:'pointer' }}
           onClick={() => setExpandido(abierto ? null : c.id)}>
-          <div style={{ width:38, height:38, borderRadius:'50%', background: c.tipo==='persona'?'#EAF3DE':'#E6F1FB', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, fontWeight:700, color:c.tipo==='persona'?'#3B6D11':'#185FA5', flexShrink:0 }}>
+          <div style={{ width:38, height:38, borderRadius:'50%', background: c.tipo==='persona'?'#e0f2fe':'#E6F1FB', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, fontWeight:700, color:c.tipo==='persona'?'#0369a1':'#185FA5', flexShrink:0 }}>
             {c.tipo === 'persona' ? c.nombre.split(' ').map(n=>n[0]).join('').slice(0,2) : '🏢'}
           </div>
           <div style={{ flex:1 }}>
@@ -266,7 +266,7 @@ export default function Contratos() {
                 {pagoVencido ? '🔴 Pago vencido' : pagoProximoAlerta ? '⚠️ Pago próximo' : 'Pago pendiente'}
               </span>
             )}
-            <span style={{ fontSize:10, background:c.estado==='activo'?'#EAF3DE':'#f3f4f6', color:c.estado==='activo'?'#3B6D11':'#6b7280', padding:'2px 8px', borderRadius:20 }}>
+            <span style={{ fontSize:10, background:c.estado==='activo'?'#e0f2fe':'#f3f4f6', color:c.estado==='activo'?'#0369a1':'#6b7280', padding:'2px 8px', borderRadius:20 }}>
               {c.estado === 'activo' ? 'Activo' : 'Terminado'}
             </span>
             <span style={{ fontSize:14, color:'#9ca3af' }}>{abierto ? '▲' : '▼'}</span>
@@ -285,7 +285,7 @@ export default function Contratos() {
                 { k:'Monto neto', v:`$${c.monto_bruto.toLocaleString('es-CL')}` },
                 ...(c.tipo==='persona' ? [
                   { k:`Retención ${c.retencion_pct}%`, v:`$${retencionMonto(c.monto_bruto,c.retencion_pct).toLocaleString('es-CL')}` },
-                  { k:'Monto líquido', v:`$${montoLiquido(c.monto_bruto,c.retencion_pct,c.tipo).toLocaleString('es-CL')}`, color:'#3B6D11' },
+                  { k:'Monto líquido', v:`$${montoLiquido(c.monto_bruto,c.retencion_pct,c.tipo).toLocaleString('es-CL')}`, color:'#0369a1' },
                 ] : [
                   { k:'IVA (19%)', v:`$${Math.round(c.monto_bruto*0.19).toLocaleString('es-CL')}` },
                   { k:'Total con IVA', v:`$${Math.round(c.monto_bruto*1.19).toLocaleString('es-CL')}`, color:'#185FA5' },
@@ -332,8 +332,8 @@ export default function Contratos() {
                     <span style={{ color:'#6b7280' }}>{MESES[p.mes-1]} {p.año}{(p as any).descripcion ? ` · ${(p as any).descripcion}` : ''}</span>
                     <span style={{ fontWeight:500 }}>${p.monto_liquido.toLocaleString('es-CL')}</span>
                     {p.estado === 'pagado'
-                      ? <span style={{ fontSize:10, background:'#EAF3DE', color:'#3B6D11', padding:'1px 6px', borderRadius:20 }}>✓ Pagado</span>
-                      : <button onClick={() => setPagoConComprobante(p.id)} style={{ fontSize:10, padding:'2px 8px', border:'none', borderRadius:6, background:'#3B6D11', color:'#EAF3DE', cursor:'pointer' }}>Pagar</button>
+                      ? <span style={{ fontSize:10, background:'#e0f2fe', color:'#0369a1', padding:'1px 6px', borderRadius:20 }}>✓ Pagado</span>
+                      : <button onClick={() => setPagoConComprobante(p.id)} style={{ fontSize:10, padding:'2px 8px', border:'none', borderRadius:6, background:'#0369a1', color:'#e0f2fe', cursor:'pointer' }}>Pagar</button>
                     }
                   </div>
                   {/* Mini modal comprobante */}
@@ -352,11 +352,11 @@ export default function Contratos() {
                       <div style={{ display:'flex', gap:6 }}>
                         <button onClick={() => marcarPagado(p.id)}
                           disabled={subiendoComprobante}
-                          style={{ flex:1, padding:'5px 0', border:'1px solid #3B6D11', borderRadius:6, background:'transparent', color:'#3B6D11', fontSize:11, cursor:'pointer' }}>
+                          style={{ flex:1, padding:'5px 0', border:'1px solid #0369a1', borderRadius:6, background:'transparent', color:'#0369a1', fontSize:11, cursor:'pointer' }}>
                           Sin comprobante
                         </button>
                         <label htmlFor={`comp-${p.id}`}
-                          style={{ flex:1, padding:'5px 0', border:'none', borderRadius:6, background:'#3B6D11', color:'#EAF3DE', fontSize:11, cursor:'pointer', textAlign:'center' as const }}>
+                          style={{ flex:1, padding:'5px 0', border:'none', borderRadius:6, background:'#0369a1', color:'#e0f2fe', fontSize:11, cursor:'pointer', textAlign:'center' as const }}>
                           {subiendoComprobante ? 'Subiendo...' : '⬆ Con comprobante'}
                         </label>
                         <button onClick={() => setPagoConComprobante(null)}
@@ -398,7 +398,7 @@ export default function Contratos() {
                     }
                     alert('Documento no encontrado.')
                   }} style={{ fontSize:10, padding:'2px 7px', border:'1px solid #e5e7eb', borderRadius:5, background:'transparent', color:'#6b7280', cursor:'pointer' }}>📥</button>
-                  <label style={{ fontSize:10, padding:'2px 7px', border:'1px solid #3B6D11', borderRadius:5, color:'#3B6D11', cursor:'pointer' }}>
+                  <label style={{ fontSize:10, padding:'2px 7px', border:'1px solid #0369a1', borderRadius:5, color:'#0369a1', cursor:'pointer' }}>
                     ↑ Subir
                     <input type="file" accept=".pdf,.jpg,.jpeg,.png" style={{ display:'none' }}
                       onChange={async (e) => {
@@ -462,27 +462,27 @@ export default function Contratos() {
             <p style={{ fontSize:13, color:'#6b7280' }}>Honorarios de personas, contratos con empresas, pagos y finiquitos</p>
           </div>
           <button onClick={() => setMostrarForm(!mostrarForm)}
-            style={{ padding:'8px 16px', border:'none', borderRadius:8, background:'#3B6D11', color:'#EAF3DE', fontSize:13, fontWeight:600, cursor:'pointer' }}>
+            style={{ padding:'8px 16px', border:'none', borderRadius:8, background:'#0369a1', color:'#e0f2fe', fontSize:13, fontWeight:600, cursor:'pointer' }}>
             + Nuevo contrato
           </button>
         </div>
 
         {mensaje && (
-          <div style={{ background:mensaje.startsWith('✅')?'#EAF3DE':'#FCEBEB', border:`1px solid ${mensaje.startsWith('✅')?'#97C459':'#F5C5C5'}`, borderRadius:8, padding:'10px 14px', fontSize:12, color:mensaje.startsWith('✅')?'#3B6D11':'#A32D2D', marginBottom:16 }}>
+          <div style={{ background:mensaje.startsWith('✅')?'#e0f2fe':'#FCEBEB', border:`1px solid ${mensaje.startsWith('✅')?'#7dd3fc':'#F5C5C5'}`, borderRadius:8, padding:'10px 14px', fontSize:12, color:mensaje.startsWith('✅')?'#0369a1':'#A32D2D', marginBottom:16 }}>
             {mensaje}
           </div>
         )}
 
         {/* Form nuevo contrato */}
         {mostrarForm && (
-          <div style={{ border:'1px solid #97C459', borderRadius:12, padding:18, marginBottom:20, background:'#FAFFF5' }}>
-            <div style={{ fontSize:14, fontWeight:600, marginBottom:16, color:'#3B6D11' }}>📋 Nuevo contrato</div>
+          <div style={{ border:'1px solid #7dd3fc', borderRadius:12, padding:18, marginBottom:20, background:'#FAFFF5' }}>
+            <div style={{ fontSize:14, fontWeight:600, marginBottom:16, color:'#0369a1' }}>📋 Nuevo contrato</div>
 
             {/* Tipo */}
             <div style={{ display:'flex', gap:8, marginBottom:14 }}>
               {[{v:'persona',l:'👤 Persona (honorarios)'},{v:'empresa',l:'🏢 Empresa'}].map(t => (
                 <button key={t.v} onClick={() => setNcTipo(t.v as typeof ncTipo)}
-                  style={{ padding:'7px 16px', border:`1.5px solid ${ncTipo===t.v?'#3B6D11':'#e5e7eb'}`, borderRadius:8, background:ncTipo===t.v?'#EAF3DE':'#fff', color:ncTipo===t.v?'#3B6D11':'#6b7280', fontSize:12, cursor:'pointer', fontWeight:ncTipo===t.v?600:400 }}>
+                  style={{ padding:'7px 16px', border:`1.5px solid ${ncTipo===t.v?'#0369a1':'#e5e7eb'}`, borderRadius:8, background:ncTipo===t.v?'#e0f2fe':'#fff', color:ncTipo===t.v?'#0369a1':'#6b7280', fontSize:12, cursor:'pointer', fontWeight:ncTipo===t.v?600:400 }}>
                   {t.l}
                 </button>
               ))}
@@ -493,7 +493,7 @@ export default function Contratos() {
               <div style={s.field}>
                 <label style={s.label}>RUT *</label>
                 <input
-                  style={{ ...s.input, borderColor: ncRutError ? '#E24B4A' : ncRut && validarRut(ncRut) ? '#97C459' : '#d1d5db' }}
+                  style={{ ...s.input, borderColor: ncRutError ? '#E24B4A' : ncRut && validarRut(ncRut) ? '#7dd3fc' : '#d1d5db' }}
                   value={ncRut}
                   placeholder="Ej: 12345678-9"
                   onChange={e => {
@@ -505,7 +505,7 @@ export default function Contratos() {
                   onBlur={() => setNcRutError(ncRut && !validarRut(ncRut) ? 'RUT inválido. Verifica el dígito verificador.' : '')}
                 />
                 {ncRutError && <span style={{ fontSize:11, color:'#E24B4A', marginTop:2 }}>{ncRutError}</span>}
-                {!ncRutError && ncRut && validarRut(ncRut) && <span style={{ fontSize:11, color:'#3B6D11', marginTop:2 }}>✓ RUT válido</span>}
+                {!ncRutError && ncRut && validarRut(ncRut) && <span style={{ fontSize:11, color:'#0369a1', marginTop:2 }}>✓ RUT válido</span>}
               </div>
               <div style={s.field}><label style={s.label}>Rol / Función</label><input style={s.input} value={ncRol} onChange={e=>setNcRol(e.target.value)} placeholder="Ej: Cultivador"/></div>
               <div style={s.field}>
@@ -541,7 +541,7 @@ export default function Contratos() {
               )}
               {ncTipo === 'persona' && ncMonto && (
                 <div style={{ ...s.field, justifyContent:'flex-end' }}>
-                  <div style={{ background:'#EAF3DE', borderRadius:8, padding:'8px 10px', fontSize:12, color:'#3B6D11' }}>
+                  <div style={{ background:'#e0f2fe', borderRadius:8, padding:'8px 10px', fontSize:12, color:'#0369a1' }}>
                     <div>Bruto: ${parseInt(ncMonto||'0').toLocaleString('es-CL')}</div>
                     <div>Retención: ${retencionMonto(parseInt(ncMonto||'0'),parseFloat(ncRetencion||'0')).toLocaleString('es-CL')}</div>
                     <div style={{ fontWeight:700 }}>Líquido: ${montoLiquido(parseInt(ncMonto||'0'),parseFloat(ncRetencion||'0'),'persona').toLocaleString('es-CL')}</div>
@@ -580,7 +580,7 @@ export default function Contratos() {
                 <div style={{ fontSize:12, fontWeight:500 }}>Contrato firmado (opcional)</div>
                 <div style={{ fontSize:11, color:'#9ca3af' }}>{archivoContrato ? `✓ ${archivoContrato.name}` : 'Puedes subirlo ahora o después desde la tarjeta del contrato'}</div>
               </div>
-              <label style={{ fontSize:12, padding:'5px 12px', border:'1px solid #3B6D11', borderRadius:8, color:'#3B6D11', cursor:'pointer' }}>
+              <label style={{ fontSize:12, padding:'5px 12px', border:'1px solid #0369a1', borderRadius:8, color:'#0369a1', cursor:'pointer' }}>
                 {archivoContrato ? 'Cambiar' : '↑ Subir PDF'}
                 <input type="file" accept=".pdf,.jpg,.jpeg,.png" style={{ display:'none' }}
                   onChange={e => e.target.files?.[0] && setArchivoContrato(e.target.files[0])} />
@@ -588,7 +588,7 @@ export default function Contratos() {
             </div>
             <div style={{ display:'flex', justifyContent:'flex-end', gap:8 }}>
               <button onClick={() => setMostrarForm(false)} style={{ padding:'7px 16px', border:'1px solid #e5e7eb', borderRadius:8, background:'#fff', fontSize:13, cursor:'pointer' }}>Cancelar</button>
-              <button onClick={crearContrato} disabled={guardando} style={{ padding:'7px 16px', border:'none', borderRadius:8, background:'#3B6D11', color:'#EAF3DE', fontSize:13, fontWeight:600, cursor:'pointer' }}>
+              <button onClick={crearContrato} disabled={guardando} style={{ padding:'7px 16px', border:'none', borderRadius:8, background:'#0369a1', color:'#e0f2fe', fontSize:13, fontWeight:600, cursor:'pointer' }}>
                 {guardando ? 'Guardando...' : 'Crear contrato'}
               </button>
             </div>
@@ -626,8 +626,8 @@ export default function Contratos() {
                   <div style={{ fontSize:13, fontWeight:500 }}>{c.nombre} · {MESES[p.mes-1]} {p.año}</div>
                   <div style={{ fontSize:11, color:'#6b7280' }}>{c.rol_funcion} · Bruto ${p.monto_bruto.toLocaleString('es-CL')} · Retención ${p.retencion.toLocaleString('es-CL')}</div>
                 </div>
-                <div style={{ fontWeight:700, fontSize:14, color:'#3B6D11' }}>${p.monto_liquido.toLocaleString('es-CL')}</div>
-                <button onClick={() => marcarPagado(p.id)} style={{ padding:'6px 14px', border:'none', borderRadius:8, background:'#3B6D11', color:'#EAF3DE', fontSize:12, fontWeight:600, cursor:'pointer' }}>
+                <div style={{ fontWeight:700, fontSize:14, color:'#0369a1' }}>${p.monto_liquido.toLocaleString('es-CL')}</div>
+                <button onClick={() => marcarPagado(p.id)} style={{ padding:'6px 14px', border:'none', borderRadius:8, background:'#0369a1', color:'#e0f2fe', fontSize:12, fontWeight:600, cursor:'pointer' }}>
                   ✓ Registrar pago
                 </button>
               </div>

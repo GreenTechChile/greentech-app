@@ -99,10 +99,10 @@ export default function SidebarSocio({ nombre, rut }: Props) {
             <Link key={item.href} href={item.href} onClick={onClickLink} style={{
               display: 'flex', alignItems: 'center', gap: 10,
               padding: '11px 16px', fontSize: 14,
-              color: active ? '#3B6D11' : '#6b7280',
+              color: active ? '#0369a1' : '#6b7280',
               fontWeight: active ? 600 : 400,
               background: active ? '#fff' : '#f9fafb',
-              borderRight: active ? '2px solid #3B6D11' : '2px solid transparent',
+              borderRight: active ? '2px solid #0369a1' : '2px solid transparent',
               textDecoration: 'none',
             }}>
               <span>{item.icon}</span>
@@ -192,7 +192,7 @@ export default function SidebarSocio({ nombre, rut }: Props) {
       <div className="gt-topbar">
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{
-            width: 28, height: 28, background: '#EAF3DE', borderRadius: 6,
+            width: 28, height: 28, background: '#e0f2fe', borderRadius: 6,
             display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16,
           }}>🌿</div>
           <span style={{ fontSize: 13, fontWeight: 600 }}>GreenTech</span>
@@ -229,7 +229,7 @@ export default function SidebarSocio({ nombre, rut }: Props) {
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <div style={{
-              width: 28, height: 28, background: '#EAF3DE', borderRadius: 6,
+              width: 28, height: 28, background: '#e0f2fe', borderRadius: 6,
               display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16,
             }}>🌿</div>
             <span style={{ fontSize: 13, fontWeight: 600 }}>GreenTech</span>
@@ -249,7 +249,7 @@ export default function SidebarSocio({ nombre, rut }: Props) {
           padding: '16px 16px 14px', borderBottom: '1px solid #e5e7eb',
         }}>
           <div style={{
-            width: 28, height: 28, background: '#EAF3DE', borderRadius: 6,
+            width: 28, height: 28, background: '#e0f2fe', borderRadius: 6,
             display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16,
           }}>🌿</div>
           <span style={{ fontSize: 13, fontWeight: 600 }}>GreenTech</span>

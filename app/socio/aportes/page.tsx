@@ -90,14 +90,14 @@ export default function MisAportes() {
         <div class="titulo">COMPROBANTE DE APORTE ORDINARIO</div>
         <div class="orden">#${o.ordenBase}</div>
         <div style="text-align:center;margin-bottom:12px">
-          <span style="padding:4px 14px;background:#EAF3DE;border-radius:20px;font-size:12px;font-weight:600;color:#3B6D11">✅ Pago confirmado</span>
+          <span style="padding:4px 14px;background:#e0f2fe;border-radius:20px;font-size:12px;font-weight:600;color:#0369a1">✅ Pago confirmado</span>
         </div>
         <div class="monto">$${o.montoTotal.toLocaleString('es-CL')}</div>
         <div style="font-size:11px;text-align:center;color:#666;margin-bottom:12px">${o.items[0].medio_pago || 'Webpay Plus'} · ${fecha}</div>
         <div class="sep"></div>
         <div class="st">Productos dispensados</div>
         ${lineas}
-        <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;padding-top:8px;color:#3B6D11">
+        <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;padding-top:8px;color:#0369a1">
           <span>Total aportado</span><span>$${o.montoTotal.toLocaleString('es-CL')}</span>
         </div>
         <div class="pie">GreenTech · Asociación sin fines de lucro · Reg. 390054<br/>Aporte ordinario del socio · ${fecha}</div>
@@ -146,7 +146,7 @@ export default function MisAportes() {
           </div>
           <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: 14 }}>
             <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 5 }}>Aportes ordinarios</div>
-            <div style={{ fontSize: 20, fontWeight: 600, color: '#3B6D11' }}>${totalAño.toLocaleString('es-CL')}</div>
+            <div style={{ fontSize: 20, fontWeight: 600, color: '#0369a1' }}>${totalAño.toLocaleString('es-CL')}</div>
             <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>vinculados a dispensaciones</div>
           </div>
           <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: 14 }}>
@@ -181,20 +181,20 @@ export default function MisAportes() {
               <div key={mes} style={{ marginBottom: 20 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, paddingBottom: 8, borderBottom: '1px solid #e5e7eb' }}>
                   <span style={{ fontSize: 14, fontWeight: 600 }}>{MESES[mes - 1]} {filtroAño}</span>
-                  <span style={{ fontSize: 12, fontWeight: 600, color: '#3B6D11' }}>${totalMes.toLocaleString('es-CL')}</span>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: '#0369a1' }}>${totalMes.toLocaleString('es-CL')}</span>
                 </div>
 
                 {ordenes.map((o) => (
                   <div key={o.ordenBase} style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, padding: '12px 14px', marginBottom: 8 }}>
 
-                    <div style={{ width: 38, height: 38, borderRadius: '50%', background: '#EAF3DE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>
+                    <div style={{ width: 38, height: 38, borderRadius: '50%', background: '#e0f2fe', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>
                       🌿
                     </div>
 
                     {/* Monto destacado */}
                     <div style={{ minWidth: 100 }}>
-                      <div style={{ fontSize: 18, fontWeight: 700, color: '#3B6D11' }}>${o.montoTotal.toLocaleString('es-CL')}</div>
-                      <span style={{ fontSize: 10, padding: '1px 7px', borderRadius: 20, background: '#EAF3DE', color: '#3B6D11', display: 'inline-block', marginTop: 2 }}>
+                      <div style={{ fontSize: 18, fontWeight: 700, color: '#0369a1' }}>${o.montoTotal.toLocaleString('es-CL')}</div>
+                      <span style={{ fontSize: 10, padding: '1px 7px', borderRadius: 20, background: '#e0f2fe', color: '#0369a1', display: 'inline-block', marginTop: 2 }}>
                         Ordinario
                       </span>
                     </div>
