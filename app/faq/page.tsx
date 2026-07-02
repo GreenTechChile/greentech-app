@@ -158,7 +158,7 @@ export default function FaqPage() {
           font-size: 17px;
         }
         .faq-nav-name {
-          font-size: 18px;
+          font-size: 24px;
           font-weight: 700;
           color: #0c2d48;
           font-family: 'Georgia', serif;

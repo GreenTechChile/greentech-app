@@ -75,7 +75,7 @@ export default function LandingPage() {
   }
 
   .logo-text {
-    font-size: 20px;
+    font-size: 26px;
     font-weight: 700;
     color: var(--texto-oscuro);
     font-family: 'Georgia', serif;

@@ -139,7 +139,7 @@ export default function Login() {
 
         {/* Logo */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 28 }}>
-          <span style={{ fontSize: 18, fontWeight: 700 }}><span style={{ color: '#0c2d48' }}>Green</span><span style={{ color: '#0ea5e9' }}>Tech</span></span>
+          <span style={{ fontSize: 24, fontWeight: 700 }}><span style={{ color: '#0c2d48' }}>Green</span><span style={{ color: '#0ea5e9' }}>Tech</span></span>
         </div>
 
         <h1 style={{ fontSize: 20, fontWeight: 600, marginBottom: 6 }}>Ingresar al portal</h1>

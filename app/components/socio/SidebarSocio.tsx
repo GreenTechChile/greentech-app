@@ -104,7 +104,7 @@ export default function SidebarSocio({ nombre, rut }: Props) {
       {/* Logo */}
       <div style={{ padding: '16px 16px 12px', borderBottom: '1px solid #e5e7eb' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-          <span style={{ fontSize: 14, fontWeight: 700 }}><span style={{ color: '#0c2d48' }}>Green</span><span style={{ color: '#0ea5e9' }}>Tech</span></span>
+          <span style={{ fontSize: 20, fontWeight: 700 }}><span style={{ color: '#0c2d48' }}>Green</span><span style={{ color: '#0ea5e9' }}>Tech</span></span>
         </div>
         <span style={{ fontSize: 10, background: '#E6F1FB', color: '#185FA5', padding: '2px 7px', borderRadius: 20 }}>Portal Socio</span>
       </div>
@@ -177,7 +177,7 @@ export default function SidebarSocio({ nombre, rut }: Props) {
           padding: '0 16px', height: 52,
           background: '#f9fafb', borderBottom: '1px solid #e5e7eb',
         }}>
-          <span style={{ fontSize: 14, fontWeight: 700 }}><span style={{ color: '#0c2d48' }}>Green</span><span style={{ color: '#0ea5e9' }}>Tech</span></span>
+          <span style={{ fontSize: 20, fontWeight: 700 }}><span style={{ color: '#0c2d48' }}>Green</span><span style={{ color: '#0ea5e9' }}>Tech</span></span>
           <button onClick={() => setMenuOpen(true)} style={{
             background: 'none', border: 'none', cursor: 'pointer', fontSize: 22, padding: 4, color: '#374151',
           }}>☰</button>
@@ -208,7 +208,7 @@ export default function SidebarSocio({ nombre, rut }: Props) {
           overflowY: 'auto',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderBottom: '1px solid #e5e7eb' }}>
-            <span style={{ fontSize: 14, fontWeight: 700 }}><span style={{ color: '#0c2d48' }}>Green</span><span style={{ color: '#0ea5e9' }}>Tech</span></span>
+            <span style={{ fontSize: 20, fontWeight: 700 }}><span style={{ color: '#0c2d48' }}>Green</span><span style={{ color: '#0ea5e9' }}>Tech</span></span>
             <button onClick={() => setMenuOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: '#9ca3af' }}>✕</button>
           </div>
           {navContent(() => setMenuOpen(false))}
