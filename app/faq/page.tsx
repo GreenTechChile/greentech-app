@@ -67,7 +67,7 @@ const FAQS_ESTATICAS: { categoria: string; items: { pregunta: string; respuesta:
       },
       {
         pregunta: '¿Cómo se entrega la dispensación?',
-        respuesta: 'Las dispensaciones se coordinan mediante despacho a domicilio o retiro acordado. Recibirás una notificación cuando tu dispensación esté lista. Todo el proceso queda registrado digitalmente en tu historial dentro de la plataforma, junto con el detalle del producto, gramaje y fecha.',
+        respuesta: 'Las dispensaciones se entregan a domicilio. Recibirás una notificación cuando tu dispensación esté lista y coordinamos el envío directamente contigo. Todo el proceso queda registrado digitalmente en tu historial dentro de la plataforma, junto con el detalle del producto, gramaje y fecha.',
       },
     ],
   },
