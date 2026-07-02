@@ -608,9 +608,7 @@ export default function Dispensacion() {
             </div>
             <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: 16, marginBottom: 20 }}>
               <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>Medio de pago</div>
-              <div style={{ background: '#FAEEDA', border: '1px solid #EF9F27', borderRadius: 8, padding: '8px 12px', fontSize: 11, color: '#633806', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
-                🧪 <span><strong>Modo prueba</strong> — Los pagos usan el sandbox de MercadoPago.</span>
-              </div>
+
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', border: '2px solid #009EE3', borderRadius: 10, background: '#F0F9FF' }}>
                 <div style={{ width: 36, height: 36, borderRadius: 8, background: '#009EE3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>💙</div>
                 <div style={{ flex: 1 }}>
