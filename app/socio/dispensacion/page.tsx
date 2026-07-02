@@ -63,7 +63,7 @@ export default function Dispensacion() {
       // Registrar dispensaciones ahora que el pago fue aprobado
       const saved = sessionStorage.getItem('mp_carrito')
       if (saved) {
-        const { carrito: savedCarrito, mesActual, añoActual, rutSocio: savedRut } = JSON.parse(saved)
+        const { carrito: savedCarrito, mesActual, añoActual, rutSocio: savedRut, totalMonto: savedTotal } = JSON.parse(saved)
         ;(async () => {
           for (const item of savedCarrito) {
             await supabase.from('dispensaciones').insert({
@@ -81,6 +81,14 @@ export default function Dispensacion() {
             if (cepaActual) {
               await supabase.from('cepas').update({ stock_gramos: cepaActual.stock_gramos - item.gramos }).eq('id', item.cepa.id)
             }
+          }
+          // Registrar comisión MercadoPago (3.08%) como egreso en finanzas
+          if (savedTotal) {
+            fetch('/api/comision-mp', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ monto_total: savedTotal, orden, mes: mesActual, año: añoActual }),
+            }).catch(console.error)
           }
           sessionStorage.removeItem('mp_carrito')
           // Enviar correo de confirmación (vía MercadoPago) — dentro del bloque donde savedCarrito existe
@@ -262,7 +270,7 @@ export default function Dispensacion() {
       }
 
       // ── MODO PRODUCCIÓN: flujo real MercadoPago ──
-      sessionStorage.setItem('mp_carrito', JSON.stringify({ orden, mesActual, añoActual, carrito, rutSocio }))
+      sessionStorage.setItem('mp_carrito', JSON.stringify({ orden, mesActual, añoActual, carrito, rutSocio, totalMonto }))
 
       const items = [
         ...carrito.map(item => ({
