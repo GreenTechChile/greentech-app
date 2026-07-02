@@ -685,6 +685,140 @@ export default function LandingPage() {
     opacity: 0.5;
   }
 
+  /* ============================================
+     MOBILE RESPONSIVE — max-width: 768px
+     ============================================ */
+  @media (max-width: 768px) {
+
+    /* NAV — ocultar links, solo mostrar logo + login */
+    nav {
+      padding: 0 1.2rem;
+    }
+
+    .nav-links {
+      gap: 0;
+    }
+
+    .nav-links li:not(:last-child) {
+      display: none;
+    }
+
+    .logo-text {
+      font-size: 20px;
+    }
+
+    /* HERO */
+    .hero {
+      padding: 90px 1.2rem 50px;
+      min-height: auto;
+    }
+
+    .hero-inner {
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+
+    .hero-visual {
+      display: none;
+    }
+
+    .hero h1 {
+      font-size: 1.9rem;
+      letter-spacing: -0.2px;
+    }
+
+    .hero-desc {
+      font-size: 0.95rem;
+      max-width: 100%;
+    }
+
+    .hero-actions {
+      flex-direction: column;
+    }
+
+    .btn-dorado, .btn-outline-crema {
+      width: 100%;
+      justify-content: center;
+    }
+
+    .hero-stats {
+      gap: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    /* SECCIONES */
+    section {
+      padding: 60px 1.2rem;
+    }
+
+    .cta-section {
+      padding: 60px 1.2rem;
+    }
+
+    .section-title {
+      font-size: 1.7rem;
+    }
+
+    /* VALOR */
+    .valor-grid {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+
+    /* CULTIVO */
+    .cultivo-grid {
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+
+    /* APP */
+    .app-grid {
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+
+    .phone-frame {
+      max-width: 320px;
+      margin: 0 auto;
+    }
+
+    /* LEGAL */
+    .legal-grid {
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+
+    .trust-cards {
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    /* VISIÓN Y MISIÓN */
+    .vm-grid {
+      grid-template-columns: 1fr;
+      gap: 1.2rem;
+    }
+
+    .vm-card {
+      padding: 24px;
+    }
+
+    /* CTA */
+    .cta-section .section-title {
+      font-size: 1.7rem;
+    }
+
+    .cta-actions {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .btn-tierra, .btn-outline-tierra {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+
       `}</style>
 
 
