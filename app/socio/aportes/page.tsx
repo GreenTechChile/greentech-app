@@ -22,6 +22,13 @@ export default function MisAportes() {
   const [rutSocio, setRutSocio] = useState<string | null>(null)
   const [nombreSocio, setNombreSocio] = useState('')
   const [rutDisplay, setRutDisplay] = useState('')
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth <= 768)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -118,20 +125,19 @@ export default function MisAportes() {
       <SidebarSocio nombre={nombreSocio} rut={rutDisplay} />
       <main style={{ flex: 1, padding: 24, overflowY: 'auto', background: '#f9fafb' }}>
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
-          <div>
-            <h1 style={{ fontSize: 18, fontWeight: 600, marginBottom: 3 }}>Mis aportes</h1>
-            <p style={{ fontSize: 13, color: '#6b7280' }}>Registro de todos tus aportes sociales a la corporación</p>
-          </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <select value={filtroAño} onChange={e => setFiltroAño(Number(e.target.value))}
-              style={{ padding: '7px 10px', border: '1px solid #e5e7eb', borderRadius: 8, fontSize: 13, background: '#fff', outline: 'none' }}>
-              <option value={2026}>2026</option>
-              <option value={2025}>2025</option>
-            </select>
-            <button style={{ padding: '7px 14px', border: '1px solid #e5e7eb', borderRadius: 8, fontSize: 12, background: '#fff', cursor: 'pointer' }}>
-              📥 Exportar PDF
-            </button>
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 10 }}>
+            <div>
+              <h1 style={{ fontSize: 18, fontWeight: 600, marginBottom: 3 }}>Mis aportes</h1>
+              <p style={{ fontSize: 13, color: '#6b7280' }}>Registro de todos tus aportes sociales a la corporación</p>
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <select value={filtroAño} onChange={e => setFiltroAño(Number(e.target.value))}
+                style={{ padding: '7px 10px', border: '1px solid #e5e7eb', borderRadius: 8, fontSize: 13, background: '#fff', outline: 'none' }}>
+                <option value={2026}>2026</option>
+                <option value={2025}>2025</option>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -185,36 +191,55 @@ export default function MisAportes() {
                 </div>
 
                 {ordenes.map((o) => (
-                  <div key={o.ordenBase} style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, padding: '12px 14px', marginBottom: 8 }}>
-
-                    <div style={{ width: 38, height: 38, borderRadius: '50%', background: '#e0f2fe', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>
-                      🌿
-                    </div>
-
-                    {/* Monto destacado */}
-                    <div style={{ minWidth: 100 }}>
-                      <div style={{ fontSize: 18, fontWeight: 700, color: '#0369a1' }}>${o.montoTotal.toLocaleString('es-CL')}</div>
-                      <span style={{ fontSize: 10, padding: '1px 7px', borderRadius: 20, background: '#e0f2fe', color: '#0369a1', display: 'inline-block', marginTop: 2 }}>
-                        Ordinario
-                      </span>
-                    </div>
-
-                    <div style={{ width: 1, height: 36, background: '#e5e7eb', flexShrink: 0 }} />
-
-                    {/* Detalle */}
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 2 }}>
-                        {o.items.map(i => `${i.cepa} ${i.gramos}gr`).join(' · ')}
+                  <div key={o.ordenBase} style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, padding: '12px 14px', marginBottom: 8 }}>
+                    {isMobile ? (
+                      /* Layout móvil */
+                      <>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                          <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#e0f2fe', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>
+                            🌿
+                          </div>
+                          <div>
+                            <div style={{ fontSize: 18, fontWeight: 700, color: '#0369a1' }}>${o.montoTotal.toLocaleString('es-CL')}</div>
+                            <span style={{ fontSize: 10, padding: '1px 7px', borderRadius: 20, background: '#e0f2fe', color: '#0369a1', display: 'inline-block' }}>Ordinario</span>
+                          </div>
+                        </div>
+                        <div style={{ fontSize: 12, fontWeight: 500, marginBottom: 2 }}>
+                          {o.items.map(i => `${i.cepa} ${i.gramos}gr`).join(' · ')}
+                        </div>
+                        <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 10 }}>
+                          Orden #{o.ordenBase} · {o.items[0].medio_pago || 'Webpay Plus'} · {new Date(o.items[0].created_at).toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: 'numeric' })}
+                        </div>
+                        <button onClick={() => imprimirComprobante(o)}
+                          style={{ width: '100%', padding: '8px', border: '1px solid #185FA5', borderRadius: 8, background: '#fff', fontSize: 12, cursor: 'pointer', color: '#185FA5', fontWeight: 500 }}>
+                          📄 Ver comprobante
+                        </button>
+                      </>
+                    ) : (
+                      /* Layout desktop */
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <div style={{ width: 38, height: 38, borderRadius: '50%', background: '#e0f2fe', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>
+                          🌿
+                        </div>
+                        <div style={{ minWidth: 100 }}>
+                          <div style={{ fontSize: 18, fontWeight: 700, color: '#0369a1' }}>${o.montoTotal.toLocaleString('es-CL')}</div>
+                          <span style={{ fontSize: 10, padding: '1px 7px', borderRadius: 20, background: '#e0f2fe', color: '#0369a1', display: 'inline-block', marginTop: 2 }}>Ordinario</span>
+                        </div>
+                        <div style={{ width: 1, height: 36, background: '#e5e7eb', flexShrink: 0 }} />
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 2 }}>
+                            {o.items.map(i => `${i.cepa} ${i.gramos}gr`).join(' · ')}
+                          </div>
+                          <div style={{ fontSize: 11, color: '#9ca3af' }}>
+                            Orden #{o.ordenBase} · {o.items[0].medio_pago || 'Webpay Plus'} · {new Date(o.items[0].created_at).toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: 'numeric' })}
+                          </div>
+                        </div>
+                        <button onClick={() => imprimirComprobante(o)}
+                          style={{ padding: '5px 12px', border: '1px solid #185FA5', borderRadius: 6, background: '#fff', fontSize: 11, cursor: 'pointer', color: '#185FA5', whiteSpace: 'nowrap' as const }}>
+                          📄 Comprobante
+                        </button>
                       </div>
-                      <div style={{ fontSize: 11, color: '#9ca3af' }}>
-                        Orden #{o.ordenBase} · {o.items[0].medio_pago || 'Webpay Plus'} · {new Date(o.items[0].created_at).toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: 'numeric' })}
-                      </div>
-                    </div>
-
-                    <button onClick={() => imprimirComprobante(o)}
-                      style={{ padding: '5px 12px', border: '1px solid #185FA5', borderRadius: 6, background: '#fff', fontSize: 11, cursor: 'pointer', color: '#185FA5', whiteSpace: 'nowrap' as const }}>
-                      📄 Comprobante
-                    </button>
+                    )}
                   </div>
                 ))}
               </div>
