@@ -13,23 +13,23 @@ export default function LandingPage() {
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
-    --tierra-oscuro:  #1c1508;
-    --tierra-medio:   #2e2210;
-    --tierra-calido:  #4a3318;
-    --oliva-oscuro:   #3d4a1a;
-    --oliva-medio:    #5a6e28;
-    --oliva-vivo:     #7a9a35;
-    --oliva-claro:    #a8bc6a;
-    --dorado-fuerte:  #c9933a;
-    --dorado-medio:   #d9a84c;
-    --dorado-claro:   #f0c86a;
-    --crema:          #faf3e0;
-    --crema-medio:    #f2e4c0;
-    --crema-oscuro:   #e0cc95;
+    --tierra-oscuro:  #0c2d48;
+    --tierra-medio:   #0a2236;
+    --tierra-calido:  #1a4d6e;
+    --oliva-oscuro:   #0b5780;
+    --oliva-medio:    #0284c7;
+    --oliva-vivo:     #0ea5e9;
+    --oliva-claro:    #7dd3fc;
+    --dorado-fuerte:  #0ea5e9;
+    --dorado-medio:   #38bdf8;
+    --dorado-claro:   #7dd3fc;
+    --crema:          #f0f9ff;
+    --crema-medio:    #dbeafe;
+    --crema-oscuro:   #bae6fd;
     --blanco:         #ffffff;
-    --texto-oscuro:   #1c1508;
-    --texto-medio:    #5c4a28;
-    --texto-suave:    #8a7050;
+    --texto-oscuro:   #0c2d48;
+    --texto-medio:    #0369a1;
+    --texto-suave:    #4a90b8;
   }
 
   html { scroll-behavior: smooth; }
@@ -47,14 +47,14 @@ export default function LandingPage() {
     position: fixed;
     top: 0; left: 0; right: 0;
     z-index: 100;
-    background: rgba(28, 21, 8, 0.97);
+    background: rgba(255, 255, 255, 0.97);
     backdrop-filter: blur(10px);
     padding: 0 2.5rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
     height: 62px;
-    border-bottom: 1px solid rgba(201, 147, 58, 0.15);
+    border-bottom: 1px solid #bae6fd;
   }
 
   .nav-logo {
@@ -77,12 +77,12 @@ export default function LandingPage() {
   .logo-text {
     font-size: 20px;
     font-weight: 700;
-    color: var(--blanco);
+    color: var(--texto-oscuro);
     font-family: 'Georgia', serif;
     letter-spacing: 0.3px;
   }
 
-  .logo-text span { color: var(--dorado-claro); }
+  .logo-text span { color: var(--dorado-fuerte); }
 
   .nav-links {
     display: flex;
@@ -91,39 +91,30 @@ export default function LandingPage() {
   }
 
   .nav-links a {
-    color: rgba(255,255,255,0.6);
+    color: rgba(12,45,72,0.65);
     text-decoration: none;
     font-size: 14px;
     font-family: 'Segoe UI', sans-serif;
     transition: color 0.2s;
   }
 
-  .nav-links a:hover { color: var(--dorado-claro); }
-
-  .nav-cta {
-    background: var(--dorado-fuerte) !important;
-    color: var(--blanco) !important;
-    padding: 8px 20px;
-    border-radius: 6px;
-    font-weight: 600 !important;
-  }
-
-  .nav-cta:hover { background: var(--dorado-medio) !important; color: var(--blanco) !important; }
+  .nav-links a:hover { color: var(--dorado-fuerte); }
 
   .nav-login {
-    border: 1px solid rgba(201,147,58,0.35) !important;
-    color: rgba(240,200,100,0.8) !important;
-    padding: 7px 18px;
-    border-radius: 6px;
-    font-weight: 500 !important;
+    background: var(--dorado-fuerte) !important;
+    color: var(--blanco) !important;
+    padding: 8px 22px;
+    border-radius: 7px;
+    font-weight: 600 !important;
+    box-shadow: 0 2px 10px rgba(14,165,233,0.35);
   }
 
-  .nav-login:hover { border-color: var(--dorado-claro) !important; color: var(--dorado-claro) !important; }
+  .nav-login:hover { background: var(--dorado-medio) !important; color: var(--blanco) !important; box-shadow: 0 4px 14px rgba(14,165,233,0.4); }
 
   /* HERO */
   .hero {
     min-height: 100vh;
-    background: var(--tierra-oscuro);
+    background: linear-gradient(160deg, #0ea5e9 0%, #0c2d48 100%);
     display: flex;
     align-items: center;
     position: relative;
@@ -136,7 +127,7 @@ export default function LandingPage() {
     position: absolute;
     top: -150px; right: -150px;
     width: 600px; height: 600px;
-    background: radial-gradient(circle, rgba(201, 147, 58, 0.12) 0%, transparent 65%);
+    background: radial-gradient(circle, rgba(14,165,233,0.12) 0%, transparent 65%);
     pointer-events: none;
   }
 
@@ -145,7 +136,7 @@ export default function LandingPage() {
     position: absolute;
     bottom: -100px; left: 30%;
     width: 400px; height: 400px;
-    background: radial-gradient(circle, rgba(90, 110, 40, 0.15) 0%, transparent 65%);
+    background: radial-gradient(circle, rgba(14,165,233,0.15) 0%, transparent 65%);
     pointer-events: none;
   }
 
@@ -164,8 +155,8 @@ export default function LandingPage() {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    background: rgba(201, 147, 58, 0.12);
-    border: 1px solid rgba(201, 147, 58, 0.3);
+    background: rgba(14,165,233,0.12);
+    border: 1px solid rgba(14,165,233,0.3);
     color: var(--dorado-claro);
     font-size: 11px;
     font-weight: 600;
@@ -193,7 +184,7 @@ export default function LandingPage() {
 
   .hero-desc {
     font-size: 1rem;
-    color: rgba(240, 220, 160, 0.6);
+    color: rgba(186,230,253,0.6);
     line-height: 1.8;
     margin-bottom: 2.5rem;
     font-family: 'Segoe UI', sans-serif;
@@ -227,8 +218,8 @@ export default function LandingPage() {
 
   .btn-outline-crema {
     background: transparent;
-    color: rgba(240,200,100,0.8);
-    border: 1px solid rgba(201, 147, 58, 0.35);
+    color: rgba(125,211,252,0.8);
+    border: 1px solid rgba(14,165,233,0.35);
     padding: 13px 26px;
     border-radius: 7px;
     font-size: 15px;
@@ -249,7 +240,7 @@ export default function LandingPage() {
     gap: 2.5rem;
     margin-top: 3rem;
     padding-top: 2rem;
-    border-top: 1px solid rgba(201,147,58,0.15);
+    border-top: 1px solid rgba(14,165,233,0.15);
   }
 
   .hero-stat-num {
@@ -261,7 +252,7 @@ export default function LandingPage() {
 
   .hero-stat-label {
     font-size: 11px;
-    color: rgba(240,200,100,0.45);
+    color: rgba(125,211,252,0.45);
     margin-top: 2px;
     font-family: 'Segoe UI', sans-serif;
     letter-spacing: 0.3px;
@@ -275,26 +266,26 @@ export default function LandingPage() {
   }
 
   .app-mockup {
-    background: rgba(255,245,220,0.04);
-    border: 1px solid rgba(201,147,58,0.15);
+    background: rgba(224,242,254,0.04);
+    border: 1px solid rgba(14,165,233,0.15);
     border-radius: 14px;
     overflow: hidden;
   }
 
   .app-mockup-header {
-    background: rgba(74, 51, 24, 0.6);
+    background: rgba(12,45,72,0.6);
     padding: 10px 14px;
     display: flex;
     align-items: center;
     gap: 7px;
-    border-bottom: 1px solid rgba(201,147,58,0.1);
+    border-bottom: 1px solid rgba(14,165,233,0.1);
   }
 
   .app-mockup-dot { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,0.15); }
 
   .app-mockup-title {
     font-size: 11px;
-    color: rgba(240,200,100,0.45);
+    color: rgba(125,211,252,0.45);
     font-weight: 500;
     margin-left: 4px;
     font-family: 'Segoe UI', sans-serif;
@@ -317,13 +308,13 @@ export default function LandingPage() {
     position: absolute;
     left: 13px; top: 30px;
     width: 1px; height: calc(100% - 8px);
-    background: rgba(201,147,58,0.2);
+    background: rgba(14,165,233,0.2);
   }
 
   .trace-dot {
     width: 27px; height: 27px;
     border-radius: 50%;
-    background: rgba(201,147,58,0.1);
+    background: rgba(14,165,233,0.1);
     border: 1.5px solid var(--dorado-fuerte);
     display: flex; align-items: center; justify-content: center;
     font-size: 10px;
@@ -335,13 +326,13 @@ export default function LandingPage() {
   .trace-dot.active { background: var(--dorado-fuerte); color: var(--blanco); border-color: var(--dorado-fuerte); }
 
   .trace-info { flex: 1; padding-top: 3px; }
-  .trace-label { font-size: 12px; font-weight: 600; color: rgba(240,220,160,0.85); font-family: 'Segoe UI', sans-serif; }
-  .trace-meta { font-size: 10px; color: rgba(240,200,100,0.35); margin-top: 1px; font-family: 'Segoe UI', sans-serif; }
+  .trace-label { font-size: 12px; font-weight: 600; color: rgba(186,230,253,0.85); font-family: 'Segoe UI', sans-serif; }
+  .trace-meta { font-size: 10px; color: rgba(125,211,252,0.35); margin-top: 1px; font-family: 'Segoe UI', sans-serif; }
 
   .trace-badge {
     font-size: 9px; padding: 2px 7px;
     border-radius: 100px;
-    background: rgba(201,147,58,0.15);
+    background: rgba(14,165,233,0.15);
     color: var(--dorado-claro);
     font-weight: 600;
     align-self: center;
@@ -349,8 +340,8 @@ export default function LandingPage() {
   }
 
   .env-card {
-    background: rgba(255,245,220,0.04);
-    border: 1px solid rgba(201,147,58,0.12);
+    background: rgba(224,242,254,0.04);
+    border: 1px solid rgba(14,165,233,0.12);
     border-radius: 12px;
     padding: 14px;
   }
@@ -358,7 +349,7 @@ export default function LandingPage() {
   .env-card-title {
     font-size: 10px;
     font-weight: 600;
-    color: rgba(240,200,100,0.35);
+    color: rgba(125,211,252,0.35);
     letter-spacing: 0.5px;
     text-transform: uppercase;
     margin-bottom: 10px;
@@ -374,7 +365,7 @@ export default function LandingPage() {
 
   .sensor-val { font-size: 17px; font-weight: 700; color: var(--dorado-claro); line-height: 1; font-family: 'Georgia', serif; }
   .sensor-unit { font-size: 8px; color: var(--dorado-claro); }
-  .sensor-name { font-size: 9px; color: rgba(240,200,100,0.35); margin-top: 3px; font-family: 'Segoe UI', sans-serif; }
+  .sensor-name { font-size: 9px; color: rgba(125,211,252,0.35); margin-top: 3px; font-family: 'Segoe UI', sans-serif; }
 
   /* SECCIONES */
   section { padding: 90px 2.5rem; }
@@ -387,8 +378,8 @@ export default function LandingPage() {
     letter-spacing: 1.5px;
     text-transform: uppercase;
     color: var(--dorado-fuerte);
-    background: rgba(201,147,58,0.1);
-    border: 1px solid rgba(201,147,58,0.25);
+    background: rgba(14,165,233,0.1);
+    border: 1px solid rgba(14,165,233,0.25);
     padding: 5px 12px;
     border-radius: 100px;
     margin-bottom: 1rem;
@@ -431,7 +422,7 @@ export default function LandingPage() {
 
   .valor-card:hover {
     transform: translateY(-3px);
-    box-shadow: 0 10px 28px rgba(74,51,24,0.1);
+    box-shadow: 0 10px 28px rgba(12,45,72,0.1);
   }
 
   .valor-icon { font-size: 24px; margin-bottom: 10px; display: block; }
@@ -441,17 +432,17 @@ export default function LandingPage() {
   /* CULTIVO */
   .cultivo-section { background: var(--tierra-oscuro); color: var(--crema); }
   .cultivo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5rem; align-items: center; }
-  .cultivo-section .section-tag { background: rgba(201,147,58,0.12); color: var(--dorado-claro); border-color: rgba(201,147,58,0.2); }
+  .cultivo-section .section-tag { background: rgba(14,165,233,0.12); color: var(--dorado-claro); border-color: rgba(14,165,233,0.2); }
   .cultivo-section .section-title { color: var(--crema); }
-  .cultivo-section .section-desc { color: rgba(240,220,160,0.55); }
+  .cultivo-section .section-desc { color: rgba(186,230,253,0.55); }
 
   .features-list { list-style: none; margin-top: 1.8rem; display: flex; flex-direction: column; gap: 14px; }
   .features-list li { display: flex; gap: 11px; align-items: flex-start; }
 
   .feature-check {
     width: 20px; height: 20px;
-    background: rgba(201,147,58,0.15);
-    border: 1px solid rgba(201,147,58,0.3);
+    background: rgba(14,165,233,0.15);
+    border: 1px solid rgba(14,165,233,0.3);
     border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
     font-size: 9px; flex-shrink: 0; margin-top: 2px;
@@ -459,18 +450,18 @@ export default function LandingPage() {
   }
 
   .feature-text strong { display: block; font-size: 14px; font-weight: 600; color: var(--crema); margin-bottom: 1px; font-family: 'Georgia', serif; }
-  .feature-text span { font-size: 12px; color: rgba(240,200,100,0.45); font-family: 'Segoe UI', sans-serif; }
+  .feature-text span { font-size: 12px; color: rgba(125,211,252,0.45); font-family: 'Segoe UI', sans-serif; }
 
   .automation-display {
-    background: rgba(255,245,220,0.04);
-    border: 1px solid rgba(201,147,58,0.15);
+    background: rgba(224,242,254,0.04);
+    border: 1px solid rgba(14,165,233,0.15);
     border-radius: 16px;
     padding: 24px;
   }
 
   .automation-title {
     font-size: 10px; font-weight: 600;
-    color: rgba(240,200,100,0.35);
+    color: rgba(125,211,252,0.35);
     letter-spacing: 0.5px; text-transform: uppercase;
     margin-bottom: 16px;
     display: flex; align-items: center; gap: 7px;
@@ -492,21 +483,21 @@ export default function LandingPage() {
   .auto-systems { display: flex; flex-direction: column; gap: 10px; }
 
   .auto-system {
-    background: rgba(255,245,220,0.04);
+    background: rgba(224,242,254,0.04);
     border-radius: 9px; padding: 12px 14px;
     display: flex; align-items: center; gap: 11px;
-    border: 1px solid rgba(201,147,58,0.07);
+    border: 1px solid rgba(14,165,233,0.07);
   }
 
   .auto-system-icon {
     font-size: 18px; width: 36px; height: 36px;
     display: flex; align-items: center; justify-content: center;
-    background: rgba(201,147,58,0.1); border-radius: 8px; flex-shrink: 0;
+    background: rgba(14,165,233,0.1); border-radius: 8px; flex-shrink: 0;
   }
 
   .auto-system-info { flex: 1; }
-  .auto-system-name { font-size: 12px; font-weight: 600; color: rgba(240,220,160,0.8); font-family: 'Segoe UI', sans-serif; }
-  .auto-system-status { font-size: 10px; color: rgba(240,200,100,0.35); margin-top: 1px; font-family: 'Segoe UI', sans-serif; }
+  .auto-system-name { font-size: 12px; font-weight: 600; color: rgba(186,230,253,0.8); font-family: 'Segoe UI', sans-serif; }
+  .auto-system-status { font-size: 10px; color: rgba(125,211,252,0.35); margin-top: 1px; font-family: 'Segoe UI', sans-serif; }
   .auto-system-value { font-size: 12px; font-weight: 700; color: var(--dorado-claro); font-family: 'Georgia', serif; }
 
   /* APP */
@@ -544,7 +535,7 @@ export default function LandingPage() {
   .step-num.active {
     background: var(--dorado-fuerte);
     color: var(--blanco);
-    box-shadow: 0 0 0 4px rgba(201,147,58,0.18);
+    box-shadow: 0 0 0 4px rgba(14,165,233,0.18);
   }
 
   .step-info { padding-top: 7px; }
@@ -553,33 +544,33 @@ export default function LandingPage() {
 
   .phone-frame {
     background: var(--tierra-oscuro);
-    border: 1.5px solid rgba(201,147,58,0.2);
+    border: 1.5px solid rgba(14,165,233,0.2);
     border-radius: 26px;
     padding: 18px 14px;
-    box-shadow: 0 18px 50px rgba(28,21,8,0.25);
+    box-shadow: 0 18px 50px rgba(12,45,72,0.25);
   }
 
   .phone-notch {
     width: 70px; height: 4px;
-    background: rgba(201,147,58,0.15);
+    background: rgba(14,165,233,0.15);
     border-radius: 10px; margin: 0 auto 14px;
   }
 
   .phone-screen-title { font-size: 13px; font-weight: 700; color: var(--crema); text-align: center; margin-bottom: 14px; font-family: 'Georgia', serif; }
 
   .dispensation-card {
-    background: rgba(255,245,220,0.05);
-    border: 1px solid rgba(201,147,58,0.12);
+    background: rgba(224,242,254,0.05);
+    border: 1px solid rgba(14,165,233,0.12);
     border-radius: 9px; padding: 12px; margin-bottom: 8px;
   }
 
   .disp-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
   .disp-id { font-size: 10px; font-weight: 700; color: var(--dorado-claro); font-family: 'Segoe UI', sans-serif; }
-  .disp-date { font-size: 9px; color: rgba(240,200,100,0.3); font-family: 'Segoe UI', sans-serif; }
-  .disp-name { font-size: 12px; font-weight: 600; color: rgba(240,220,160,0.8); font-family: 'Segoe UI', sans-serif; }
-  .disp-detail { font-size: 10px; color: rgba(240,200,100,0.35); margin-top: 3px; font-family: 'Segoe UI', sans-serif; }
+  .disp-date { font-size: 9px; color: rgba(125,211,252,0.3); font-family: 'Segoe UI', sans-serif; }
+  .disp-name { font-size: 12px; font-weight: 600; color: rgba(186,230,253,0.8); font-family: 'Segoe UI', sans-serif; }
+  .disp-detail { font-size: 10px; color: rgba(125,211,252,0.35); margin-top: 3px; font-family: 'Segoe UI', sans-serif; }
   .disp-row { display: flex; justify-content: space-between; align-items: center; margin-top: 7px; }
-  .disp-badge-ok { font-size: 9px; padding: 2px 7px; border-radius: 100px; background: rgba(201,147,58,0.15); color: var(--dorado-claro); font-weight: 600; font-family: 'Segoe UI', sans-serif; }
+  .disp-badge-ok { font-size: 9px; padding: 2px 7px; border-radius: 100px; background: rgba(14,165,233,0.15); color: var(--dorado-claro); font-weight: 600; font-family: 'Segoe UI', sans-serif; }
   .disp-gramaje { font-size: 12px; font-weight: 700; color: var(--crema); font-family: 'Georgia', serif; }
 
   /* LEGAL */
@@ -594,22 +585,22 @@ export default function LandingPage() {
     border-radius: 13px; padding: 20px;
   }
 
-  .trust-card.gold { background: #fdf5e0; border-color: #e8c870; }
+  .trust-card.gold { background: #e0f2fe; border-color: #7dd3fc; }
   .trust-icon { font-size: 26px; margin-bottom: 8px; display: block; }
   .trust-card h4 { font-size: 13px; font-weight: 700; color: var(--texto-oscuro); margin-bottom: 5px; font-family: 'Georgia', serif; }
   .trust-card p { font-size: 11px; color: var(--texto-suave); line-height: 1.55; font-family: 'Segoe UI', sans-serif; }
 
   /* VISIÓN Y MISIÓN */
   .vm-section { background: var(--tierra-oscuro); }
-  .vm-section .section-tag { background: rgba(201,147,58,0.12); color: var(--dorado-claro); border-color: rgba(201,147,58,0.2); }
+  .vm-section .section-tag { background: rgba(14,165,233,0.12); color: var(--dorado-claro); border-color: rgba(14,165,233,0.2); }
   .vm-section .section-title { color: var(--crema); text-align: center; }
-  .vm-section .section-desc { color: rgba(240,200,100,0.45); text-align: center; margin: 0.5rem auto 0; }
+  .vm-section .section-desc { color: rgba(125,211,252,0.45); text-align: center; margin: 0.5rem auto 0; }
 
   .vm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2.5rem; }
 
   .vm-card {
-    background: rgba(255,245,220,0.04);
-    border: 1px solid rgba(201,147,58,0.12);
+    background: rgba(224,242,254,0.04);
+    border: 1px solid rgba(14,165,233,0.12);
     border-radius: 18px; padding: 34px;
     position: relative; overflow: hidden;
   }
@@ -627,13 +618,13 @@ export default function LandingPage() {
   .mision .vm-type { color: var(--dorado-claro); }
 
   .vm-card h3 { font-size: 20px; font-weight: 700; color: var(--crema); margin-bottom: 14px; line-height: 1.3; font-family: 'Georgia', serif; }
-  .vm-card p { font-size: 14px; color: rgba(240,220,160,0.6); line-height: 1.8; font-family: 'Segoe UI', sans-serif; }
+  .vm-card p { font-size: 14px; color: rgba(186,230,253,0.6); line-height: 1.8; font-family: 'Segoe UI', sans-serif; }
 
   .vm-pillars { margin-top: 1.5rem; display: flex; flex-direction: column; gap: 8px; }
 
   .vm-pillar {
     display: flex; align-items: center; gap: 8px;
-    font-size: 12px; color: rgba(240,220,160,0.55);
+    font-size: 12px; color: rgba(186,230,253,0.55);
     font-family: 'Segoe UI', sans-serif;
   }
 
@@ -674,15 +665,15 @@ export default function LandingPage() {
   /* FOOTER */
   footer {
     background: var(--tierra-oscuro);
-    color: rgba(240,200,100,0.35);
+    color: rgba(125,211,252,0.35);
     padding: 2rem;
     text-align: center;
     font-size: 12px;
-    border-top: 1px solid rgba(201,147,58,0.1);
+    border-top: 1px solid rgba(14,165,233,0.1);
     font-family: 'Segoe UI', sans-serif;
   }
 
-  footer strong { color: rgba(240,220,160,0.65); }
+  footer strong { color: rgba(186,230,253,0.65); }
 
   /* Separador ornamental */
   .ornament {
@@ -709,7 +700,6 @@ export default function LandingPage() {
     <li><a href="#legal">Seguridad Legal</a></li>
     <li><a href="#nosotros">Nosotros</a></li>
     <li><a href="/login" className="nav-login">Ingresar</a></li>
-    <li><a href="#unirse" className="nav-cta">Unirse</a></li>
   </ul>
 </nav>
 
@@ -1018,11 +1008,11 @@ export default function LandingPage() {
             <span className="disp-gramaje">10.0 g</span>
           </div>
         </div>
-        <div className="dispensation-card" style={{borderColor: "rgba(201,147,58,0.2)", background: "rgba(201,147,58,0.05)"}}>
+        <div className="dispensation-card" style={{borderColor: "rgba(14,165,233,0.2)", background: "rgba(14,165,233,0.05)"}}>
           <div className="disp-header">
-            <span className="disp-id" style={{color: "rgba(240,200,100,0.4)"}}>Próxima disponibilidad</span>
+            <span className="disp-id" style={{color: "rgba(125,211,252,0.4)"}}>Próxima disponibilidad</span>
           </div>
-          <div className="disp-name" style={{color: "rgba(240,220,160,0.45)"}}>Stock actual: 32.5 g disponibles</div>
+          <div className="disp-name" style={{color: "rgba(186,230,253,0.45)"}}>Stock actual: 32.5 g disponibles</div>
           <div className="disp-detail">Siguiente cosecha estimada: julio 2026</div>
           <div className="disp-row">
             <span className="disp-badge-ok">🌱 En cultivo</span>
@@ -1113,7 +1103,7 @@ export default function LandingPage() {
       <div className="ornament" style={{color: "var(--dorado-fuerte)"}}>— ✦ —</div>
       <span className="section-tag">Nuestra identidad</span>
       <h2 className="section-title">Visión y Misión</h2>
-      <p className="section-desc" style={{color: "rgba(240,200,100,0.45)", margin: "0.5rem auto 0", textAlign: "center"}}>
+      <p className="section-desc" style={{color: "rgba(125,211,252,0.45)", margin: "0.5rem auto 0", textAlign: "center"}}>
         Construimos una asociación que trasciende el acceso al cannabis medicinal — construimos confianza, tecnología y comunidad.
       </p>
     </div>
