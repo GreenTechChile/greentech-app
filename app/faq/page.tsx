@@ -1,8 +1,17 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { supabase } from '@/lib/supabase'
 
-const FAQS: { categoria: string; items: { pregunta: string; respuesta: string }[] }[] = [
+function respuestaInscripcion(monto: number | null): string {
+  if (monto === null) return 'Cargando información...'
+  if (monto === 0) {
+    return 'Actualmente la inscripción es gratuita — no se requiere aporte de incorporación para unirte a GreenTech. Solo debes completar tu solicitud con la documentación requerida (cédula vigente y receta médica). Los aportes por dispensación se determinan según el tipo y volumen de producto, conforme a la tabla aprobada por el Directorio.'
+  }
+  return `El aporte de incorporación es de $${monto.toLocaleString('es-CL')} CLP. Este pago único cubre la revisión de tu solicitud, la elaboración de tu contrato de delegación de cultivo, la declaración jurada de ingreso y la activación de tu cuenta en la plataforma. Los aportes por dispensación se determinan por separado, según el tipo y volumen de producto, conforme a la tabla aprobada por el Directorio.`
+}
+
+const FAQS_ESTATICAS: { categoria: string; items: { pregunta: string; respuesta: string }[] }[] = [
   {
     categoria: 'Membresía y acceso',
     items: [
@@ -12,7 +21,7 @@ const FAQS: { categoria: string; items: { pregunta: string; respuesta: string }[
       },
       {
         pregunta: '¿Cuánto cuesta inscribirse?',
-        respuesta: 'El aporte de inscripción es de $30.000 CLP. Este pago único cubre la revisión de tu solicitud, la elaboración de tu contrato de delegación de cultivo, la declaración jurada de ingreso y la activación de tu cuenta en la plataforma. Los aportes mensuales por dispensación se determinan según el tipo y volumen de producto, conforme a la tabla aprobada por el Directorio.',
+        respuesta: '__INSCRIPCION__', // se reemplaza dinámicamente
       },
       {
         pregunta: '¿Cuánto tarda el proceso de admisión?',
@@ -83,6 +92,27 @@ const FAQS: { categoria: string; items: { pregunta: string; respuesta: string }[
 
 export default function FaqPage() {
   const [abiertos, setAbiertos] = useState<Record<string, boolean>>({})
+  const [montoInscripcion, setMontoInscripcion] = useState<number | null>(null)
+
+  useEffect(() => {
+    supabase
+      .from('configuracion')
+      .select('datos')
+      .eq('id', 'pago_incorporacion')
+      .single()
+      .then(({ data }) => {
+        setMontoInscripcion(data?.datos?.monto ?? 0)
+      })
+  }, [])
+
+  const FAQS = FAQS_ESTATICAS.map(cat => ({
+    ...cat,
+    items: cat.items.map(item =>
+      item.respuesta === '__INSCRIPCION__'
+        ? { ...item, respuesta: respuestaInscripcion(montoInscripcion) }
+        : item
+    ),
+  }))
 
   const toggle = (key: string) => {
     setAbiertos(prev => ({ ...prev, [key]: !prev[key] }))
