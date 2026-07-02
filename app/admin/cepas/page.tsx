@@ -62,6 +62,14 @@ export default function Cepas() {
   const [ncPrecioGramo, setNcPrecioGramo] = useState('')
   const [ncImagen, setNcImagen] = useState<File | null>(null)
   const [ncImagenPreview, setNcImagenPreview] = useState<string | null>(null)
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
 
   useEffect(() => { cargarCepas() }, [])
 
@@ -396,50 +404,85 @@ export default function Cepas() {
                 <div key={cepa.id} style={{ border: `1px solid ${estaEditando ? cfg.border : '#e5e7eb'}`, borderRadius: 14, overflow: 'hidden', opacity: cepa.visible ? 1 : 0.6 }}>
 
                   {/* Fila resumen */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 16px', background: estaEditando ? cfg.bg : '#fff' }}>
-                    <div style={{ width: 52, height: 52, borderRadius: 10, overflow: 'hidden', background: cfg.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: `1px solid ${cfg.border}` }}>
-                      {cepa.imagen_url ? <img src={cepa.imagen_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: 24 }}>🌿</span>}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' as const }}>
-                        <span style={{ fontSize: 14, fontWeight: 600 }}>{cepa.nombre}</span>
-                        <span style={{ fontSize: 10, background: cfg.bg, color: cfg.color, padding: '2px 8px', borderRadius: 20, border: `1px solid ${cfg.border}`, fontWeight: 500 }}>
-                          {cepa.tipo.charAt(0).toUpperCase() + cepa.tipo.slice(1)}
-                        </span>
-                        {!cepa.visible && <span style={{ fontSize: 10, background: '#f3f4f6', color: '#9ca3af', padding: '2px 8px', borderRadius: 20 }}>Oculta en catálogo</span>}
+                  <div style={{ padding: '12px 16px', background: estaEditando ? cfg.bg : '#fff' }}>
+                    {/* Fila superior: imagen + info + precio */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <div style={{ width: 52, height: 52, borderRadius: 10, overflow: 'hidden', background: cfg.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: `1px solid ${cfg.border}` }}>
+                        {cepa.imagen_url ? <img src={cepa.imagen_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: 24 }}>🌿</span>}
                       </div>
-                      <div style={{ fontSize: 11, color: '#6b7280', marginTop: 3, display: 'flex', gap: 12, flexWrap: 'wrap' as const }}>
-                        <span>THC {cepa.thc_pct}% · CBD {cepa.cbd_pct}%</span>
-                        {cepa.pct_indica ? <span>Indica {cepa.pct_indica}%</span> : null}
-                        {cepa.pct_sativa ? <span>Sativa {cepa.pct_sativa}%</span> : null}
-                        <span style={{ color: cepa.stock_gramos > 0 ? '#0369a1' : '#A32D2D', fontWeight: 500 }}>Stock: {cepa.stock_gramos} gr</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' as const }}>
+                          <span style={{ fontSize: 14, fontWeight: 600 }}>{cepa.nombre}</span>
+                          <span style={{ fontSize: 10, background: cfg.bg, color: cfg.color, padding: '2px 8px', borderRadius: 20, border: `1px solid ${cfg.border}`, fontWeight: 500 }}>
+                            {cepa.tipo.charAt(0).toUpperCase() + cepa.tipo.slice(1)}
+                          </span>
+                          {!cepa.visible && <span style={{ fontSize: 10, background: '#f3f4f6', color: '#9ca3af', padding: '2px 8px', borderRadius: 20 }}>Oculta en catálogo</span>}
+                        </div>
+                        <div style={{ fontSize: 11, color: '#6b7280', marginTop: 3, display: 'flex', gap: 10, flexWrap: 'wrap' as const }}>
+                          <span>THC {cepa.thc_pct}% · CBD {cepa.cbd_pct}%</span>
+                          {cepa.pct_indica ? <span>Indica {cepa.pct_indica}%</span> : null}
+                          {cepa.pct_sativa ? <span>Sativa {cepa.pct_sativa}%</span> : null}
+                          <span style={{ color: cepa.stock_gramos > 0 ? '#0369a1' : '#A32D2D', fontWeight: 500 }}>Stock: {cepa.stock_gramos} gr</span>
+                        </div>
                       </div>
-                    </div>
-                    {/* Precio por gramo destacado */}
-                    <div style={{ fontSize: 13, fontWeight: 600, color: '#374151', textAlign: 'right' as const, flexShrink: 0 }}>
-                      <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 2 }}>precio/gr</div>
-                      ${(cepa.precio_gramo || 0).toLocaleString('es-CL')}
-                    </div>
-                    <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-                      <button onClick={() => imprimirEtiqueta(cepa)} title="Imprimir etiqueta"
-                        style={{ padding: '6px 10px', border: '1px solid #e5e7eb', borderRadius: 8, background: '#fff', color: '#374151', fontSize: 13, cursor: 'pointer' }}>
-                        🏷️
-                      </button>
-                      <button onClick={() => toggleVisibilidad(cepa)} title={cepa.visible ? 'Ocultar' : 'Mostrar'}
-                        style={{ padding: '6px 10px', border: `1px solid ${cepa.visible ? '#7dd3fc' : '#d1d5db'}`, borderRadius: 8, background: cepa.visible ? '#e0f2fe' : '#f9fafb', color: cepa.visible ? '#0369a1' : '#6b7280', fontSize: 13, cursor: 'pointer' }}>
-                        {cepa.visible ? '👁️' : '🙈'}
-                      </button>
-                      <button onClick={() => estaEditando ? cancelarEdicion() : iniciarEdicion(cepa)}
-                        style={{ padding: '6px 12px', border: `1px solid ${estaEditando ? cfg.border : '#e5e7eb'}`, borderRadius: 8, background: estaEditando ? cfg.bg : '#fff', color: estaEditando ? cfg.color : '#374151', fontSize: 12, fontWeight: 500, cursor: 'pointer' }}>
-                        {estaEditando ? 'Cancelar' : '✏️ Editar'}
-                      </button>
-                      {!estaEditando && (
-                        <button onClick={() => setConfirmEliminar(confirmEliminar === cepa.id ? null : cepa.id)}
-                          style={{ padding: '6px 10px', border: '1px solid #F5C5C5', borderRadius: 8, background: '#fff', color: '#A32D2D', fontSize: 13, cursor: 'pointer' }}>
-                          🗑️
-                        </button>
+                      {/* Precio — oculto en móvil (se muestra en fila de botones) */}
+                      {!isMobile && (
+                        <div style={{ fontSize: 13, fontWeight: 600, color: '#374151', textAlign: 'right' as const, flexShrink: 0 }}>
+                          <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 2 }}>precio/gr</div>
+                          ${(cepa.precio_gramo || 0).toLocaleString('es-CL')}
+                        </div>
+                      )}
+                      {/* Botones desktop */}
+                      {!isMobile && (
+                        <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                          <button onClick={() => imprimirEtiqueta(cepa)} title="Imprimir etiqueta"
+                            style={{ padding: '6px 10px', border: '1px solid #e5e7eb', borderRadius: 8, background: '#fff', color: '#374151', fontSize: 13, cursor: 'pointer' }}>
+                            🏷️
+                          </button>
+                          <button onClick={() => toggleVisibilidad(cepa)} title={cepa.visible ? 'Ocultar' : 'Mostrar'}
+                            style={{ padding: '6px 10px', border: `1px solid ${cepa.visible ? '#7dd3fc' : '#d1d5db'}`, borderRadius: 8, background: cepa.visible ? '#e0f2fe' : '#f9fafb', color: cepa.visible ? '#0369a1' : '#6b7280', fontSize: 13, cursor: 'pointer' }}>
+                            {cepa.visible ? '👁️' : '🙈'}
+                          </button>
+                          <button onClick={() => estaEditando ? cancelarEdicion() : iniciarEdicion(cepa)}
+                            style={{ padding: '6px 12px', border: `1px solid ${estaEditando ? cfg.border : '#e5e7eb'}`, borderRadius: 8, background: estaEditando ? cfg.bg : '#fff', color: estaEditando ? cfg.color : '#374151', fontSize: 12, fontWeight: 500, cursor: 'pointer' }}>
+                            {estaEditando ? 'Cancelar' : '✏️ Editar'}
+                          </button>
+                          {!estaEditando && (
+                            <button onClick={() => setConfirmEliminar(confirmEliminar === cepa.id ? null : cepa.id)}
+                              style={{ padding: '6px 10px', border: '1px solid #F5C5C5', borderRadius: 8, background: '#fff', color: '#A32D2D', fontSize: 13, cursor: 'pointer' }}>
+                              🗑️
+                            </button>
+                          )}
+                        </div>
                       )}
                     </div>
+                    {/* Fila de botones móvil */}
+                    {isMobile && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10, paddingTop: 10, borderTop: '1px solid #f3f4f6' }}>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: '#374151', flex: 1 }}>
+                          <span style={{ fontSize: 10, color: '#9ca3af', display: 'block' }}>precio/gr</span>
+                          ${(cepa.precio_gramo || 0).toLocaleString('es-CL')}
+                        </span>
+                        <button onClick={() => imprimirEtiqueta(cepa)} title="Imprimir etiqueta"
+                          style={{ padding: '6px 10px', border: '1px solid #e5e7eb', borderRadius: 8, background: '#fff', color: '#374151', fontSize: 13, cursor: 'pointer' }}>
+                          🏷️
+                        </button>
+                        <button onClick={() => toggleVisibilidad(cepa)} title={cepa.visible ? 'Ocultar' : 'Mostrar'}
+                          style={{ padding: '6px 10px', border: `1px solid ${cepa.visible ? '#7dd3fc' : '#d1d5db'}`, borderRadius: 8, background: cepa.visible ? '#e0f2fe' : '#f9fafb', color: cepa.visible ? '#0369a1' : '#6b7280', fontSize: 13, cursor: 'pointer' }}>
+                          {cepa.visible ? '👁️' : '🙈'}
+                        </button>
+                        <button onClick={() => estaEditando ? cancelarEdicion() : iniciarEdicion(cepa)}
+                          style={{ padding: '6px 12px', border: `1px solid ${estaEditando ? cfg.border : '#e5e7eb'}`, borderRadius: 8, background: estaEditando ? cfg.bg : '#fff', color: estaEditando ? cfg.color : '#374151', fontSize: 12, fontWeight: 500, cursor: 'pointer' }}>
+                          {estaEditando ? 'Cancelar' : '✏️ Editar'}
+                        </button>
+                        {!estaEditando && (
+                          <button onClick={() => setConfirmEliminar(confirmEliminar === cepa.id ? null : cepa.id)}
+                            style={{ padding: '6px 10px', border: '1px solid #F5C5C5', borderRadius: 8, background: '#fff', color: '#A32D2D', fontSize: 13, cursor: 'pointer' }}>
+                            🗑️
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   {/* Confirmar eliminación */}

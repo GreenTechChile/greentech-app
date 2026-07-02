@@ -170,6 +170,9 @@ export default function SidebarSocio({ nombre, rut }: Props) {
   if (isMobile) {
     return (
       <>
+        {/* Empuja el main content debajo del topbar fijo */}
+        <style>{`@media (max-width: 767px) { main { padding-top: 64px !important; } }`}</style>
+
         {/* Top bar */}
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
