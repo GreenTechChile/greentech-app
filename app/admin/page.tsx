@@ -33,6 +33,7 @@ export default function AdminDashboard() {
       { data: delegacionesData },
       { data: bajasData },
       { data: movimientosIngreso },
+      { data: dispensacionesIngreso },
     ] = await Promise.all([
       supabase.from('socios').select('*', { count: 'exact', head: true }).eq('estado', 'activo'),
       supabase.from('socios').select('*', { count: 'exact', head: true }).eq('estado', 'pendiente'),
@@ -42,7 +43,8 @@ export default function AdminDashboard() {
       supabase.from('pagos_incorporacion').select('rut').eq('estado', 'aprobado'),
       supabase.from('socios').select('id').eq('delegacion_estado', 'pendiente_firma'),
       supabase.from('solicitudes_baja').select('id').eq('estado', 'pendiente'),
-      supabase.from('movimientos_financieros').select('monto').eq('tipo', 'ingreso').eq('mes', mes).eq('año', año),
+      supabase.from('movimientos_financieros').select('monto').eq('tipo', 'ingreso').eq('año', año),
+      supabase.from('dispensaciones').select('monto').eq('año', año),
     ])
 
     // Calcular pagos sin inscripción completada
@@ -57,6 +59,7 @@ export default function AdminDashboard() {
     const stockTotal = cepas?.reduce((a, c) => a + (c.stock_gramos || 0), 0) || 0
     const cepasConStock = cepas?.filter(c => c.stock_gramos > 0).length || 0
     const ingresosMes = (movimientosIngreso || []).reduce((a: number, m: any) => a + (m.monto || 0), 0)
+      + (dispensacionesIngreso || []).reduce((a: number, d: any) => a + (d.monto || 0), 0)
 
     const ordenesUnicas = new Set((despachos || []).map((d: any) => d.orden_numero.split('-').slice(0,3).join('-')))
     setStats({
@@ -94,7 +97,7 @@ export default function AdminDashboard() {
             { label:'Socios activos', value: loading ? '...' : `${stats.sociosActivos}`, sub: stats.solicitudesPendientes > 0 ? `${stats.solicitudesPendientes} solicitud${stats.solicitudesPendientes>1?'es':''} pendiente${stats.solicitudesPendientes>1?'s':''}` : 'sin solicitudes pendientes', color: stats.solicitudesPendientes > 0 ? '#EF9F27' : undefined },
             { label:'Despachos pendientes', value: loading ? '...' : `${stats.despachosPendientes}`, sub:'pago confirmado', color: stats.despachosPendientes > 0 ? '#A32D2D' : undefined },
             { label:'Stock flores secas', value: loading ? '...' : `${stats.stockTotal} gr`, sub:`${stats.cepasConStock} cepas disponibles` },
-            { label:`Ingresos ${new Date().toLocaleString('es-CL',{month:'long'})}`, value: loading ? '...' : `$${stats.ingresosMes.toLocaleString('es-CL')}`, sub:'aportes + incorporaciones + dispensaciones', color: stats.ingresosMes > 0 ? '#0369a1' : undefined },
+            { label:`Ingresos ${new Date().getFullYear()}`, value: loading ? '...' : `$${stats.ingresosMes.toLocaleString('es-CL')}`, sub:'aportes + incorporaciones + dispensaciones', color: stats.ingresosMes > 0 ? '#0369a1' : undefined },
           ].map((m,i) => (
             <div key={i} style={{ background:'#f9fafb', border:'1px solid #e5e7eb', borderRadius:12, padding:14 }}>
               <div style={{ fontSize:11, color:'#6b7280', marginBottom:5 }}>{m.label}</div>
