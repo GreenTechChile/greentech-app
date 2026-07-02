@@ -376,6 +376,58 @@ export default function FaqPage() {
           border-top: 1px solid rgba(14,165,233,0.12);
         }
         .faq-footer strong { color: rgba(186,230,253,0.75); }
+
+        /* MOBILE */
+        @media (max-width: 768px) {
+          .faq-nav {
+            padding: 0 1rem;
+            height: 56px;
+          }
+          .faq-nav-links li:not(:last-child) {
+            display: none;
+          }
+          .faq-nav-name {
+            font-size: 20px;
+          }
+          .faq-hero {
+            padding: 40px 1.25rem 36px;
+          }
+          .faq-hero h1 {
+            font-size: 1.5rem;
+          }
+          .faq-hero p {
+            font-size: 0.9rem;
+          }
+          .faq-content {
+            padding: 32px 1rem 56px;
+          }
+          .faq-pregunta {
+            padding: 14px 16px;
+          }
+          .faq-pregunta-texto {
+            font-size: 13px;
+          }
+          .faq-respuesta {
+            font-size: 13px;
+            padding: 0 16px 16px;
+            padding-top: 12px;
+          }
+          .faq-cta {
+            padding: 32px 20px;
+            border-radius: 14px;
+          }
+          .faq-cta h2 {
+            font-size: 1.25rem;
+          }
+          .faq-cta-btns {
+            flex-direction: column;
+            align-items: stretch;
+          }
+          .btn-blanco, .btn-outline-blanco {
+            text-align: center;
+            padding: 12px 20px;
+          }
+        }
       `}</style>
 
       {/* NAV */}
