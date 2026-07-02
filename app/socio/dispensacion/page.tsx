@@ -51,6 +51,7 @@ export default function Dispensacion() {
   const [recetaVencida, setRecetaVencida] = useState<boolean>(false)
   const [vencimientoReceta, setVencimientoReceta] = useState<string | null>(null)
   const [promediosCalif, setPromediosCalif] = useState<Record<string, {promedio: number, total: number}>>({})
+  const [cfgEnvioGratis, setCfgEnvioGratis] = useState<{activo: boolean, monto_minimo: number}>({ activo: false, monto_minimo: 100000 })
 
 
   useEffect(() => {
@@ -154,6 +155,9 @@ export default function Dispensacion() {
             .neq('estado', 'pendiente_pago')
           if (disp) setDispensadoMes(disp.reduce((acc, d) => acc + d.gramos, 0))
         }
+        // Cargar config de envío gratis
+        const { data: envCfg } = await supabase.from('configuracion').select('datos').eq('id', 'envio_gratis').single()
+        if (envCfg?.datos) setCfgEnvioGratis(envCfg.datos)
       } catch (e) {
         console.error('[dispensacion] error cargando socio:', e)
       }
@@ -185,8 +189,9 @@ export default function Dispensacion() {
   }
 
   const totalCarrito = carrito.reduce((acc, item) => acc + item.gramos, 0)
-  const COSTO_DESPACHO = 4900
-  const totalMonto = carrito.reduce((acc, item) => acc + item.precio, 0) + COSTO_DESPACHO
+  const subtotalProductos = carrito.reduce((acc, item) => acc + item.precio, 0)
+  const COSTO_DESPACHO = cfgEnvioGratis.activo && subtotalProductos >= cfgEnvioGratis.monto_minimo ? 0 : 4900
+  const totalMonto = subtotalProductos + COSTO_DESPACHO
   const totalItems = carrito.length
   const disponibleRestante = cuota - dispensadoMes - totalCarrito
 
@@ -267,13 +272,13 @@ export default function Dispensacion() {
           unit_price: item.precio,
           currency_id: 'CLP',
         })),
-        {
+        ...(COSTO_DESPACHO > 0 ? [{
           id: 'despacho',
           title: 'Despacho a domicilio',
           quantity: 1,
           unit_price: COSTO_DESPACHO,
           currency_id: 'CLP',
-        }
+        }] : []),
       ]
 
       const res = await fetch('/api/mercadopago/preferencia', {
@@ -589,7 +594,9 @@ export default function Dispensacion() {
                   <div style={{ fontWeight: 500 }}>🚚 Despacho a domicilio</div>
                   <div style={{ fontSize: 11, color: '#6b7280' }}>Envío a tu dirección registrada</div>
                 </div>
-                <span style={{ fontWeight: 600 }}>${COSTO_DESPACHO.toLocaleString('es-CL')}</span>
+                <span style={{ fontWeight: 600, color: COSTO_DESPACHO === 0 ? '#16a34a' : undefined }}>
+                  {COSTO_DESPACHO === 0 ? 'Gratis' : `$${COSTO_DESPACHO.toLocaleString('es-CL')}`}
+                </span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, fontSize: 14, paddingTop: 10, borderTop: '1px solid #e5e7eb', marginTop: 4 }}>
                 <span>Total ({totalCarrito} gr)</span>
