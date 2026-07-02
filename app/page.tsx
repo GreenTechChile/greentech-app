@@ -1146,8 +1146,8 @@ export default function LandingPage() {
       Un proceso de inscripción transparente, documentación digital y un equipo que te acompaña desde el primer día. Sin letra chica, sin complicaciones.
     </p>
     <div className="cta-actions">
-      <a href="#" className="btn-tierra">Iniciar postulación →</a>
-      <a href="#" className="btn-outline-tierra">Preguntas frecuentes</a>
+      <a href="/inscripcion" className="btn-tierra">Iniciar postulación →</a>
+      <a href="/faq" className="btn-outline-tierra">Preguntas frecuentes</a>
     </div>
     <div style={{marginTop: "3rem", display: "flex", justifyContent: "center", gap: "3.5rem", flexWrap: "wrap"}}>
       <div style={{textAlign: "center"}}>
