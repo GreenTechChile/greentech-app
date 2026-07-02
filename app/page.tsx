@@ -799,6 +799,10 @@ export default function LandingPage() {
       gap: 1.2rem;
     }
 
+    .vm-card.mision {
+      order: -1;
+    }
+
     .vm-card {
       padding: 24px;
     }
