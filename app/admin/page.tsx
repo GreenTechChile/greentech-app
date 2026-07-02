@@ -64,7 +64,7 @@ export default function AdminDashboard() {
       solicitudesPendientes: solicitudesPendientes || 0,
       despachosPendientes: ordenesUnicas.size,
       stockTotal, cepasConStock,
-      ingresosMes, dispensacionesMes: dispensaciones?.length || 0,
+      ingresosMes, dispensacionesMes: 0,
       renovacionesPendientes: renovacionesPendientes || 0,
       delegacionesPendientes: delegacionesData?.length || 0,
       pagosIncompletos,
