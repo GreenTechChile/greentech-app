@@ -42,9 +42,10 @@ export async function POST(req: NextRequest) {
     }
 
     const data = await res.json()
+    // Si el token es de prueba (TEST-), usar sandbox_init_point para que el checkout funcione
+    const isSandbox = accessToken.startsWith('TEST-')
     return NextResponse.json({
-      init_point: data.init_point,
-      sandbox_init_point: data.sandbox_init_point,
+      init_point: isSandbox ? data.sandbox_init_point : data.init_point,
       preference_id: data.id,
     })
   } catch (e) {
