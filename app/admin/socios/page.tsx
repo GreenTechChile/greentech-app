@@ -1182,7 +1182,7 @@ export default function AdminSocios() {
                     </div>
                     <div style={{ padding: '14px 16px', borderRight: '1px solid #e5e7eb' }}>
                       <div style={{ fontSize: 11, fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 10 }}>Información médica</div>
-                      {[{k:'Diagnóstico',v:socio.diagnostico},{k:'Médico',v:socio.medico_nombre},{k:'RUT médico',v:socio.medico_rut},{k:'Folio receta',v:socio.folio_receta},{k:'Cuota autorizada',v:`${socio.cuota_mensual} gr / mes`},{k:'Gramos delegados',v:`${socio.gramos_delegados} gr / mes`},{k:'Venc. receta',v:socio.vencimiento_receta}].map((r,i) => (
+                      {[{k:'Diagnóstico',v:socio.diagnostico},{k:'Médico',v:socio.medico_nombre},{k:'RUT médico',v:socio.medico_rut},{k:'Folio receta',v:socio.folio_receta},{k:'Cuota autorizada',v: socio.cuota_mensual != null ? `${socio.cuota_mensual} gr / mes` : null},{k:'Gramos delegados',v: socio.gramos_delegados != null ? `${socio.gramos_delegados} gr / mes` : null},{k:'Venc. receta',v:socio.vencimiento_receta}].map((r,i) => (
                         <div key={i} style={{ marginBottom: 8 }}>
                           <div style={{ fontSize: 11, color: '#9ca3af' }}>{r.k}</div>
                           <div style={{ fontSize: 12, fontWeight: 500 }}>{r.v || '—'}</div>
