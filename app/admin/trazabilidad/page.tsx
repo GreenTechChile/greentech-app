@@ -35,6 +35,14 @@ export default function Trazabilidad() {
   const [auditHasta, setAuditHasta] = useState(new Date().toISOString().split('T')[0])
   const [dispModal, setDispModal] = useState<Dispensacion|null>(null)
   const [busquedaSocios, setBusquedaSocios] = useState('')
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth <= 768)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
 
   useEffect(() => { cargarDatos() }, [])
 
@@ -112,7 +120,7 @@ export default function Trazabilidad() {
         </div>
 
         {/* Métricas */}
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:10, marginBottom:20 }}>
+        <div style={{ display:'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)', gap:10, marginBottom:20 }}>
           {[
             { label:'Dispensaciones trazadas', value:`${dispensaciones.length}`, sub:'registro completo' },
             { label:'Socios registrados', value:`${socios.length}`, sub:'en el sistema' },
@@ -128,10 +136,10 @@ export default function Trazabilidad() {
         </div>
 
         {/* Tabs */}
-        <div style={{ display:'flex', borderBottom:'1px solid #e5e7eb', marginBottom:20 }}>
-          {[{key:'log',label:'📋 Log general'},{key:'expediente',label:'👤 Por socio'},{key:'auditlog',label:'🔐 Acciones admin'},{key:'exportar',label:'📤 Exportar fiscalización'}].map(t => (
+        <div style={{ display:'flex', borderBottom:'1px solid #e5e7eb', marginBottom:20, overflowX:'auto', WebkitOverflowScrolling:'touch' as any }}>
+          {[{key:'log',label:'📋 Log'},{key:'expediente',label:'👤 Por socio'},{key:'auditlog',label:'🔐 Admin'},{key:'exportar',label:'📤 Exportar'}].map(t => (
             <button key={t.key} onClick={() => setTab(t.key as typeof tab)}
-              style={{ padding:'8px 18px', fontSize:13, background:'none', border:'none', cursor:'pointer', borderBottom:tab===t.key?'2px solid #185FA5':'2px solid transparent', color:tab===t.key?'#185FA5':'#6b7280', fontWeight:tab===t.key?600:400, marginBottom:-1 }}>
+              style={{ padding: isMobile ? '8px 12px' : '8px 18px', fontSize: isMobile ? 12 : 13, whiteSpace:'nowrap', background:'none', border:'none', cursor:'pointer', borderBottom:tab===t.key?'2px solid #185FA5':'2px solid transparent', color:tab===t.key?'#185FA5':'#6b7280', fontWeight:tab===t.key?600:400, marginBottom:-1, flexShrink:0 }}>
               {t.label}
             </button>
           ))}
@@ -158,6 +166,20 @@ export default function Trazabilidad() {
             ) : logFiltrado.length === 0 ? (
               <div style={{ fontSize:13, color:'#9ca3af', padding:40, textAlign:'center', border:'1px dashed #e5e7eb', borderRadius:12 }}>
                 No hay registros que coincidan
+              </div>
+            ) : isMobile ? (
+              <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                {logFiltrado.map(item => (
+                  <div key={item.id} style={{ border:'1px solid #f3f4f6', borderRadius:10, padding:12, background:'#fff' }}>
+                    <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:6 }}>
+                      <span style={{ fontSize:10, padding:'2px 8px', borderRadius:20, background:item.badgeBg, color:item.badgeColor }}>{item.badgeLabel}</span>
+                      <span style={{ fontSize:10, color:'#9ca3af' }}>{new Date(item.fecha).toLocaleDateString('es-CL',{day:'2-digit',month:'short',year:'numeric'})}</span>
+                    </div>
+                    <div style={{ fontSize:12, fontWeight:500, marginBottom:3 }}>{item.evento}</div>
+                    <div style={{ fontSize:11, color:'#6b7280', marginBottom:8 }}>{item.detalle}</div>
+                    <button onClick={() => setDispModal(dispensaciones.find(d => d.id === item.id) || null)} style={{ fontSize:11, padding:'4px 12px', border:'1px solid #e5e7eb', borderRadius:6, background:'#fff', cursor:'pointer', color:'#6b7280' }}>Ver detalle</button>
+                  </div>
+                ))}
               </div>
             ) : (
               <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
@@ -192,7 +214,7 @@ export default function Trazabilidad() {
 
         {/* ── POR SOCIO ── */}
         {tab === 'expediente' && (
-          <div style={{ display:'grid', gridTemplateColumns:'220px 1fr', gap:20 }}>
+          <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '220px 1fr', gap:20 }}>
             {/* Lista socios */}
             <div>
               <div style={{ fontSize:12, fontWeight:600, color:'#6b7280', textTransform:'uppercase', letterSpacing:'0.04em', marginBottom:8 }}>Socios</div>
@@ -415,6 +437,28 @@ export default function Trazabilidad() {
                 <div style={{ fontSize:13, color:'#9ca3af', padding:40, textAlign:'center', border:'1px dashed #e5e7eb', borderRadius:12 }}>
                   No hay acciones registradas para los filtros seleccionados
                 </div>
+              ) : isMobile ? (
+                <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                  {auditFiltrado.map(entry => {
+                    const badge = ACCION_LABELS[entry.accion]
+                    const fecha = new Date(entry.created_at)
+                    const detallesStr = Object.entries(entry.detalles||{}).map(([k,v]) => `${k}: ${v}`).join(' · ')
+                    return (
+                      <div key={entry.id} style={{ border:'1px solid #f3f4f6', borderRadius:10, padding:12, background:'#fff' }}>
+                        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:6 }}>
+                          {badge
+                            ? <span style={{ fontSize:10, padding:'2px 8px', borderRadius:20, background:badge.bg, color:badge.color }}>{badge.label}</span>
+                            : <span style={{ fontSize:10, padding:'2px 8px', borderRadius:20, background:'#f3f4f6', color:'#374151' }}>{entry.accion}</span>
+                          }
+                          <span style={{ fontSize:10, color:'#9ca3af' }}>{fecha.toLocaleDateString('es-CL',{day:'2-digit',month:'short'})}</span>
+                        </div>
+                        <div style={{ fontSize:12, fontWeight:500, marginBottom:2 }}>{entry.realizado_por}</div>
+                        <div style={{ fontSize:11, color:'#6b7280' }}>{entry.entidad}{entry.entidad_id ? ` · ${entry.entidad_id.slice(0,8)}…` : ''}</div>
+                        {detallesStr && <div style={{ fontSize:11, color:'#9ca3af', marginTop:4 }}>{detallesStr}</div>}
+                      </div>
+                    )
+                  })}
+                </div>
               ) : (
                 <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
                   <thead>
@@ -461,7 +505,7 @@ export default function Trazabilidad() {
 
         {/* ── EXPORTAR ── */}
         {tab === 'exportar' && (
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20 }}>
+          <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap:20 }}>
 
             {/* Exportar por socio */}
             <div style={{ border:'1px solid #e5e7eb', borderRadius:12, overflow:'hidden' }}>
