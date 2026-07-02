@@ -86,7 +86,7 @@ export default function MisAportes() {
       .pie{font-size:9px;color:#999;text-align:center;margin-top:16px;padding-top:8px;border-top:1px solid #eee}
       @media print{body{padding:0}}</style></head><body>
       <div class="c">
-        <div style="font-size:18px;font-weight:bold;color:#185FA5;margin-bottom:4px">🌿 GreenTech</div>
+        <div style="font-size:18px;font-weight:bold;margin-bottom:4px"><span style="color:#0c2d48">Green</span><span style="color:#0ea5e9">Tech</span></div>
         <div class="titulo">COMPROBANTE DE APORTE ORDINARIO</div>
         <div class="orden">#${o.ordenBase}</div>
         <div style="text-align:center;margin-bottom:12px">

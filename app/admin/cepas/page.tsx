@@ -247,7 +247,7 @@ export default function Cepas() {
   <div class="etiqueta">
     <div>
       <div class="header">
-        <span class="logo">🌿 GreenTech</span>
+        <span class="logo"><span style="color:#0c2d48">Green</span><span style="color:#0ea5e9">Tech</span></span>
         <span class="badge">${tipoLabel}</span>
       </div>
       <div class="nombre">${cepa.nombre}</div>

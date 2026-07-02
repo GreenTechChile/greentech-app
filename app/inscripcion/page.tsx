@@ -364,8 +364,7 @@ export default function Inscripcion() {
       `}</style>
       <nav className="gt-nav" style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 32px',borderBottom:'1px solid #e5e7eb',background:'#fff'}}>
         <Link href="/" style={{display:'flex',alignItems:'center',gap:10,textDecoration:'none',color:'#111'}}>
-          <div style={{width:32,height:32,background:'#e0f2fe',borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center'}}>🌿</div>
-          <span style={{fontSize:15,fontWeight:600}}>GreenTech</span>
+          <span style={{fontSize:18,fontWeight:700}}><span style={{color:'#0c2d48'}}>Green</span><span style={{color:'#0ea5e9'}}>Tech</span></span>
         </Link>
         <Link href="/" style={{fontSize:13,color:'#6b7280',textDecoration:'none'}}>← Volver al inicio</Link>
       </nav>

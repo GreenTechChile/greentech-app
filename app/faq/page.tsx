@@ -381,7 +381,6 @@ export default function FaqPage() {
       {/* NAV */}
       <nav className="faq-nav">
         <Link href="/" className="faq-nav-brand">
-          <div className="faq-nav-icon">🌿</div>
           <span className="faq-nav-name">Green<span>Tech</span></span>
         </Link>
         <ul className="faq-nav-links">

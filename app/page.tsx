@@ -691,7 +691,6 @@ export default function LandingPage() {
 {/* NAVEGACIÓN */}
 <nav>
   <a href="#" className="nav-logo">
-    <div className="logo-icon">🌿</div>
     <span className="logo-text">Green<span>Tech</span></span>
   </a>
   <ul className="nav-links">
