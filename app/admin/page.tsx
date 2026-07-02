@@ -85,6 +85,15 @@ export default function AdminDashboard() {
     <div style={{ display:'flex', minHeight:'100vh', overflowX:'hidden' }}>
       <SidebarAdmin />
       <main style={{ flex:1, padding:24, overflowY:'auto', minWidth:0, background:'#fff' }}>
+        <style>{`
+          @media (max-width: 768px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
+            .stats-grid > div { padding: 10px !important; }
+            .stats-grid .stat-value { font-size: 16px !important; }
+            .stats-grid .stat-label { font-size: 10px !important; }
+            .stats-grid .stat-sub { font-size: 10px !important; }
+          }
+        `}</style>
 
         <div style={{ marginBottom:20 }}>
           <h1 style={{ fontSize:18, fontWeight:600, marginBottom:3 }}>Panel general</h1>
@@ -92,7 +101,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Métricas */}
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:10, marginBottom:20 }}>
+        <div className="stats-grid" style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:10, marginBottom:20 }}>
           {[
             { label:'Socios activos', value: loading ? '...' : `${stats.sociosActivos}`, sub: stats.solicitudesPendientes > 0 ? `${stats.solicitudesPendientes} solicitud${stats.solicitudesPendientes>1?'es':''} pendiente${stats.solicitudesPendientes>1?'s':''}` : 'sin solicitudes pendientes', color: stats.solicitudesPendientes > 0 ? '#EF9F27' : undefined },
             { label:'Despachos pendientes', value: loading ? '...' : `${stats.despachosPendientes}`, sub:'pago confirmado', color: stats.despachosPendientes > 0 ? '#A32D2D' : undefined },
@@ -100,9 +109,9 @@ export default function AdminDashboard() {
             { label:`Ingresos ${new Date().getFullYear()}`, value: loading ? '...' : `$${stats.ingresosMes.toLocaleString('es-CL')}`, sub:'aportes + incorporaciones + dispensaciones', color: stats.ingresosMes > 0 ? '#0369a1' : undefined },
           ].map((m,i) => (
             <div key={i} style={{ background:'#f9fafb', border:'1px solid #e5e7eb', borderRadius:12, padding:14 }}>
-              <div style={{ fontSize:11, color:'#6b7280', marginBottom:5 }}>{m.label}</div>
-              <div style={{ fontSize:22, fontWeight:700, color:m.color||'#111' }}>{m.value}</div>
-              <div style={{ fontSize:11, color:'#9ca3af', marginTop:2 }}>{m.sub}</div>
+              <div className="stat-label" style={{ fontSize:11, color:'#6b7280', marginBottom:5 }}>{m.label}</div>
+              <div className="stat-value" style={{ fontSize:22, fontWeight:700, color:m.color||'#111' }}>{m.value}</div>
+              <div className="stat-sub" style={{ fontSize:11, color:'#9ca3af', marginTop:2 }}>{m.sub}</div>
             </div>
           ))}
         </div>
