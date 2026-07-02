@@ -110,6 +110,16 @@ export default function LandingPage() {
 
   .nav-cta:hover { background: var(--dorado-medio) !important; color: var(--blanco) !important; }
 
+  .nav-login {
+    border: 1px solid rgba(201,147,58,0.35) !important;
+    color: rgba(240,200,100,0.8) !important;
+    padding: 7px 18px;
+    border-radius: 6px;
+    font-weight: 500 !important;
+  }
+
+  .nav-login:hover { border-color: var(--dorado-claro) !important; color: var(--dorado-claro) !important; }
+
   /* HERO */
   .hero {
     min-height: 100vh;
@@ -698,6 +708,7 @@ export default function LandingPage() {
     <li><a href="#app">APP</a></li>
     <li><a href="#legal">Seguridad Legal</a></li>
     <li><a href="#nosotros">Nosotros</a></li>
+    <li><a href="/login" className="nav-login">Ingresar</a></li>
     <li><a href="#unirse" className="nav-cta">Unirse</a></li>
   </ul>
 </nav>
