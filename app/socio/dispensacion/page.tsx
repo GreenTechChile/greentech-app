@@ -286,7 +286,7 @@ export default function Dispensacion() {
         body: JSON.stringify({
           items,
           pagador: { email: emailSocio || rutSocio.replace(/[^0-9kK]/gi, '') + '@greentech.cl', name: nombreSocio },
-          external_reference: `${rutSocio}|dispensacion|${orden}`,
+          external_reference: `${rutSocio}|aporte|${orden}`,
           back_urls: {
             success: `${window.location.origin}/socio/dispensacion?pago=success&orden=${orden}`,
             failure: `${window.location.origin}/socio/dispensacion?pago=failure`,
