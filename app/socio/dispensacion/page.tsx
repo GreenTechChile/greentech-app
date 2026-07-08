@@ -272,22 +272,13 @@ export default function Dispensacion() {
       // ── MODO PRODUCCIÓN: flujo real MercadoPago ──
       sessionStorage.setItem('mp_carrito', JSON.stringify({ orden, mesActual, añoActual, carrito, rutSocio, totalMonto }))
 
-      const items = [
-        ...carrito.map(item => ({
-          id: item.cepa.id,
-          title: `${item.cepa.nombre} — ${item.gramos} gr`,
-          quantity: 1,
-          unit_price: item.precio,
-          currency_id: 'CLP',
-        })),
-        ...(COSTO_DESPACHO > 0 ? [{
-          id: 'despacho',
-          title: 'Despacho a domicilio',
-          quantity: 1,
-          unit_price: COSTO_DESPACHO,
-          currency_id: 'CLP',
-        }] : []),
-      ]
+      const items = [{
+        id: orden,
+        title: 'Aporte ordinario',
+        quantity: 1,
+        unit_price: totalMonto,
+        currency_id: 'CLP',
+      }]
 
       const res = await fetch('/api/mercadopago/preferencia', {
         method: 'POST',
