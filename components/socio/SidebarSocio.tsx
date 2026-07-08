@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase'
 
 const navItems = [
   { href: '/socio',              label: 'Mi panel',       icon: '🏠' },
-  { href: '/socio/dispensacion', label: 'Dispensar',      icon: '🌿' },
+  { href: '/socio/solicitud', label: 'Dispensar',      icon: '🌿' },
   { href: '/socio/historial',    label: 'Mi historial',   icon: '🕐' },
   { href: '/socio/documentos',   label: 'Mis documentos', icon: '📄' },
   { href: '/socio/aportes',      label: 'Mis aportes',    icon: '💳' },

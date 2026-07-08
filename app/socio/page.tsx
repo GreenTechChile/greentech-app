@@ -96,7 +96,7 @@ export default function SocioDashboard() {
             <h1 style={{ fontSize:18, fontWeight:600, marginBottom:3 }}>Bienvenido, {socio.nombre.split(' ')[0]}</h1>
             <p style={{ fontSize:13, color:'#6b7280' }}>{new Date().toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</p>
           </div>
-          <Link href="/socio/dispensacion" style={{ padding:'9px 18px', background:'#0369a1', borderRadius:8, fontSize:13, color:'#e0f2fe', fontWeight:600, textDecoration:'none', display:'flex', alignItems:'center', gap:6, alignSelf: isMobile ? 'stretch' : 'auto', justifyContent: isMobile ? 'center' : 'flex-start' }}>
+          <Link href="/socio/solicitud" style={{ padding:'9px 18px', background:'#0369a1', borderRadius:8, fontSize:13, color:'#e0f2fe', fontWeight:600, textDecoration:'none', display:'flex', alignItems:'center', gap:6, alignSelf: isMobile ? 'stretch' : 'auto', justifyContent: isMobile ? 'center' : 'flex-start' }}>
             🌿 Nueva dispensación
           </Link>
         </div>
@@ -157,7 +157,7 @@ export default function SocioDashboard() {
             {dispensaciones.length === 0 ? (
               <div style={{ fontSize:13, color:'#9ca3af', padding:'20px 0', textAlign:'center' }}>
                 Sin dispensaciones aún.<br/>
-                <Link href="/socio/dispensacion" style={{ color:'#0369a1', fontSize:12 }}>Hacer primera dispensación →</Link>
+                <Link href="/socio/solicitud" style={{ color:'#0369a1', fontSize:12 }}>Hacer primera dispensación →</Link>
               </div>
             ) : dispensaciones.slice(0,3).map((d,i) => (
               <div key={d.id} style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 0', borderBottom:i<2?'1px solid #f3f4f6':'none' }}>
