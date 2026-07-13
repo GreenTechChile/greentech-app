@@ -6,9 +6,9 @@ import { supabase } from '@/lib/supabase'
 function respuestaInscripcion(monto: number | null): string {
   if (monto === null) return 'Cargando información...'
   if (monto === 0) {
-    return 'Actualmente la inscripción es gratuita — no se requiere aporte de incorporación para unirte a GreenTech. Solo debes completar tu solicitud con la documentación requerida (cédula vigente y receta médica). Los aportes por dispensación se determinan según el tipo y volumen de producto, conforme a la tabla aprobada por el Directorio.'
+    return 'Actualmente la inscripción es gratuita — no se requiere aporte de incorporación para unirte a GreenTech. Solo debes completar tu solicitud con la documentación requerida (cédula vigente). Los aportes por retiro se determinan según el tipo y volumen de producto, conforme a la tabla aprobada por el Directorio.'
   }
-  return `El aporte de incorporación es de $${monto.toLocaleString('es-CL')} CLP. Este pago único cubre la revisión de tu solicitud, la elaboración de tu contrato de delegación de cultivo, la declaración jurada de ingreso y la activación de tu cuenta en la plataforma. Los aportes por dispensación se determinan por separado, según el tipo y volumen de producto, conforme a la tabla aprobada por el Directorio.`
+  return `El aporte de incorporación es de $${monto.toLocaleString('es-CL')} CLP. Este pago único cubre la revisión de tu solicitud, la elaboración de tu contrato de delegación de cultivo, la declaración jurada de ingreso y la activación de tu cuenta en la plataforma. Los aportes por retiro se determinan por separado, según el tipo y volumen de producto, conforme a la tabla aprobada por el Directorio.`
 }
 
 const FAQS_ESTATICAS: { categoria: string; items: { pregunta: string; respuesta: string }[] }[] = [
@@ -17,7 +17,7 @@ const FAQS_ESTATICAS: { categoria: string; items: { pregunta: string; respuesta:
     items: [
       {
         pregunta: '¿Quién puede asociarse a GreenTech?',
-        respuesta: 'Cualquier persona mayor de 18 años con diagnóstico médico que indique cannabis como tratamiento. Se requiere cédula de identidad vigente, receta médica actualizada y completar el proceso de inscripción online a través de nuestra plataforma.',
+        respuesta: 'Cualquier persona mayor de 18 años interesada en el cultivo colectivo de plantas. Se requiere cédula de identidad vigente y completar el proceso de inscripción online a través de nuestra plataforma.',
       },
       {
         pregunta: '¿Cuánto cuesta inscribirse?',
@@ -28,8 +28,8 @@ const FAQS_ESTATICAS: { categoria: string; items: { pregunta: string; respuesta:
         respuesta: 'Entre 3 y 7 días hábiles desde que subiste todos tus documentos correctamente. Te notificamos por correo electrónico en cada etapa del proceso: recepción de solicitud, revisión documental, aprobación o si se requiere información adicional, y finalmente la activación de tu cuenta.',
       },
       {
-        pregunta: '¿Puedo asociarme si ya consumo cannabis sin receta?',
-        respuesta: 'La asociación es exclusivamente para uso medicinal certificado. Necesitas contar con receta de un médico habilitado en Chile antes de postular. Si aún no tienes receta, podemos orientarte sobre cómo obtener una consulta con un especialista en cannabis medicinal.',
+        pregunta: '¿Puedo asociarme si no tengo experiencia en cultivo?',
+        respuesta: 'Sí. No se requiere experiencia previa. Nuestro equipo gestiona el cultivo de forma colectiva y te acompaña en todo el proceso desde el ingreso. Solo necesitas interés en participar en un proyecto de cultivo colaborativo.',
       },
     ],
   },
@@ -37,37 +37,37 @@ const FAQS_ESTATICAS: { categoria: string; items: { pregunta: string; respuesta:
     categoria: 'Marco legal',
     items: [
       {
-        pregunta: '¿Es legal pertenecer a una asociación de cannabis medicinal en Chile?',
-        respuesta: 'Sí. Las asociaciones cannábicas funcionan bajo el amparo del artículo 4° de la Ley 20.000, que permite el cultivo y consumo personal en el contexto de una agrupación sin fines de lucro con fines terapéuticos documentados. GreenTech opera como corporación legalmente constituida, con RUT 65.271.661-K, inscrita en el Registro Civil bajo el N° 390054.',
+        pregunta: '¿Es legal pertenecer a una asociación de cultivadores en Chile?',
+        respuesta: 'Sí. Las asociaciones de cultivadores operan bajo la normativa vigente para corporaciones sin fines de lucro. GreenTech está legalmente constituida, con RUT 65.271.661-K, inscrita en el Registro Civil bajo el N° 390054.',
       },
       {
         pregunta: '¿Qué pasa si me fiscaliza Carabineros?',
-        respuesta: 'Todos los socios activos tienen acceso a sus documentos desde la app en todo momento: contrato de delegación de cultivo, declaración jurada de ingreso firmada y receta médica vigente. Esos documentos acreditan tu calidad de socio y la legalidad de tu acceso al cannabis. Te recomendamos mantenerlos siempre descargados en tu celular.',
+        respuesta: 'Todos los socios activos tienen acceso a sus documentos desde la app en todo momento: contrato de delegación de cultivo y declaración jurada de ingreso firmada. Esos documentos acreditan tu calidad de socio y la legalidad de tu participación en la asociación. Te recomendamos mantenerlos siempre descargados en tu celular.',
       },
       {
-        pregunta: '¿GreenTech vende cannabis?',
-        respuesta: 'No. GreenTech es una asociación sin fines de lucro. Los socios realizan aportes para cubrir los costos operativos del cultivo colectivo y reciben su dispensación como parte del acuerdo asociativo, no como compraventa. Este esquema es lo que le da el amparo legal a la actividad.',
+        pregunta: '¿GreenTech vende plantas o productos?',
+        respuesta: 'No. GreenTech es una asociación sin fines de lucro. Los socios realizan aportes para cubrir los costos operativos del cultivo colectivo y reciben su parte como acuerdo asociativo, no como compraventa. Este esquema es lo que le da el amparo legal a la actividad.',
       },
     ],
   },
   {
-    categoria: 'Cultivo y dispensación',
+    categoria: 'Cultivo y entregas',
     items: [
       {
-        pregunta: '¿Puedo elegir la cepa que quiero?',
-        respuesta: 'Puedes indicar preferencias al momento de inscribirte y tu médico puede orientarte según tu condición. El stock disponible depende de los ciclos de cultivo activos. Desde la app puedes consultar en tiempo real las cepas disponibles con sus perfiles de cannabinoides (THC, CBD) y características.',
+        pregunta: '¿Puedo elegir la variedad que quiero?',
+        respuesta: 'Puedes indicar preferencias al momento de inscribirte. El stock disponible depende de los ciclos de cultivo activos. Desde la app puedes consultar en tiempo real las variedades disponibles y sus características.',
       },
       {
-        pregunta: '¿Con qué frecuencia puedo dispensar?',
-        respuesta: 'La frecuencia y el gramaje máximo están determinados por tu receta médica. El sistema solo permite autorizar dispensaciones dentro de los márgenes prescritos y con receta vigente. Si tu prescripción cambia, puedes actualizarla desde tu perfil subiendo la nueva receta.',
+        pregunta: '¿Con qué frecuencia puedo retirar?',
+        respuesta: 'La frecuencia y el gramaje máximo están determinados por el acuerdo asociativo y el stock disponible. El sistema solo permite autorizar retiros dentro de los márgenes establecidos por el Directorio.',
       },
       {
         pregunta: '¿Puedo visitar el lugar de cultivo?',
         respuesta: 'El acceso a las instalaciones está regulado por nuestro Protocolo de Acceso a Cultivos. En general no se permiten visitas abiertas para proteger la seguridad del espacio y la privacidad de los socios. Sin embargo, la trazabilidad completa de tu cultivo — desde la siembra hasta el procesado — está disponible en tiempo real desde tu perfil en la app.',
       },
       {
-        pregunta: '¿Cómo se entrega la dispensación?',
-        respuesta: 'Las dispensaciones se entregan a domicilio. Recibirás una notificación cuando tu dispensación esté lista y coordinamos el envío directamente contigo. Todo el proceso queda registrado digitalmente en tu historial dentro de la plataforma, junto con el detalle del producto, gramaje y fecha.',
+        pregunta: '¿Cómo se realiza la entrega?',
+        respuesta: 'Las entregas se realizan a domicilio. Recibirás una notificación cuando tu pedido esté listo y coordinamos el envío directamente contigo. Todo el proceso queda registrado digitalmente en tu historial dentro de la plataforma, junto con el detalle del producto, gramaje y fecha.',
       },
     ],
   },
@@ -436,7 +436,7 @@ export default function FaqPage() {
           <span className="faq-nav-name">Green<span>Tech</span></span>
         </Link>
         <ul className="faq-nav-links">
-          <li><Link href="/#cultivo">Cultivo Indoor</Link></li>
+          <li><Link href="/#cultivo">Cultivo</Link></li>
           <li><Link href="/#app">APP</Link></li>
           <li><Link href="/#legal">Legal</Link></li>
           <li><Link href="/login" className="faq-nav-login">Ingresar</Link></li>
@@ -447,7 +447,7 @@ export default function FaqPage() {
       <div className="faq-hero">
         <div className="faq-hero-tag">Preguntas frecuentes</div>
         <h1>Todo lo que necesitas saber</h1>
-        <p>Resolvemos las dudas más comunes sobre membresía, costos, marco legal, cultivo y dispensación en GreenTech.</p>
+        <p>Resolvemos las dudas más comunes sobre membresía, costos, marco legal, cultivo y entregas en GreenTech.</p>
       </div>
 
       {/* PREGUNTAS */}
@@ -490,7 +490,7 @@ export default function FaqPage() {
 
       {/* FOOTER */}
       <footer className="faq-footer">
-        <strong>GreenTech</strong> · Asociación de Cannabis Medicinal · RUT 65.271.661-K · Reg. 390054
+        <strong>GreenTech</strong> · Club de Cultivadores · RUT 65.271.661-K · Reg. 390054
       </footer>
     </>
   )
