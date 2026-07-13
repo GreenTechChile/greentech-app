@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'GreenTech — Asociación de Cannabis Medicinal',
-  description: 'Cultivo indoor 100% controlado con trazabilidad digital total. Cannabis medicinal seguro, legal y transparente en Chile.',
+  title: 'GreenTech — Club de Cultivadores',
+  description: 'Cultivo 100% controlado con trazabilidad digital total. Genética vegetal de calidad, transparencia y seguimiento en cada etapa.',
 }
 
 export default function LandingPage() {
@@ -832,7 +832,7 @@ export default function LandingPage() {
     <span className="logo-text">Green<span>Tech</span></span>
   </a>
   <ul className="nav-links">
-    <li><a href="#cultivo">Cultivo Indoor</a></li>
+    <li><a href="#cultivo">Cultivo</a></li>
     <li><a href="#app">APP</a></li>
     <li><a href="#legal">Seguridad Legal</a></li>
     <li><a href="#nosotros">Nosotros</a></li>
@@ -844,10 +844,10 @@ export default function LandingPage() {
 <section className="hero">
   <div className="hero-inner">
     <div className="hero-content">
-      <div className="hero-badge">🌿 Asociación de Cannabis Medicinal</div>
-      <h1>Cannabis medicinal con <em>cuidado experto</em> y control de precisión</h1>
+      <div className="hero-badge">🌿 Club de Cultivadores</div>
+      <h1>Cultivo de plantas con <em>cuidado experto</em> y control de precisión</h1>
       <p className="hero-desc">
-        Cultivo 100% indoor con control ambiental inteligente y revisión personalizada de cada planta. Trazabilidad completa desde la semilla hasta tu dispensación. Cumplimiento legal que te protege en cada paso.
+        Cultivo 100% controlado con monitoreo ambiental inteligente y revisión personalizada de cada planta. Trazabilidad completa desde la semilla hasta la entrega. Cumplimiento legal que te protege en cada paso.
       </p>
       <div className="hero-actions">
         <a href="#unirse" className="btn-dorado">Quiero ser socio →</a>
@@ -856,7 +856,7 @@ export default function LandingPage() {
       <div className="hero-stats">
         <div>
           <div className="hero-stat-num">100%</div>
-          <div className="hero-stat-label">Indoor controlado</div>
+          <div className="hero-stat-label">Ambiente controlado</div>
         </div>
         <div>
           <div className="hero-stat-num">24/7</div>
@@ -881,7 +881,7 @@ export default function LandingPage() {
               <div className="trace-dot active">✓</div>
               <div className="trace-info">
                 <div className="trace-label">Siembra</div>
-                <div className="trace-meta">Cepa registrada · Sala A · Lote 2024-03</div>
+                <div className="trace-meta">Variedad registrada · Sala A · Lote 2024-03</div>
               </div>
               <div className="trace-badge">Completo</div>
             </div>
@@ -904,7 +904,7 @@ export default function LandingPage() {
             <div className="trace-item">
               <div className="trace-dot">→</div>
               <div className="trace-info">
-                <div className="trace-label">Dispensación</div>
+                <div className="trace-label">Entrega</div>
                 <div className="trace-meta">Pendiente · Receta médica vigente</div>
               </div>
             </div>
@@ -935,13 +935,13 @@ export default function LandingPage() {
     <div className="valor-grid">
       <div className="valor-card">
         <span className="valor-icon">🏡</span>
-        <h3>Cultivo 100% indoor</h3>
-        <p>Ambiente controlado, sin exposición a contaminantes externos, pesticidas ni variaciones climáticas. Calidad consistente en cada cosecha.</p>
+        <h3>Cultivo en ambiente controlado</h3>
+        <p>Ambiente cerrado y controlado, sin exposición a contaminantes externos, pesticidas ni variaciones climáticas. Calidad consistente en cada cosecha.</p>
       </div>
       <div className="valor-card">
         <span className="valor-icon">📱</span>
         <h3>Trazabilidad digital total</h3>
-        <p>Nuestra APP registra cada etapa: siembra, cultivo, cosecha, secado, procesado y dispensación. Conoces el origen de cada gramo.</p>
+        <p>Nuestra APP registra cada etapa: siembra, cultivo, cosecha, secado y procesado. Conoces el origen de cada gramo.</p>
       </div>
       <div className="valor-card">
         <span className="valor-icon">⚖️</span>
@@ -951,7 +951,7 @@ export default function LandingPage() {
       <div className="valor-card">
         <span className="valor-icon">👨‍🌾</span>
         <h3>Revisión personalizada</h3>
-        <p>Cada cultivo delegado es revisado diariamente por nuestro equipo. Atención individual que garantiza el mejor resultado para tu cepa.</p>
+        <p>Cada cultivo delegado es revisado diariamente por nuestro equipo. Atención individual que garantiza el mejor resultado para cada variedad.</p>
       </div>
       <div className="valor-card">
         <span className="valor-icon">🔒</span>
@@ -967,13 +967,13 @@ export default function LandingPage() {
   </div>
 </section>
 
-{/* CULTIVO INDOOR */}
+{/* CULTIVO */}
 <section className="cultivo-section" id="cultivo">
   <div className="section-inner">
     <div className="cultivo-grid">
       <div>
         <span className="section-tag">Cultivo de excelencia</span>
-        <h2 className="section-title">Indoor inteligente, cuidado artesanal</h2>
+        <h2 className="section-title">Cultivo inteligente, cuidado artesanal</h2>
         <p className="section-desc">
           Ambiente completamente controlado con sensores inteligentes para temperatura, humedad, luz y CO₂. El riego y la revisión de cada cultivo son realizados manualmente por nuestro equipo experto — atención personalizada que ninguna máquina reemplaza.
         </p>
@@ -1076,7 +1076,7 @@ export default function LandingPage() {
       <span className="section-tag">Tecnología en tus manos</span>
       <h2 className="section-title" style={{textAlign: "center"}}>Trazabilidad total en tu smartphone</h2>
       <p className="section-desc" style={{margin: "0.5rem auto 0", textAlign: "center"}}>
-        Nuestra APP registra el ciclo completo de tu cannabis medicinal. Sabes exactamente qué cultivamos, cuándo, cómo y cuánto dispones.
+        Nuestra APP registra el ciclo completo de tus cultivos. Sabes exactamente qué cultivamos, cuándo, cómo y cuánto tienes disponible.
       </p>
     </div>
     <div className="app-grid">
@@ -1105,8 +1105,8 @@ export default function LandingPage() {
         <div className="step-item">
           <div className="step-num">4</div>
           <div className="step-info">
-            <div className="step-label">Dispensación registrada</div>
-            <div className="step-desc">Cada dispensación queda registrada: fecha, gramaje, receta asociada. Expediente completo y auditable.</div>
+            <div className="step-label">Entrega registrada</div>
+            <div className="step-desc">Cada entrega queda registrada: fecha, gramaje y socio asociado. Expediente completo y auditable.</div>
           </div>
         </div>
         <div className="step-item">
@@ -1120,28 +1120,28 @@ export default function LandingPage() {
 
       <div className="phone-frame">
         <div className="phone-notch"></div>
-        <div className="phone-screen-title">Mis dispensaciones</div>
+        <div className="phone-screen-title">Mis retiros</div>
         <div className="dispensation-card">
           <div className="disp-header">
-            <span className="disp-id">#DISP-2026-089</span>
+            <span className="disp-id">#RET-2026-089</span>
             <span className="disp-date">28 jun 2026</span>
           </div>
-          <div className="disp-name">Flor sativa — Lote L2024-03A</div>
-          <div className="disp-detail">Cosecha sala A · Procesado 20 jun · Receta Dr. Martínez</div>
+          <div className="disp-name">Variedad A — Lote L2024-03A</div>
+          <div className="disp-detail">Cosecha sala A · Procesado 20 jun · Socio verificado</div>
           <div className="disp-row">
-            <span className="disp-badge-ok">✓ Dispensado</span>
+            <span className="disp-badge-ok">✓ Entregado</span>
             <span className="disp-gramaje">10.0 g</span>
           </div>
         </div>
         <div className="dispensation-card">
           <div className="disp-header">
-            <span className="disp-id">#DISP-2026-071</span>
+            <span className="disp-id">#RET-2026-071</span>
             <span className="disp-date">14 jun 2026</span>
           </div>
-          <div className="disp-name">Flor indica — Lote L2024-02B</div>
-          <div className="disp-detail">Cosecha sala B · Procesado 10 jun · Receta Dr. Martínez</div>
+          <div className="disp-name">Variedad B — Lote L2024-02B</div>
+          <div className="disp-detail">Cosecha sala B · Procesado 10 jun · Socio verificado</div>
           <div className="disp-row">
-            <span className="disp-badge-ok">✓ Dispensado</span>
+            <span className="disp-badge-ok">✓ Entregado</span>
             <span className="disp-gramaje">10.0 g</span>
           </div>
         </div>
@@ -1179,7 +1179,7 @@ export default function LandingPage() {
           <div className="trust-card gold">
             <span className="trust-icon">⚖️</span>
             <h4>Marco legal vigente</h4>
-            <p>Operación bajo Ley 20.000 y normativa de asociaciones cannábicas. Asesoría legal permanente.</p>
+            <p>Operación bajo la normativa chilena vigente para asociaciones de cultivadores. Asesoría legal permanente.</p>
           </div>
           <div className="trust-card">
             <span className="trust-icon">🔐</span>
@@ -1241,15 +1241,15 @@ export default function LandingPage() {
       <span className="section-tag">Nuestra identidad</span>
       <h2 className="section-title">Visión y Misión</h2>
       <p className="section-desc" style={{color: "rgba(125,211,252,0.45)", margin: "0.5rem auto 0", textAlign: "center"}}>
-        Construimos una asociación que trasciende el acceso al cannabis medicinal — construimos confianza, tecnología y comunidad.
+        Construimos una comunidad que trasciende el cultivo — construimos confianza, tecnología y mejoramiento genético vegetal.
       </p>
     </div>
     <div className="vm-grid" style={{position: "relative", zIndex: 1}}>
       <div className="vm-card vision">
         <div className="vm-type">Visión</div>
-        <h3>Liderar el estándar en cannabis medicinal de Chile</h3>
+        <h3>Liderar el estándar en cultivo y genética vegetal de Chile</h3>
         <p>
-          Ser la asociación de cannabis medicinal más avanzada y confiable del país, estableciendo el referente en cultivo indoor tecnificado, trazabilidad total y protección legal para nuestros socios — donde cada miembro accede con la certeza de calidad, transparencia y seguridad que merece.
+          Ser el club de cultivadores más avanzado y confiable del país, estableciendo el referente en cultivo tecnificado, trazabilidad total y protección legal para nuestros socios — donde cada miembro accede con la certeza de calidad, transparencia y seguridad que merece.
         </p>
         <div className="vm-pillars">
           <div className="vm-pillar">Tecnología de cultivo de precisión</div>
@@ -1259,9 +1259,9 @@ export default function LandingPage() {
       </div>
       <div className="vm-card mision">
         <div className="vm-type">Misión</div>
-        <h3>Acceso seguro, legal y transparente al cannabis medicinal</h3>
+        <h3>Acceso seguro, legal y transparente a plantas de calidad</h3>
         <p>
-          Proveer a cada socio cannabis medicinal de alta calidad, cultivado exclusivamente en ambientes indoor controlados con revisión experta y personalizada, garantizando trazabilidad completa desde el cultivo hasta la dispensación, protegiendo su salud, privacidad y derechos a través de cumplimiento normativo riguroso y tecnología de gestión certificada.
+          Proveer a cada socio plantas de alta calidad, cultivadas exclusivamente en ambientes controlados con revisión experta y personalizada, garantizando trazabilidad completa desde el cultivo hasta la entrega, protegiendo su privacidad y derechos a través de cumplimiento normativo riguroso y tecnología de gestión certificada.
         </p>
         <div className="vm-pillars">
           <div className="vm-pillar">Calidad reproducible y verificable</div>
@@ -1278,7 +1278,7 @@ export default function LandingPage() {
   <div className="cta-inner">
     <div className="ornament" style={{color: "var(--dorado-fuerte)"}}>— ✦ —</div>
     <span className="section-tag">¿Listo para unirte?</span>
-    <h2 className="section-title">Accede al cannabis medicinal que mereces</h2>
+    <h2 className="section-title">Cultiva con el estándar que mereces</h2>
     <p className="section-desc" style={{margin: "1rem auto 2.5rem", textAlign: "center"}}>
       Un proceso de inscripción transparente, documentación digital y un equipo que te acompaña desde el primer día. Sin letra chica, sin complicaciones.
     </p>
@@ -1289,7 +1289,7 @@ export default function LandingPage() {
     <div style={{marginTop: "3rem", display: "flex", justifyContent: "center", gap: "3.5rem", flexWrap: "wrap"}}>
       <div style={{textAlign: "center"}}>
         <div style={{fontSize: "1.5rem", fontWeight: 700, color: "var(--tierra-oscuro)", fontFamily: "'Georgia', serif"}}>100%</div>
-        <div style={{fontSize: "11px", color: "var(--texto-suave)", fontFamily: "'Segoe UI', sans-serif"}}>Cultivo indoor controlado</div>
+        <div style={{fontSize: "11px", color: "var(--texto-suave)", fontFamily: "'Segoe UI', sans-serif"}}>Cultivo en ambiente controlado</div>
       </div>
       <div style={{textAlign: "center"}}>
         <div style={{fontSize: "1.5rem", fontWeight: 700, color: "var(--tierra-oscuro)", fontFamily: "'Georgia', serif"}}>24/7</div>
@@ -1308,8 +1308,8 @@ export default function LandingPage() {
 </section>
 
 <footer>
-  <strong>GreenTech</strong> — Asociación de Cannabis Medicinal · Chile<br/>
-  <span style={{marginTop: "4px", display: "block"}}>Operamos bajo la normativa vigente de la Ley 20.000 y reglamentos de asociaciones cannábicas de Chile.</span>
+  <strong>GreenTech</strong> — Club de Cultivadores · Chile<br/>
+  <span style={{marginTop: "4px", display: "block"}}>Operamos bajo la normativa vigente para asociaciones de cultivadores en Chile.</span>
 </footer>
 
 
