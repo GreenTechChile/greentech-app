@@ -162,8 +162,8 @@ export default function Inscripcion() {
       return
     }
 
-    // ── MODO PRODUCCIÓN: flujo real MercadoPago ──
-    // Guardar pre-registro server-side antes de redirigir a MP (evita fallo por RLS)
+    // ── MODO PRODUCCIÓN: flujo Khipu ──
+    // Pre-registro server-side antes de redirigir (evita fallo por RLS)
     setMpLoading(true)
     const preRes = await fetch('/api/registrar-pago', {
       method: 'POST',
@@ -184,36 +184,24 @@ export default function Inscripcion() {
     }
     setError('')
     try {
-      const res = await fetch('/api/mercadopago/preferencia', {
+      const res = await fetch('/api/khipu-payment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          items: [{
-            id: 'incorporacion-greentech',
-            title: 'Incorporación como socio GreenTech',
-            quantity: 1,
-            unit_price: montoIncorporacion,
-            currency_id: 'CLP',
-          }],
-          pagador: { name: form.nombre, email: form.email },
-          external_reference: form.rut,
-          back_urls: {
-            success: `${window.location.origin}/inscripcion/pago-exitoso`,
-            failure: `${window.location.origin}/inscripcion/pago-fallido`,
-            pending: `${window.location.origin}/inscripcion/pago-pendiente`,
-          },
+          amount: montoIncorporacion,
+          subject: 'Inscripción',
+          transaction_id: `${form.rut}|incorporacion|incorp-${Date.now()}`,
+          return_url: `${window.location.origin}/inscripcion/pago-exitoso`,
+          cancel_url: `${window.location.origin}/inscripcion/pago-fallido`,
+          payer_email: form.email,
         }),
       })
       const data = await res.json()
-      const url = data.init_point
-      if (url) {
-        window.location.href = url
-      } else {
-        const mpErr = data.mp_error ? JSON.stringify(data.mp_error) : (data.error || 'Sin detalle')
-        setError('No se pudo iniciar el pago: ' + mpErr)
-      }
-    } catch {
-      setError('Error al conectar con Mercado Pago.')
+      if (!res.ok || !data.payment_url) throw new Error(data.error || 'Error al crear cobro')
+      window.location.href = data.payment_url
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Error desconocido'
+      setError('Error al conectar con Khipu: ' + msg)
     } finally {
       setMpLoading(false)
     }
@@ -440,7 +428,7 @@ export default function Inscripcion() {
                   <div>
                     <div style={{fontSize:13,fontWeight:600,color:'#0369a1',marginBottom:2}}>Costo del proceso de incorporación</div>
                     <div style={{fontSize:22,fontWeight:700,color:'#0369a1'}}>${montoIncorporacion.toLocaleString('es-CL')} CLP</div>
-                    <div style={{fontSize:11,color:'#6b7280',marginTop:2}}>Pago único · Mercado Pago</div>
+                    <div style={{fontSize:11,color:'#6b7280',marginTop:2}}>Pago único · Khipu</div>
                   </div>
                 </div>
               ) : (
@@ -575,8 +563,8 @@ export default function Inscripcion() {
               </div>
               {montoIncorporacion > 0 ? (
                 <>
-                  <div style={{background:'#f0f9ff',border:'1px solid #7dd3fc',borderRadius:10,padding:'10px 14px',fontSize:12,color:'#0369a1',marginBottom:20,display:'flex',alignItems:'center',gap:8}}>
-                    🔵 <span><strong>Pago seguro con Mercado Pago</strong> — Acepta tarjetas de débito, crédito y transferencia bancaria.</span>
+                  <div style={{background:'#f0fdf4',border:'1px solid #86efac',borderRadius:10,padding:'10px 14px',fontSize:12,color:'#15803d',marginBottom:20,display:'flex',alignItems:'center',gap:8}}>
+                    💳 <span><strong>Pago seguro con Khipu</strong> — Transferencia bancaria instantánea desde tu banco.</span>
                   </div>
                   <div style={{border:'1px solid #e5e7eb',borderRadius:12,overflow:'hidden',marginBottom:20}}>
                     <div style={{background:'#f9fafb',padding:'12px 16px',borderBottom:'1px solid #e5e7eb'}}>
@@ -608,16 +596,16 @@ export default function Inscripcion() {
               )}
               {error && <div style={{background:'#FCEBEB',border:'1px solid #F5C5C5',borderRadius:8,padding:'10px 12px',fontSize:12,color:'#A32D2D',marginBottom:14}}>⚠️ {error}</div>}
               <button onClick={handlePagoMP} disabled={mpLoading}
-                style={{width:'100%',padding:'14px',border:'none',borderRadius:12,background:mpLoading?'#9ca3af':montoIncorporacion>0?'#009ee3':'#0369a1',color:'#fff',fontSize:15,fontWeight:700,cursor:mpLoading?'not-allowed':'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:10,marginBottom:10}}>
+                style={{width:'100%',padding:'14px',border:'none',borderRadius:12,background:mpLoading?'#9ca3af':montoIncorporacion>0?'#00a550':'#0369a1',color:'#fff',fontSize:15,fontWeight:700,cursor:mpLoading?'not-allowed':'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:10,marginBottom:10}}>
                 {mpLoading
                   ? '⏳ Procesando...'
                   : montoIncorporacion > 0
-                    ? `💳 Pagar $${montoIncorporacion.toLocaleString('es-CL')} con Mercado Pago →`
+                    ? `💳 Pagar $${montoIncorporacion.toLocaleString('es-CL')} con Khipu →`
                     : 'Continuar →'}
               </button>
               {montoIncorporacion > 0 && (
                 <div style={{textAlign:'center',fontSize:11,color:'#9ca3af',marginBottom:16}}>
-                  🔒 Pago seguro · Mercado Pago · SSL
+                  🔒 Pago seguro · Khipu · SSL
                 </div>
               )}
               <div style={{display:'flex',justifyContent:'flex-start'}}>

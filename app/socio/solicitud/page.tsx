@@ -55,60 +55,33 @@ export default function Dispensacion() {
 
 
   useEffect(() => {
-    // Manejar retorno desde MercadoPago
+    // Manejar retorno desde Khipu
     const params = new URLSearchParams(window.location.search)
     const pago = params.get('pago')
     const orden = params.get('orden')
     if (pago === 'success' && orden) {
-      // Registrar dispensaciones ahora que el pago fue aprobado
-      const saved = sessionStorage.getItem('mp_carrito')
+      // Khipu: el webhook ya registró las dispensaciones en BD
+      // Aquí solo mostramos confirmación con datos de sessionStorage
+      const saved = sessionStorage.getItem('khipu_carrito')
       if (saved) {
-        const { carrito: savedCarrito, mesActual, añoActual, rutSocio: savedRut, totalMonto: savedTotal } = JSON.parse(saved)
-        ;(async () => {
-          for (const item of savedCarrito) {
-            await supabase.from('dispensaciones').insert({
-              rut_socio: savedRut,
-              cepa: item.cepa.nombre,
-              gramos: item.gramos,
-              monto: item.precio,
-              orden_numero: orden + '-' + item.cepa.nombre.slice(0,3).toUpperCase(),
-              estado: 'pagado',
-              mes: mesActual,
-              año: añoActual,
-              medio_pago: 'MercadoPago',
-            })
-            const { data: cepaActual } = await supabase.from('cepas').select('stock_gramos').eq('id', item.cepa.id).single()
-            if (cepaActual) {
-              await supabase.from('cepas').update({ stock_gramos: cepaActual.stock_gramos - item.gramos }).eq('id', item.cepa.id)
-            }
-          }
-          // Registrar comisión MercadoPago (3.08%) como egreso en finanzas
-          if (savedTotal) {
-            fetch('/api/comision-mp', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ monto_total: savedTotal, orden, mes: mesActual, año: añoActual }),
-            }).catch(console.error)
-          }
-          sessionStorage.removeItem('mp_carrito')
-          // Enviar correo de confirmación (vía MercadoPago) — dentro del bloque donde savedCarrito existe
-          if (emailSocio) {
-            const totalGr = savedCarrito.reduce((a: number, i: {gramos: number}) => a + i.gramos, 0)
-            sendEmail('dispensacion_confirmada', emailSocio, {
-              nombre: nombreSocio,
-              cepa: savedCarrito.map((i: {cepa: {nombre: string}, gramos: number}) => `${i.cepa.nombre} ${i.gramos}gr`).join(', '),
-              gramos: totalGr,
-              orden,
-            }).catch(console.error)
-          }
-        })()
+        const { carrito: savedCarrito, emailSocio: savedEmail, nombreSocio: savedNombre } = JSON.parse(saved)
+        if (savedEmail) {
+          const totalGr = savedCarrito.reduce((a: number, i: {gramos: number}) => a + i.gramos, 0)
+          sendEmail('dispensacion_confirmada', savedEmail, {
+            nombre: savedNombre,
+            cepa: savedCarrito.map((i: {cepa: {nombre: string}, gramos: number}) => `${i.cepa.nombre} ${i.gramos}gr`).join(', '),
+            gramos: totalGr,
+            orden,
+          }).catch(console.error)
+        }
+        sessionStorage.removeItem('khipu_carrito')
       }
       setOrdenNumero(orden)
       setPaso('confirmacion')
       window.history.replaceState({}, '', window.location.pathname)
-    } else if (pago === 'failure' || pago === 'pending') {
-      sessionStorage.removeItem('mp_carrito')
-      alert(pago === 'failure' ? 'El pago fue rechazado. Intenta nuevamente.' : 'El pago está pendiente de confirmación.')
+    } else if (pago === 'failure' || pago === 'cancel') {
+      sessionStorage.removeItem('khipu_carrito')
+      alert('El pago fue cancelado o rechazado. Intenta nuevamente.')
       window.history.replaceState({}, '', window.location.pathname)
     }
   }, [])
@@ -269,35 +242,27 @@ export default function Dispensacion() {
         return
       }
 
-      // ── MODO PRODUCCIÓN: flujo real MercadoPago ──
-      sessionStorage.setItem('mp_carrito', JSON.stringify({ orden, mesActual, añoActual, carrito, rutSocio, totalMonto }))
+      // ── MODO PRODUCCIÓN: flujo Khipu ──
+      sessionStorage.setItem('khipu_carrito', JSON.stringify({
+        orden, mesActual, añoActual, carrito, rutSocio, totalMonto, emailSocio, nombreSocio
+      }))
 
-      const items = [{
-        id: orden,
-        title: 'Aporte ordinario',
-        quantity: 1,
-        unit_price: totalMonto,
-        currency_id: 'CLP',
-      }]
-
-      const res = await fetch('/api/mercadopago/preferencia', {
+      const res = await fetch('/api/khipu-payment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          items,
-          pagador: { email: emailSocio || rutSocio.replace(/[^0-9kK]/gi, '') + '@greentech.cl', name: nombreSocio },
-          external_reference: `${rutSocio}|aporte|${orden}`,
-          back_urls: {
-            success: `${window.location.origin}/socio/solicitud?pago=success&orden=${orden}`,
-            failure: `${window.location.origin}/socio/solicitud?pago=failure`,
-            pending: `${window.location.origin}/socio/solicitud?pago=pending`,
-          }
+          amount: totalMonto,
+          subject: 'Aporte ordinario',
+          transaction_id: `${rutSocio}|aporte|${orden}`,
+          return_url: `${window.location.origin}/socio/solicitud?pago=success&orden=${orden}`,
+          cancel_url: `${window.location.origin}/socio/solicitud?pago=cancel`,
+          payer_email: emailSocio || undefined,
         }),
       })
 
       const data = await res.json()
-      if (!res.ok) throw new Error('Error al crear preferencia')
-      window.location.href = data.init_point
+      if (!res.ok || !data.payment_url) throw new Error('Error al crear cobro en Khipu')
+      window.location.href = data.payment_url
 
     } catch {
       alert('Error al procesar el pago. Intenta nuevamente.')
@@ -615,13 +580,13 @@ export default function Dispensacion() {
             <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: 16, marginBottom: 20 }}>
               <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>Medio de pago</div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', border: '2px solid #009EE3', borderRadius: 10, background: '#F0F9FF' }}>
-                <div style={{ width: 36, height: 36, borderRadius: 8, background: '#009EE3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>💙</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', border: '2px solid #00a550', borderRadius: 10, background: '#f0fdf4' }}>
+                <div style={{ width: 36, height: 36, borderRadius: 8, background: '#00a550', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>💳</div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>MercadoPago</div>
-                  <div style={{ fontSize: 11, color: '#6b7280' }}>Tarjeta de crédito, débito o transferencia</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>Khipu</div>
+                  <div style={{ fontSize: 11, color: '#6b7280' }}>Transferencia bancaria instantánea</div>
                 </div>
-                <div style={{ width: 18, height: 18, borderRadius: '50%', border: '2px solid #009EE3', background: '#009EE3', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <div style={{ width: 18, height: 18, borderRadius: '50%', border: '2px solid #00a550', background: '#00a550', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#fff' }}/>
                 </div>
               </div>
@@ -632,8 +597,8 @@ export default function Dispensacion() {
                 ← Cancelar
               </button>
               <button onClick={confirmarPago} disabled={procesando}
-                style={{ flex:3, background: procesando ? '#9ca3af' : '#009EE3', color: '#fff', border: 'none', borderRadius: 10, padding: 14, fontSize: 14, fontWeight: 700, cursor: procesando ? 'not-allowed' : 'pointer' }}>
-                {procesando ? 'Redirigiendo...' : `💙 Pagar $${totalMonto.toLocaleString('es-CL')} con MercadoPago`}
+                style={{ flex:3, background: procesando ? '#9ca3af' : '#00a550', color: '#fff', border: 'none', borderRadius: 10, padding: 14, fontSize: 14, fontWeight: 700, cursor: procesando ? 'not-allowed' : 'pointer' }}>
+                {procesando ? 'Redirigiendo...' : `💳 Pagar $${totalMonto.toLocaleString('es-CL')} con Khipu`}
               </button>
             </div>
           </div>
@@ -645,7 +610,7 @@ export default function Dispensacion() {
             <h1 style={{ fontSize: 20, fontWeight: 600, marginBottom: 8, color: '#0369a1' }}>Pago confirmado</h1>
             <p style={{ fontSize: 14, color: '#6b7280', marginBottom: 4 }}>Tu pedido fue recibido y sera preparado por la corporacion.</p>
             <div style={{ fontSize: 12, color: '#9ca3af', marginBottom: 24 }}>
-              Orden <strong>{ordenNumero}</strong> · 💙 MercadoPago
+              Orden <strong>{ordenNumero}</strong> · 💳 Khipu
             </div>
             <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: 16, marginBottom: 20, textAlign: 'left' as const }}>
               <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10 }}>Resumen del pedido</div>
