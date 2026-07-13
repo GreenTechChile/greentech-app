@@ -468,8 +468,8 @@ export default function Inscripcion() {
                 <div style={{display:'flex',flexDirection:'column',gap:8}}>
                   {[
                     {icon:'📖',titulo:'Reglamento Interno de la Asociación GreenTech',desc:'Derechos y deberes de los socios. Incluye obligación de no comercializar los productos recibidos.'},
-                    {icon:'📄',titulo:'Contrato de Previsión y Delegación de Cultivo',desc:'Autoriza a GreenTech a cultivar, cosechar y transportar cannabis medicinal en tu nombre.'},
-                    {icon:'📄',titulo:'Declaración Jurada Especial de Ingreso',desc:'Declaras ser usuario medicinal de cannabis con receta vigente y manifiestas tu voluntad de incorporarte a la asociación.'},
+                    {icon:'📄',titulo:'Contrato de Previsión y Delegación de Cultivo',desc:'Autoriza a GreenTech a cultivar, cosechar y transportar plantas en tu nombre como parte del cultivo colectivo.'},
+                    {icon:'📄',titulo:'Declaración Jurada Especial de Ingreso',desc:'Manifiestas tu voluntad de incorporarte a la asociación y declaras cumplir con los requisitos de membresía.'},
                   ].map((d,i)=>(
                     <div key={i} style={{display:'flex',gap:12,padding:'10px 12px',background:'#f9fafb',borderRadius:10,border:'1px solid #e5e7eb'}}>
                       <span style={{fontSize:20,flexShrink:0}}>{d.icon}</span>
@@ -756,7 +756,7 @@ export default function Inscripcion() {
                 <div style={s.field}><label style={s.label}>Vencimiento de la receta <span style={s.req}>*</span></label><input style={s.input} type="date" value={form.vencimiento_receta} min={new Date().toISOString().split('T')[0]} onChange={e=>update('vencimiento_receta',e.target.value)}/></div>
               </div>
               <div style={{border:'1px solid #7dd3fc',borderRadius:12,padding:16,background:'#e0f2fe',marginBottom:12}}>
-                <div style={{fontSize:13,fontWeight:600,color:'#0369a1',marginBottom:12}}>🌱 Delegación al cultivo colectivo — límite mensual de dispensación</div>
+                <div style={{fontSize:13,fontWeight:600,color:'#0369a1',marginBottom:12}}>🌱 Delegación al cultivo colectivo — límite mensual de retiro</div>
                 <div className="gt-grid2" style={s.grid2}>
                   <div style={s.field}>
                     <label style={{...s.label,color:'#0369a1'}}>Gramos autorizados en receta (máximo) <span style={s.req}>*</span></label>
@@ -766,11 +766,11 @@ export default function Inscripcion() {
                   <div style={s.field}>
                     <label style={{...s.label,color:'#0369a1'}}>Gramos que delegas a GreenTech (mensual) <span style={s.req}>*</span></label>
                     <input style={{...s.input,borderColor:'#7dd3fc'}} type="number" min="1" step="0.5" max={parseFloat(form.cuota_mensual)||999} value={form.gramos_delegados} onChange={e=>update('gramos_delegados',e.target.value)} placeholder="Ej: 30"/>
-                    <span style={{...s.hint,color:'#0369a1'}}>Este será tu límite máximo de dispensación mensual</span>
+                    <span style={{...s.hint,color:'#0369a1'}}>Este será tu límite máximo de retiro mensual</span>
                   </div>
                 </div>
                 {gramosEnDomicilio>0&&<div style={{marginTop:10,fontSize:12,color:'#0369a1',background:'#fff',borderRadius:8,padding:'8px 12px'}}>ℹ️ Cultivarás <strong>{gramosEnDomicilio} gr</strong> en domicilio</div>}
-                <div style={{marginTop:10,background:'#FAEEDA',border:'1px solid #EF9F27',borderRadius:8,padding:'8px 12px',fontSize:11,color:'#633806'}}>⚠️ El sistema bloqueará automáticamente cualquier dispensación que supere los gramos delegados.</div>
+                <div style={{marginTop:10,background:'#FAEEDA',border:'1px solid #EF9F27',borderRadius:8,padding:'8px 12px',fontSize:11,color:'#633806'}}>⚠️ El sistema bloqueará automáticamente cualquier retiro que supere los gramos delegados.</div>
               </div>
               <div style={s.field}><label style={s.label}>Observaciones médicas</label><textarea style={{...s.input,height:70,resize:'none'}} value={form.observaciones} onChange={e=>update('observaciones',e.target.value)} placeholder="Observaciones relevantes (opcional)"/></div>
               <div style={{display:'flex',justifyContent:'space-between',marginTop:20}}>
